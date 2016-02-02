@@ -60,6 +60,13 @@ This stage is responsible for generating specific land features that modify the 
 
 Basically, anything specific that belongs to the base terrain but cannot be represented in the general terms of previous stages is inserted here.
 
+###Large-scale features
+Some features, such as large rivers, would span many chunks of detailed terrain and require large-scale as well as detailed cohesion. This is impractical to do completely in this stage, as it would require holding large amounts of voxel data in memory. To solve this problem we can use the auxiliary data from earlier stages:
+ - We define a river module for use in the height stage. This module is run after the others and uses the created height data to find suitable locations for large rivers.
+ - The module outputs a bitmap, indicating for each segment if there will be a river in that area.
+ - Later in the feature stage we have another river module that when generating a chunk checks if there is a river in the current chunks and its neighbors. It uses this to find out from what chunk edges a river will flow, and modifies the terrain accordingly.
+ - This is done in each chunk. Since the river generation itself is deterministic and position-based, the edges of the river in each chunk will line up correctly without requiring inter-chunk passes.
+
 ##Structure generation
 This final stage is used to generate specific, mostly non-organic structures that are not a natural part of the terrain (but may require modifications to it).
 One could say that this stage adds the stuff that is the most specific for a game and used by gameplay, which is why it is only needed for specific use cases.
