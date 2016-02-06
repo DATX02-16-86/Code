@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "prng.h"
-#include "cellular_automata.h"
+#include "cellular_automaton.h"
 
 uint64_t s[2];
 

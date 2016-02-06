@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "cellular_automata.h"
+#include "cellular_automaton.h"
 
 void next_state(bool*** arr, int xc, int yc, int neighbors, int (*f)(bool**, int, int, int, int)) {
   int a;
@@ -20,36 +20,10 @@ void next_state(bool*** arr, int xc, int yc, int neighbors, int (*f)(bool**, int
 
 void next_state_moore(bool*** arr, int xc, int yc) {
   next_state(arr, xc, yc, 5, moore_neighbors);
-
-  //int a;
-  //bool** tmp = alloc_2d_array(xc, yc);
-  // for (int i = 0; i < xc; i++) {
-  //   for (int j = 0; j < yc; j++) {
-  //     if ((a = moore_neighbors(*arr, i, j, xc, yc)) > 5) {
-  //       tmp[i][j] = true;
-  //     } else if (a < 5) {
-  //       tmp[i][j] = false;
-  //     }
-  //   }
-  // }
-  // *arr = tmp;
 }
 
 void next_state_neumann(bool*** arr, int xc, int yc) {
   next_state(arr, xc, yc, 3, neumann_neighbors);
-
-  // int a;
-  // bool** tmp = alloc_2d_array(xc, yc);
-  // for (int i = 0; i < xc; i++) {
-  //   for (int j = 0; j < yc; j++) {
-  //     if ((a = von_neumann_neighbors(*arr, i, j, xc, yc)) > 3) {
-  //       tmp[i][j] = true;
-  //     } else if (a < 3) {
-  //       tmp[i][j] = false;
-  //     }
-  //   }
-  // }
-  // *arr = tmp;
 }
 
 bool** alloc_2d_array(int xc, int yc) {

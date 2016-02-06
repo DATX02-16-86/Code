@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "cellular_automata.h"
+#include "cellular_automaton.h"
 #include "prng.h"
 
 int main(int argc, char const *argv[]) {
