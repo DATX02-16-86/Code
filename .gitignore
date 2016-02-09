@@ -29,6 +29,17 @@
 
 main
 
-main
+# Visual Studio
+*.pdb
+*.suo
+*.sln
+*.openpdb
+*.idb
+*.ilk
+*.sdf
+*.tlog
+*.vcxproj
+*.vcxproj.filters
+*.VC.opendb
 
-main
+*.log
