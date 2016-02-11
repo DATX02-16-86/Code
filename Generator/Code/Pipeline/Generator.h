@@ -34,6 +34,18 @@ struct Segment {
     U32 height; /// The size over the y-axis in world units.
     F32 baseScale; /// The base scale to use for the generated features.
     U32 detail; /// The detail factor of the segment, used to determine sampling from different maps.
+
+    /// Calls the provided mapper for each element in this segment.
+    template<class F> void map(F&& f) const {
+        auto step = Size(1) << detail;
+        auto yMax = y + height;
+        auto xMax = x + width;
+        for(auto row = y; row < yMax; row += step) {
+            for(auto column = x; column < xMax; column += step) {
+                f(column, row);
+            }
+        }
+    }
 };
 
 /// The common interface for generators inside a stage.
