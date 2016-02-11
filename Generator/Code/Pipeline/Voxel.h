@@ -8,12 +8,22 @@ namespace generator {
 
 /// Defines the location of a subset of the world.
 struct Area {
-    U32 x; /// The x-position of the chunk left-upper corner.
-    U32 y; /// The y-position of the chunk left-upper corner.
+    I32 x; /// The x-position of the chunk left-upper corner.
+    I32 y; /// The y-position of the chunk left-upper corner.
     U16 z; /// The z-position of the chunk left-lower corner.
-    U16 width; /// The size over the x-axis in world units.
-    U16 height; /// The size over the y-axis in world units.
-    U16 depth; /// The size over the z-axis in world units, starting from 0.
+    U16 width; /// The size over the x-axis in local units.
+    U16 height; /// The size over the y-axis in local units.
+    U16 depth: 13; /// The size over the z-axis in local units, starting from 0.
+    U8 lod: 3; /// The lod index of this chunk, as a power of two.
+
+    /// Returns the chunk width in world units.
+    Size worldWidth() const {return width << lod;}
+
+    /// Returns the chunk height in world units.
+    Size worldHeight() const {return height << lod;}
+
+    /// Returns the chunk depth in world units.
+    Size worldDepth() const {return depth << lod;}
 };
 
 /// Represents the data for a single voxel.
@@ -47,6 +57,26 @@ struct Chunk {
 
     /// Updates the heightmap of terrain height in the chunk.
     void updateHeightMap();
+
+    /// Calls the provided builder for each voxel in this area. The mapper should return a voxel for that location.
+    template<class F> void build(F&& f) {
+        auto step = Size(1) << area.lod;
+        auto x = area.x;
+        auto y = area.y;
+        auto z = area.z;
+        Size height = area.height;
+        Size width = area.width;
+        Size depth = area.depth;
+
+        for(Size row = 0; row < height; row++) {
+            for(Size column = 0; column < width; column++) {
+                for(Size zi = 0; zi < depth; zi++) {
+                    Voxel& voxel = at(column, row, zi);
+                    voxel = f(voxel, x + column * step, y + row * step, z + zi * step);
+                }
+            }
+        }
+    }
 
 private:
 
