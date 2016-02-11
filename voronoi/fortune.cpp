@@ -152,40 +152,6 @@ bool closeEnough(T answer, T value, T epsilon) {
   return value >= answer - epsilon && value <= answer + epsilon;
 }
 
-// "Greater than" comparison, for reverse sorting in priority queue.
-struct gt {
-  bool operator()(CircleEvent a, CircleEvent b) { return true; }
-};
-
-bool gtpoint(Point a, Point b) { return a.x == b.x ? a.y > b.y : a.x > b.x; };
-
-typedef std::priority_queue<CircleEvent, std::vector<CircleEvent>, gt> CircleEventsQueue;
-
-void processEvent(CircleEventsQueue& q) {
-  auto event = q.top();
-  q.pop();
-
-  //Do stuff if event is valid
-}
-
-void frontInsert(Point p, CircleEventsQueue& q) {
-  //Create arc etc.
-}
-
-std::vector<Edge> voronoi(std::vector<Point>& siteEvents) {
-  std::sort(siteEvents.begin(), siteEvents.end(), gtpoint);
-  CircleEventsQueue  circleEvents;
-
-  for (auto siteEvent : siteEvents) {
-    while (!circleEvents.empty() && circleEvents.top().x <= siteEvent.x) {
-      processEvent(circleEvents);
-    }
-    frontInsert(siteEvent, circleEvents);
-  }
-
-  return{};
-}
-
 Optional<Point> intersect(Vector a, Vector b) {
   // http://www.gamedev.net/topic/647810-intersection-point-of-two-vectors/
   auto c = a.point - b.point;
@@ -198,3 +164,67 @@ Optional<Point> intersect(Vector a, Vector b) {
   return {true, a.point + a.direction * t};
 }
 
+void pop(arc *arc, Segment *s) {
+  if (arc->prev) {
+    arc->prev->next = arc->next;
+    arc->prev->s1 = s;
+  }
+  if (arc->next) {
+    arc->next->prev = arc->prev;
+    arc->next->s0 = s;
+  }
+}
+
+void finishSegments(arc *arc, Point p) {
+  if (arc->s0) arc->s0->finish(p);
+  if (arc->s1) arc->s1->finish(p);
+}
+
+void Voronoid::processNextCircleEvent()
+{
+  auto event = circleEvents.top();
+  circleEvents.pop();
+  
+  if (event.valid) {
+    Segment *s = new Segment{ event.p };
+    arc *arc = event.a;
+
+    pop(arc, s);
+    finishSegments(arc, event.p);
+
+    // Recheck circle events on adjacent arcs
+    if (arc->prev) checkCircleEvent(arc->prev, event.x);
+    if (arc->next) checkCircleEvent(arc->next, event.x);
+  }
+}
+
+void Voronoid::checkCircleEvent(arc * arc, double x)
+{
+}
+
+void Voronoid::frontInsert(Point p)
+{
+  //Create arc etc.
+}
+
+void Voronoid::compute()
+{
+  for (auto siteEvent : siteEvents) {
+    while (!circleEvents.empty() && circleEvents.top().x <= siteEvent.x) {
+      processNextCircleEvent();
+    }
+    frontInsert(siteEvent);
+  }
+
+  while (!circleEvents.empty()) {
+    processNextCircleEvent();
+  }
+}
+
+bool gtpoint(Point a, Point b) { return a.x == b.x ? a.y > b.y : a.x > b.x; };
+
+Voronoid::Voronoid(std::vector<Point> points)
+{
+  std::sort(points.begin(), points.end(), gtpoint);
+  siteEvents = points;
+}

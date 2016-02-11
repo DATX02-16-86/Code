@@ -4,6 +4,7 @@
 #include <queue>
 #include <utility>
 
+
 struct Point{
   double x;
   double y;
@@ -46,6 +47,19 @@ struct Optional {
   T value;
 };
 
+struct Segment {
+  Point start;
+  Point end = { 0, 0 };
+  bool done = false;
+  Segment(Point start) : start(start) {};
+  void finish(Point p) {
+    if (done) {
+      return;
+    }
+    done = true;
+    end = p;
+  }
+};
 
 struct SweepLine {
   double value;
@@ -53,9 +67,44 @@ struct SweepLine {
 };
 
 typedef std::pair<Point, Point> Edge;
-typedef Point CircleEvent;
 
-std::vector<Edge> voronoi(std::vector<Point> points);
+struct CircleEvent;
+
+struct arc {
+  Point p;
+  arc *prev;
+  arc *next;
+  // So we can invalidate old events in checkCircleEvent
+  CircleEvent *event;
+  Segment *s0;
+  Segment *s1;
+  arc(Point pp, arc *a = 0, arc *b = 0)
+    : p(pp), prev(a), next(b), s0(0), s1(0) {};
+};
+
+struct CircleEvent {
+  double x;
+  Point p;
+  arc *a;
+  bool valid;
+};
+
+// "Greater than" comparison, for reverse sorting in priority queue.
+struct gt {
+  bool operator()(CircleEvent a, CircleEvent b) { return true; }
+};
+
+class Voronoid {
+  std::vector<Point> siteEvents;
+  std::priority_queue<CircleEvent, std::vector<CircleEvent>, gt> circleEvents;
+  std::vector<Edge> result;
+  void processNextCircleEvent();
+  void checkCircleEvent(arc *arc, double x);
+  void frontInsert(Point p);
+public:
+  void compute();
+  Voronoid(std::vector<Point> points);
+};
 
 
 bool pointIsOnVector(Point p, Vector v, double epsilon = 0.001);
@@ -74,10 +123,5 @@ std::ostream& operator << (std::ostream& os, Vector const& value) {
   return os;
 }
 
-
 template <class T>
 bool closeEnough(T answer, T value, T epsilon);
-
-
-template <class T>
-bool isSiteEvent(T answer, T value, T epsilon);
