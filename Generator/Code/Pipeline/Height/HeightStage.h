@@ -14,19 +14,18 @@ GeneratorStream(BaseHeight, 16);
  */
 struct HeightGenerator: Generator {
     using Generator::Generator;
+    static const Size kDefaultOceanHeight = 100;
 
     void generate(const Segment& segment, IdMatrix** auxiliaries, Pipeline& pipeline) override;
 
     /**
      * Generates height data for a specific sample segment.
-     * The default implementation uses no base height.
+     * The default implementation uses the default ocean height as base.
      */
     virtual void generate(const Segment& segment, IdMatrix& heightMap, IdMatrix** auxiliaries, Pipeline& pipeline) {
-        for(Size x = 0; x < segment.width; x++) {
-            for(Size y = 0; y < segment.height; y++) {
-                heightMap.set(x, y, segment.detail, 0);
-            }
-        }
+        segment.map([&](auto x, auto y) {
+            heightMap.set(x, y, segment.detail, kDefaultOceanHeight);
+        });
     }
 };
 

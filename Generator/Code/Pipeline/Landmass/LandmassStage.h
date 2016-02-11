@@ -9,6 +9,10 @@ namespace generator {
 
 GeneratorStream(Landmass, 1);
 
+/**
+ * Helper base class for landmass generators.
+ * This will automatically send the landmass map to the overloaded generate().
+ */
 struct LandmassGenerator: Generator {
     using Generator::Generator;
 
@@ -19,11 +23,9 @@ struct LandmassGenerator: Generator {
      * The default implementation just creates an endless continent without any other data.
      */
     virtual void generate(const Segment& segment, IdMatrix& map, IdMatrix** auxiliaries, Pipeline& pipeline) {
-        for(Size x = 0; x < segment.width; x++) {
-            for(Size y = 0; y < segment.height; y++) {
-                map.set(x, y, segment.detail, 1);
-            }
-        }
+        segment.map([&](auto x, auto y) {
+            map.set(x, y, segment.detail, 1);
+        });
     }
 };
 
