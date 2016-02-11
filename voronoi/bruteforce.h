@@ -6,12 +6,9 @@ struct Point{
   double y;
 };
 
-struct Line{
-  double k;
-  double m;
-  bool operator==(const Line& rhs) {
-    return k == rhs.k && m == rhs.m;
-  }
+struct Vector {
+  Point point;
+  Point direction;
 };
 
 struct Polygon{
@@ -19,16 +16,19 @@ struct Polygon{
   std::vector<Point> lines;
 };
 
-bool pointIsOnLine(Point p, Line l, double allowedDiff);
+bool pointIsOnVector(Point p, Vector v, double epsilon = 0.001);
 Point randomPoint(double xmax, double ymax);
-Line bisector(Point a, Point b);
-
-std::ostream& operator << (std::ostream& os, Line const& value) {
-  os << (std::string) "k: " << value.k << (std::string) ", m: " << value.m;
-  return os;
-}
+Vector bisector(Point a, Point b);
 
 std::ostream& operator << (std::ostream& os, Point const& value) {
   os << (std::string) "(" << value.x << (std::string) ", " << value.y << (std::string) ")";
   return os;
 }
+
+std::ostream& operator << (std::ostream& os, Vector const& value) {
+  os << (std::string) "point: " << value.point << (std::string) ", direction: " << value.direction;
+  return os;
+}
+
+template <class T>
+bool closeEnough(T answer, T value, T epsilon);

@@ -53,23 +53,32 @@ int main(int argc, char const *argv[]) {
 
 #ifdef TESTING
 TEST_CASE("Bisector line should go through central point") {
-  REQUIRE(pointIsOnLine({ 1, 1 }, bisector({ 0, 0 }, { 2, 2 }), 0.001));
+  auto a = bisector({ 0, 0 }, { 2, 2 });
+  CAPTURE(a);
+  REQUIRE(pointIsOnVector({ 1, 1 }, a));
 }
 
 TEST_CASE("Bisector") {
-  REQUIRE(pointIsOnLine({ 0, 2 }, bisector({ 0, 0 }, { 2, 2 }), 0.001));
-  REQUIRE(pointIsOnLine({ -1, 0.15 }, bisector({ 0, -5 }, { 1, 5 }), 0.001));
+  auto a = bisector({ 0, 0 }, { 2, 2 });
+  auto b = bisector({ 0, -5 }, { 1, 5 });
+  CAPTURE(a);
+  CAPTURE(b);
+  REQUIRE(pointIsOnVector({ 0, 2 }, bisector({ 0, 0 }, { 2, 2 })));
+  
+  REQUIRE(pointIsOnVector({ -1, 0.15 }, bisector({ 0, -5 }, { 1, 5 })));
 }
 
-TEST_CASE("Point is on line") {
-  Line a{ 0, 0 };
-  REQUIRE(pointIsOnLine({ 0, 0 }, a, 0.001));
 
-  Line b{ 0, 1 };
-  REQUIRE(!pointIsOnLine({ 0, 0 }, b, 0.001));
+TEST_CASE("Point is on vector") {
+  Vector a{ 0, 0, 0, 0 };
+  REQUIRE(pointIsOnVector({ 0, 0 }, a, 0.001));
 
-  Line c{ 1, 1 };
-  REQUIRE(!pointIsOnLine({ 1, 2 }, b, 0.001));
+  Vector b{ 1, 0, 1, 3 };
+  REQUIRE(!pointIsOnVector({ 0, 0 }, b, 0.001));
+
+  Vector c{ 1, 1, 1, 19 };
+  CAPTURE(c);
+  REQUIRE(pointIsOnVector({ 2, 20 }, c, 0.001));
 
 }
 
@@ -93,19 +102,24 @@ Point randomPoint(double xmax, double ymax) {
 
 // Returns the line perpendicular to the segment bisector,
 // going through their central point
-Line bisector(Point a, Point b) {
+Vector bisector(Point a, Point b) {
   Point p = {(a.x + b.x) / 2, (a.y + b.y) / 2};
-
-  double k = - (b.x - a.x) / (b.y - a.y);
-  double m = p.y - k * p.x;
-  return {k, m};
+  Point direction = {a.y - b.y, b.x - a.x };
+  return{ p, direction };
 }
 
-bool pointIsOnLine(Point p, Line l, double allowedDiff) {
-  auto ycalc = p.x * l.k + l.m;
-  return ycalc + allowedDiff > p.y && ycalc - allowedDiff < p.y;
+bool pointIsOnVector(Point p, Vector v, double epsilon) {
+  auto xdistance = p.x - v.point.x;
+  if (v.direction.y == 0) {
+    return closeEnough(v.point.x, p.x, epsilon);
+  }
+  if (v.direction.x == 0) {
+    return closeEnough(v.point.y, p.y, epsilon);
+  }
+  return closeEnough(v.point.y + xdistance * (v.direction.y / v.direction.x), p.y, epsilon);
 }
 
-Line voronoiBisector(Point a, Point b) {
-  return{0,0};
+template <class T>
+bool closeEnough(T answer, T value, T epsilon) {
+  return value >= answer - epsilon && value <= answer + epsilon;
 }
