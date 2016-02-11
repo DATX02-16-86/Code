@@ -39,6 +39,7 @@ main
 *.sdf
 *.tlog
 *.vcxproj
+*.vcxproj.user
 *.vcxproj.filters
 *.VC.opendb
 
