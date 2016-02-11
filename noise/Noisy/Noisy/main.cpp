@@ -1,5 +1,5 @@
-#include "simplexnoise.h"
 #include <iostream>
+#include "..\..\simplex\simplexnoise.h"
 
 int main() {
 
