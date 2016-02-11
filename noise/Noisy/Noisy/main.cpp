@@ -1,5 +1,4 @@
 #include "simplexnoise.h"
-#include "simplextextures.h"
 #include <iostream>
 
 int main() {
