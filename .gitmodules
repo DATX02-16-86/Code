@@ -1,0 +1,3 @@
+[submodule "Tritium"]
+	path = Tritium
+	url = https://github.com/Le-Chiffre/Tritium-Open.git
