@@ -47,6 +47,10 @@ struct TiledMatrix {
     /// Returns the value at the provided global index.
     Size get(Size x, Size y, Size detail) const;
 
+    /// Returns a value at the provided global index.
+    /// The value is interpolated bilinearly if the matrix has a higher LOD index.
+    Float getBilinear(Size x, Size y, Size detail) const;
+
     /// Sets the value at the provided global index.
     void set(Size x, Size y, Size detail, Size value);
 
@@ -55,11 +59,21 @@ struct TiledMatrix {
     IdMatrix& getTile(Size x, Size y);
 
 private:
-    void resize(Size minWidth, Size minHeight);
-    Size tileIndex(Size position) const {return position >> baseDetail >> tileSize;}
-    Size indexInTile(Size position) const {return position >> tileSize;}
+    /// Resizes the tileset to include the provided position.
+    void resize(Int x, Int y);
+
+    Size tileIndex(Size position) const {
+        return position >> tileSize;
+    }
+
+    Size indexInTile(Size position) const {
+        auto shift = sizeof(position) * 8 - tileSize;
+        return position << shift >> shift;
+    }
 
     IdMatrix* tiles = nullptr;
+    I32 x = 0;
+    I32 y = 0;
     U16 width = 0;
     U16 height = 0;
     U8 tileSize = 0;
