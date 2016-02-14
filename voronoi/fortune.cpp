@@ -226,9 +226,9 @@ Point intersection(Point p0, Point p1, double l)
 
     double a = 1 / z0 - 1 / z1;
     double b = -2 * (p0.y / z0 - p1.y / z1);
-    double c = (p0.y*p0.y + p0.x*p0.x - l*l) / z0
-      - (p1.y*p1.y + p1.x*p1.x - l*l) / z1;
-    y = (-b - sqrt(b*b - 4 * a*c)) / (2 * a);
+    double c = (pow(p0.y, 2) + pow(p0.x, 2) - pow(l, 2)) / z0
+      - (pow(p1.y, 2) + pow(p1.x, 2) - pow(l, 2)) / z1;
+    y = (-b - sqrt(pow(b, 2) - 4 * a*c)) / (2 * a);
   }
 
   double x = (pow(p.x, 2) + pow(p.y - y, 2) - pow(l, 2)) / (2 * p.x - 2 * l);
@@ -266,6 +266,7 @@ void Voronoi::processNextCircleEvent()
 
     checkAdjacentArcEvents(*arc, event->x);
   }
+  delete event;
 }
 
 
@@ -298,7 +299,7 @@ void Voronoi::frontInsert(Point p)
   for (arc *i = root; i; i = i->next) {
     auto inter = intersect(p, *i);
     if (inter.just) {
-      if (i->next && intersect(p, *i->next).just) {
+      if (i->next && intersect(p, *(i->next)).just) {
         // New parabola intersects arc i -> duplicate i.
         // Doesn't copy i->event
         i->next->prev = new arc(i->p, i, i->next);
@@ -323,8 +324,18 @@ void Voronoi::frontInsert(Point p)
       // Check for new circle events around the new arc:
       checkCircleEvent(next, p.x);
       checkAdjacentArcEvents(next, p.x);
+      return;
     }
   }
+
+  // Special case: If p never intersects an arc, append it to the list.
+  arc *i;
+  for (i = root; i->next; i = i->next); // Find the last node.
+  i->next = new arc(p, i);
+
+  // Insert segment between p and i
+  Point start{ X0, (i->next->p.y + i->p.y) / 2 };
+  i->s1 = i->next->s0 = new Segment(start);
 }
 
 void Voronoi::checkAdjacentArcEvents(arc &arc, double x)
@@ -340,21 +351,43 @@ Segment * Voronoi::createSegment(Point p)
   return seg;
 }
 
+void Voronoi::finishEdges()
+{
+  // Advance the sweep line so no parabolas can cross the bounding box.
+  double l = X1 + (X1 - X0) + (Y1 - Y0);
+
+  // Extend each remaining segment to the new parabola intersections.
+  for (arc *i = root; i->next; i = i->next)
+    if (i->s1)
+      i->s1->finish(intersection(i->p, i->next->p, l * 2));
+}
+
 void Voronoi::compute()
 {
-  for (auto siteEvent : siteEvents) {
-    while (!circleEvents.empty() && circleEvents.top()->x <= siteEvent.x) {
+  // Calculate bounding box first since front_insert depends on X0
+  for (auto p : siteEvents) {
+    if (p.x < X0) X0 = p.x;
+    if (p.y < Y0) Y0 = p.y;
+    if (p.x > X1) X1 = p.x;
+    if (p.y > Y1) Y1 = p.y;
+  }
+
+  for (auto p : siteEvents) {
+    while (!circleEvents.empty() && circleEvents.top()->x <= p.x) {
       processNextCircleEvent();
     }
-    frontInsert(siteEvent);
+    frontInsert(p);
   }
 
   while (!circleEvents.empty()) {
     processNextCircleEvent();
   }
+
+  finishEdges();
 }
 
-bool gtpoint(Point a, Point b) { return a.x == b.x ? a.y > b.y : a.x > b.x; };
+// Smallest point first
+bool gtpoint(Point a, Point b) { return a.x == b.x ? a.y < b.y : a.x < b.x; };
 
 Voronoi::Voronoi(std::vector<Point> points)
 {

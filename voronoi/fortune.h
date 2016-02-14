@@ -79,7 +79,7 @@ struct arc {
   Segment *s0;
   Segment *s1;
   arc(Point pp, arc *a = 0, arc *b = 0)
-    : p(pp), prev(a), next(b), s0(0), s1(0) {};
+    : p(pp), prev(a), next(b), event(nullptr),s0(nullptr), s1(nullptr) {};
 };
 
 struct CircleEvent {
@@ -99,16 +99,22 @@ struct gt {
 class Voronoi {
   std::vector<Point> siteEvents;
   std::priority_queue<CircleEvent*, std::vector<CircleEvent*>, gt> circleEvents;
-  std::vector<Segment*> result;
   arc *root = nullptr;
   void processNextCircleEvent();
   void checkCircleEvent(arc &arc, double x0);
   void frontInsert(Point p);
   void checkAdjacentArcEvents(arc &arc, double x);
   Segment* createSegment(Point p);
+  void finishEdges();
+  
+  double X0 = 0;
+  double X1 = 0;
+  double Y0 = 0;
+  double Y1 = 0;
 public:
   void compute();
   Voronoi(std::vector<Point> points);
+  std::vector<Segment*> result;
 };
 
 
