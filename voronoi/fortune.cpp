@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "fortune.h"
 #include <random>
+#include <cmath>
 
 #define TESTING
 
@@ -164,6 +165,76 @@ Optional<Point> intersect(Vector a, Vector b) {
   return {true, a.point + a.direction * t};
 }
 
+// Will a new parabola at point p intersect with arc i?
+Optional<Point> intersect(Point p, arc & arc)
+{
+  if (arc.p.x == p.x) return{ false };
+
+  bool intersectsWithPrev = !arc.prev || intersection(arc.prev->p, arc.p, p.x).y <= p.y;
+  bool intersectsWithNext = !arc.next || intersection(arc.p, arc.next->p, p.x).y <= p.y;
+
+  if (intersectsWithPrev && intersectsWithNext) {
+    double y = p.y;
+    // Plug it back into the parabola equation.
+    double x = (pow(arc.p.x, 2) + pow(arc.p.y - y, 2) - pow(p.x, 2))
+      / (2 * arc.p.x - 2 * p.x);
+    return{ true, {x, y} };
+  }
+
+  return{ false };
+}
+
+Optional<std::pair<double, Point>> circle(Point a, Point b, Point c)
+{
+  // Check that bc is a "right turn" from ab.
+  if ((b.x - a.x)*(c.y - a.y) - (c.x - a.x)*(b.y - a.y) > 0)
+    return{ false };
+
+  // Algorithm from O'Rourke 2ed p. 189.
+  double A = b.x - a.x, B = b.y - a.y,
+    C = c.x - a.x, D = c.y - a.y,
+    E = A*(a.x + b.x) + B*(a.y + b.y),
+    F = C*(a.x + c.x) + D*(a.y + c.y),
+    G = 2 * (A*(c.y - b.y) - B*(c.x - b.x));
+
+  if (G == 0) return{ false };  // Points are co-linear.
+
+  Point o = { (D*E - B*F) / G, (A*F - C*E) / G };
+  double x = o.x + sqrt(pow(a.x - o.x, 2) + pow(a.y - o.y, 2));
+
+  return{ true, {x, o}};
+}
+
+
+
+// Where do two parabolas intersect?
+Point intersection(Point p0, Point p1, double l)
+{
+  Point p = p0;
+  double y;
+  if (p0.x == p1.x) {
+    y = (p0.y + p1.y) / 2;
+  } else if (p1.x == 1) {
+    y = p1.y;
+  } else if (p0.x == 1) {
+    y = p0.y;
+    p = p1;
+  } else {
+    // Use the quadratic formula.
+    double z0 = 2 * (p0.x - l);
+    double z1 = 2 * (p1.x - l);
+
+    double a = 1 / z0 - 1 / z1;
+    double b = -2 * (p0.y / z0 - p1.y / z1);
+    double c = (p0.y*p0.y + p0.x*p0.x - l*l) / z0
+      - (p1.y*p1.y + p1.x*p1.x - l*l) / z1;
+    y = (-b - sqrt(b*b - 4 * a*c)) / (2 * a);
+  }
+
+  double x = (pow(p.x, 2) + pow(p.y - y, 2) - pow(l, 2)) / (2 * p.x - 2 * l);
+  return{ x, y };
+}
+
 void pop(arc *arc, Segment *s) {
   if (arc->prev) {
     arc->prev->next = arc->next;
@@ -180,37 +251,99 @@ void finishSegments(arc *arc, Point p) {
   if (arc->s1) arc->s1->finish(p);
 }
 
-void Voronoid::processNextCircleEvent()
+
+void Voronoi::processNextCircleEvent()
 {
   auto event = circleEvents.top();
   circleEvents.pop();
   
-  if (event.valid) {
-    Segment *s = new Segment{ event.p };
-    arc *arc = event.a;
+  if (event->valid) {
+    Segment *s = createSegment( event->p );
+    arc *arc = event->a;
 
     pop(arc, s);
-    finishSegments(arc, event.p);
+    finishSegments(arc, event->p);
 
-    // Recheck circle events on adjacent arcs
-    if (arc->prev) checkCircleEvent(arc->prev, event.x);
-    if (arc->next) checkCircleEvent(arc->next, event.x);
+    checkAdjacentArcEvents(*arc, event->x);
   }
 }
 
-void Voronoid::checkCircleEvent(arc * arc, double x)
+
+
+void Voronoi::checkCircleEvent(arc &arc, double x0)
 {
+  if (arc.event && arc.event->x != x0) {
+    arc.event->valid = false;
+  }
+  arc.event = nullptr;
+
+  if (!arc.prev || !arc.next)
+    return;
+
+  auto circ = circle(arc.prev->p, arc.p, arc.next->p);
+  if (circ.just) {
+    arc.event = new CircleEvent(circ.value.first, circ.value.second, &arc);
+    circleEvents.push(arc.event);
+  }
 }
 
-void Voronoid::frontInsert(Point p)
+void Voronoi::frontInsert(Point p)
 {
-  //Create arc etc.
+  if (!root) {
+    root = new arc(p);
+    return;
+  }
+
+  // Find the current arc(s) at height p.y (if there are any).
+  for (arc *i = root; i; i = i->next) {
+    auto inter = intersect(p, *i);
+    if (inter.just) {
+      if (i->next && intersect(p, *i->next).just) {
+        // New parabola intersects arc i -> duplicate i.
+        // Doesn't copy i->event
+        i->next->prev = new arc(i->p, i, i->next);
+        i->next = i->next->prev;
+      } else {
+        i->next = new arc(i->p, i);
+      }
+
+      // Copy segment s1 to next arc
+      i->next->s1 = i->s1;
+
+      // Add p between i and i->next.
+      i->next->prev = new arc(p, i, i->next);
+      i->next = i->next->prev;
+
+      arc next = *i->next; 
+
+      // Add new half-edges connected to i's endpoints.
+      next.prev->s1 = next.s0 = createSegment(inter.value);
+      next.next->s0 = next.s1 = createSegment(inter.value);
+
+      // Check for new circle events around the new arc:
+      checkCircleEvent(next, p.x);
+      checkAdjacentArcEvents(next, p.x);
+    }
+  }
 }
 
-void Voronoid::compute()
+void Voronoi::checkAdjacentArcEvents(arc &arc, double x)
+{
+  if (arc.prev) checkCircleEvent(*arc.prev, x);
+  if (arc.next) checkCircleEvent(*arc.next, x);
+}
+
+Segment * Voronoi::createSegment(Point p)
+{
+  auto seg = new Segment(p);
+  result.push_back(seg);
+  return seg;
+}
+
+void Voronoi::compute()
 {
   for (auto siteEvent : siteEvents) {
-    while (!circleEvents.empty() && circleEvents.top().x <= siteEvent.x) {
+    while (!circleEvents.empty() && circleEvents.top()->x <= siteEvent.x) {
       processNextCircleEvent();
     }
     frontInsert(siteEvent);
@@ -223,7 +356,7 @@ void Voronoid::compute()
 
 bool gtpoint(Point a, Point b) { return a.x == b.x ? a.y > b.y : a.x > b.x; };
 
-Voronoid::Voronoid(std::vector<Point> points)
+Voronoi::Voronoi(std::vector<Point> points)
 {
   std::sort(points.begin(), points.end(), gtpoint);
   siteEvents = points;

@@ -87,23 +87,28 @@ struct CircleEvent {
   Point p;
   arc *a;
   bool valid;
+  CircleEvent(double xx, Point pp, arc *aa)
+    : x(xx), p(pp), a(aa), valid(true) {}
 };
 
 // "Greater than" comparison, for reverse sorting in priority queue.
 struct gt {
-  bool operator()(CircleEvent a, CircleEvent b) { return true; }
+  bool operator()(CircleEvent *a, CircleEvent *b) { return a->x > b->x; }
 };
 
-class Voronoid {
+class Voronoi {
   std::vector<Point> siteEvents;
-  std::priority_queue<CircleEvent, std::vector<CircleEvent>, gt> circleEvents;
-  std::vector<Edge> result;
+  std::priority_queue<CircleEvent*, std::vector<CircleEvent*>, gt> circleEvents;
+  std::vector<Segment*> result;
+  arc *root = nullptr;
   void processNextCircleEvent();
-  void checkCircleEvent(arc *arc, double x);
+  void checkCircleEvent(arc &arc, double x0);
   void frontInsert(Point p);
+  void checkAdjacentArcEvents(arc &arc, double x);
+  Segment* createSegment(Point p);
 public:
   void compute();
-  Voronoid(std::vector<Point> points);
+  Voronoi(std::vector<Point> points);
 };
 
 
@@ -112,6 +117,11 @@ Point randomPoint(double xmax, double ymax);
 Vector bisector(Point a, Point b);
 
 Optional<Point> intersect(Vector a, Vector b);
+Optional<Point> intersect(Point p, arc &arc);
+
+Optional<std::pair<double, Point>> circle(Point a, Point b, Point c);
+
+Point intersection(Point p0, Point p1, double l);
 
 std::ostream& operator << (std::ostream& os, Point const& value) {
   os << (std::string) "(" << value.x << (std::string) ", " << value.y << (std::string) ")";
