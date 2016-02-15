@@ -115,6 +115,14 @@ TEST_CASE("Intersection") {
   REQUIRE(c.value == p);
 }
 
+TEST_CASE("Voronoi") {
+  std::vector<Point> points{ {0, 0}, {1, 1} };
+  Voronoi vor(points);
+  vor.compute();
+  auto res = vor.result;
+
+}
+
 #endif // TESTING
 
 
