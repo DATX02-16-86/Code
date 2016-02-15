@@ -216,30 +216,30 @@ Optional<std::pair<double, Point>> circle(Point a, Point b, Point c)
 
 
 // Where do two parabolas intersect?
-Point intersection(Point p0, Point p1, double l)
+Point intersection(Point p0, Point p1, double sweep)
 {
   Point p = p0;
   double y;
   if (p0.x == p1.x) {
     y = (p0.y + p1.y) / 2;
-  } else if (p1.x == 1) {
+  } else if (p1.x == sweep) {
     y = p1.y;
-  } else if (p0.x == 1) {
+  } else if (p0.x == sweep) {
     y = p0.y;
     p = p1;
   } else {
     // Use the quadratic formula.
-    double z0 = 2 * (p0.x - l);
-    double z1 = 2 * (p1.x - l);
+    double z0 = 2 * (p0.x - sweep);
+    double z1 = 2 * (p1.x - sweep);
 
     double a = 1 / z0 - 1 / z1;
     double b = -2 * (p0.y / z0 - p1.y / z1);
-    double c = (pow(p0.y, 2) + pow(p0.x, 2) - pow(l, 2)) / z0
-      - (pow(p1.y, 2) + pow(p1.x, 2) - pow(l, 2)) / z1;
+    double c = (pow(p0.y, 2) + pow(p0.x, 2) - pow(sweep, 2)) / z0
+      - (pow(p1.y, 2) + pow(p1.x, 2) - pow(sweep, 2)) / z1;
     y = (-b - sqrt(pow(b, 2) - 4 * a*c)) / (2 * a);
   }
 
-  double x = (pow(p.x, 2) + pow(p.y - y, 2) - pow(l, 2)) / (2 * p.x - 2 * l);
+  double x = (pow(p.x, 2) + pow(p.y - y, 2) - pow(sweep, 2)) / (2 * p.x - 2 * sweep);
   return{ x, y };
 }
 
@@ -307,7 +307,7 @@ void Voronoi::frontInsert(Point p)
   for (arc *i = root; i; i = i->next) {
     auto inter = intersect(p, *i);
     if (inter.just) {
-      if (i->next && intersect(p, *(i->next)).just) {
+      if (i->next && !intersect(p, *(i->next)).just) {
         // New parabola intersects arc i -> duplicate i.
         // Doesn't copy i->event
         i->next->prev = new arc(i->p, i, i->next);
