@@ -45,28 +45,29 @@ struct TiledMatrix {
     void create(Size detail, Size itemBits, U8 tileSize);
 
     /// Returns the value at the provided global index.
-    Size get(Size x, Size y, Size detail) const;
+    Size get(Int x, Int y, Size detail) const;
 
     /// Returns a value at the provided global index.
     /// The value is interpolated bilinearly if the matrix has a higher LOD index.
-    Float getBilinear(Size x, Size y, Size detail) const;
+    Float getBilinear(Int x, Int y, Size detail) const;
 
     /// Sets the value at the provided global index.
-    void set(Size x, Size y, Size detail, Size value);
+    void set(Int x, Int y, Size detail, Size value);
 
     /// Returns the tile that contains the provided global position.
     /// The tile may be created if it doesn't exist.
-    IdMatrix& getTile(Size x, Size y);
+    IdMatrix& getTile(Int x, Int y);
 
+    bool isEmpty() const {return itemBits == 0;}
 private:
     /// Resizes the tileset to include the provided position.
     void resize(Int x, Int y);
 
-    Size tileIndex(Size position) const {
+    Int tileIndex(Int position) const {
         return position >> tileSize;
     }
 
-    Size indexInTile(Size position) const {
+    Size indexInTile(Int position) const {
         auto shift = sizeof(position) * 8 - tileSize;
         return position << shift >> shift;
     }

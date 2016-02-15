@@ -113,9 +113,9 @@ void TiledMatrix::resize(Int x, Int y) {
     height = (U16)h;
 }
 
-IdMatrix& TiledMatrix::getTile(Size x, Size y) {
-    auto tileX = tileIndex(x);
-    auto tileY = tileIndex(y);
+IdMatrix& TiledMatrix::getTile(Int x, Int y) {
+    auto tileX = tileIndex(x - this->x);
+    auto tileY = tileIndex(y - this->y);
     if(tileX < this->x || tileY < this->y || this->x + width <= tileX || this->y + height <= tileY) {
         resize(tileX, tileY);
     }
@@ -128,15 +128,15 @@ IdMatrix& TiledMatrix::getTile(Size x, Size y) {
     return tile;
 }
 
-Size TiledMatrix::get(Size x, Size y, Size detail) const {
-    auto tileX = tileIndex(x);
-    auto tileY = tileIndex(y);
+Size TiledMatrix::get(Int x, Int y, Size detail) const {
+    auto tileX = tileIndex(x - this->x);
+    auto tileY = tileIndex(y - this->y);
     if(tileX < this->x || tileY < this->y || this->x + width <= tileX || this->y + height <= tileY) return 0;
 
     return tiles[width * tileY + tileX].get(indexInTile(x), indexInTile(y), detail);
 }
 
-Float TiledMatrix::getBilinear(Size x, Size y, Size detail) const {
+Float TiledMatrix::getBilinear(Int x, Int y, Size detail) const {
     // 1/(x2-x1)(y2-y1) * (q11(x2-x)(y2-y)+q21(x-x1)(y2-y)+q12(x2-x)(y-y1)+q22(x-x1)(y-y1))
     auto offset = Size(1) << baseDetail;
     auto baseX = x >> baseDetail << baseDetail;
@@ -152,7 +152,7 @@ Float TiledMatrix::getBilinear(Size x, Size y, Size detail) const {
     return (Float)(blFactor + brFactor + tlFactor + trFactor) / (Float)(offset * offset);
 }
 
-void TiledMatrix::set(Size x, Size y, Size detail, Size value) {
+void TiledMatrix::set(Int x, Int y, Size detail, Size value) {
     getTile(x, y).set(indexInTile(x), indexInTile(y), detail, value);
 }
 
