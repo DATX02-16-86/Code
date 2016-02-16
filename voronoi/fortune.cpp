@@ -115,12 +115,34 @@ TEST_CASE("Intersection") {
   REQUIRE(c.value == p);
 }
 
-TEST_CASE("Voronoi") {
-  std::vector<Point> points{ {0, 0}, {1, 1} };
-  Voronoi vor(points);
-  vor.compute();
-  auto res = vor.result;
+TEST_CASE("Voronoi: points in same height") {
+    std::vector<Point> points { {0.2, 0.5 }, {0.4, 0.5} };
+    Voronoi vor(points);
+    vor.compute();
+    auto res = vor.result;
+    REQUIRE(res.size());
+    
+    Point a {0.3, 0}, b {0.3, 1};
+    auto seg = *res.front();
+    auto b1 = seg.start == a && seg.end == b;
+    auto b2 = seg.start == b && seg.end == a;
+    auto cond = b1 || b2;
+    REQUIRE(cond);
+}
 
+TEST_CASE("Voronoi: points in same width") {
+    std::vector<Point> points { {0.5, 0.2 }, {0.5, 0.4} };
+    Voronoi vor(points);
+    vor.compute();
+    auto res = vor.result;
+    REQUIRE(res.size());
+    
+    Point a {0, 0.3}, b {1, 0.3};
+    auto seg = *res.front();
+    auto b1 = seg.start == a && seg.end == b;
+    auto b2 = seg.start == b && seg.end == a;
+    auto cond = b1 || b2;
+    REQUIRE(cond);
 }
 
 #endif // TESTING
