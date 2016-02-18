@@ -1,135 +1,69 @@
 #define BOOST_POLYGON_NO_DEPS
-// Boost.Polygon library voronoi_basic_tutorial.cpp file
 
-//          Copyright Andrii Sydorchuk 2010-2012.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          http://www.boost.org/LICENSE_1_0.txt)
+// Example from http://whyalgorithm.com/blog/2015/08/26/reliable-voronoi-implementation/
 
-// See http://www.boost.org for updates, documentation, and revision history.
-
-#include <cstdio>
-#include <vector>
+#include <iostream>
 
 #include <boost/polygon/voronoi.hpp>
-using boost::polygon::voronoi_builder;
-using boost::polygon::voronoi_diagram;
-using boost::polygon::x;
-using boost::polygon::y;
-using boost::polygon::low;
-using boost::polygon::high;
 
-struct Point {
-  int a;
-  int b;
-  Point(int x, int y) : a(x), b(y) {}
-};
+using namespace boost::polygon;
 
-struct Segment {
-  Point p0;
-  Point p1;
-  Segment(int x1, int y1, int x2, int y2) : p0(x1, y1), p1(x2, y2) {}
-};
+typedef double coordinate_type;
+typedef point_data<coordinate_type> Point;
+typedef voronoi_diagram<double> VD;
 
-namespace boost {
-  namespace polygon {
-
-    template <>
-    struct geometry_concept<Point> {
-      typedef point_concept type;
-    };
-
-    template <>
-    struct point_traits<Point> {
-      typedef int coordinate_type;
-
-      static inline coordinate_type get(
-        const Point& point, orientation_2d orient) {
-        return (orient == HORIZONTAL) ? point.a : point.b;
-      }
-    };
-
-    template <>
-    struct geometry_concept<Segment> {
-      typedef segment_concept type;
-    };
-
-    template <>
-    struct segment_traits<Segment> {
-      typedef int coordinate_type;
-      typedef Point point_type;
-
-      static inline point_type get(const Segment& segment, direction_1d dir) {
-        return dir.to_int() ? segment.p1 : segment.p0;
-      }
-    };
-  }  // polygon
-}  // boost
-
-
-int main() {
-  // Preparing Input Geometries.
+int main(int argc, char* argv[])
+{
   std::vector<Point> points;
-  points.push_back(Point(0, 0));
-  points.push_back(Point(1, 6));
-  std::vector<Segment> segments;
-  segments.push_back(Segment(-4, 5, 5, -1));
-  segments.push_back(Segment(3, -11, 13, -1));
 
-  // Construction of the Voronoi Diagram.
-  voronoi_diagram<double> vd;
-  construct_voronoi(points.begin(), points.end(),
-    segments.begin(), segments.end(),
-    &vd);
-
-  // Using color member of the Voronoi primitives to store the average number
-  // of edges around each cell (including secondary edges).
-  {
-    printf("Number of edges (including secondary) around the Voronoi cells:\n");
-    for (voronoi_diagram<double>::const_edge_iterator it = vd.edges().begin();
-    it != vd.edges().end(); ++it) {
-      std::size_t cnt = it->cell()->color();
-      it->cell()->color(cnt + 1);
-    }
-    for (voronoi_diagram<double>::const_cell_iterator it = vd.cells().begin();
-    it != vd.cells().end(); ++it) {
-      printf("%lu ", it->color());
-    }
-    printf("\n");
-    printf("\n");
+  //    points.push_back(Point(0, 0));
+  //    points.push_back(Point(1, 0));
+  //    points.push_back(Point(0, 1));
+  //    points.push_back(Point(1, 1));
+  int n;
+  std::cin >> n;
+  double x, y;
+  for (int i = 0; i<n; i++) {
+    std::cin >> x >> y;
+    points.push_back(Point(x, y));
   }
+  VD vd;
+  construct_voronoi(points.begin(), points.end(), &vd);
 
-  // Linking Voronoi cells with input geometries.
+  for (VD::const_edge_iterator it = vd.edges().begin(); it != vd.edges().end(); ++it)
   {
-    unsigned int cell_index = 0;
-    for (voronoi_diagram<double>::const_cell_iterator it = vd.cells().begin();
-    it != vd.cells().end(); ++it) {
-      if (it->contains_point()) {
-        std::size_t index = it->source_index();
-        Point p = points[index];
-        printf("Cell #%ud contains a point: (%d, %d).\n",
-          cell_index, x(p), y(p));
+    if (it->is_primary())
+    {
+      if (it->is_finite())
+      {
+        std::cout << "(" << it->vertex0()->x() << "," << it->vertex0()->y() << ") --- (" << it->vertex1()->x() << "," << it->vertex1()->y() << ")" << std::endl;
       }
-      else {
-        std::size_t index = it->source_index() - points.size();
-        Point p0 = low(segments[index]);
-        Point p1 = high(segments[index]);
-        if (it->source_category() ==
-          boost::polygon::SOURCE_CATEGORY_SEGMENT_START_POINT) {
-          printf("Cell #%ud contains segment start point: (%d, %d).\n",
-            cell_index, x(p0), y(p0));
-        }
-        else if (it->source_category() ==
-          boost::polygon::SOURCE_CATEGORY_SEGMENT_END_POINT) {
-          printf("Cell #%ud contains segment end point: (%d, %d).\n",
-            cell_index, x(p0), y(p0));
+      else
+      {
+        Point p1 = points[it->cell()->source_index()];
+        Point p2 = points[it->twin()->cell()->source_index()];
+        Point origin;
+        Point direction;
+        coordinate_type koef = 1.0;
+
+        origin.x((p1.x() + p2.x()) * 0.5);
+        origin.y((p1.y() + p2.y()) * 0.5);
+        direction.x(p1.y() - p2.y());
+        direction.y(p2.x() - p1.x());
+        if (it->vertex0() == NULL) {
+          std::cout << "(" << origin.x() - direction.x() * koef << "," << origin.y() - direction.y() * koef << ") --- ";
         }
         else {
-          printf("Cell #%ud contains a segment: ((%d, %d), (%d, %d)). \n",
-            cell_index, x(p0), y(p0), x(p1), y(p1));
+          std::cout << "(" << it->vertex0()->x() << "," << it->vertex0()->y() << ")  --- ";
+        }
+
+        if (it->vertex1() == NULL) {
+          std::cout << "(" << origin.x() + direction.x() * koef << "," << origin.y() + direction.y() * koef << ")" << std::endl;
+        }
+        else {
+          std::cout << "(" << it->vertex1()->x() << "," << it->vertex1()->y() << ")" << std::endl;
         }
       }
-      ++cell_index;
     }
   }
   return 0;
