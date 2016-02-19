@@ -1,10 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include "..\..\Simplex\simplex.h"
+#include <math.h>
 
 const int chunk_width = 10;
-const int chunks_y = 4;
-const int chunks_x = 4;
+const int chunks_y = 100;
+const int chunks_x = 100;
 
 float point_z_values[chunk_width*chunks_y][chunk_width*chunks_x];
 
@@ -47,14 +48,14 @@ float calculate_height(int x, int y, int chunkX, int chunkY)
 
 int main() {
 
-	/*for (int chY = 0; chY < chunks_y; chY++) {
-		for (int j = 0; j < chunks_x; j++) {
-			std::cout << heights[chY][j];
-			std::cout << ",";
+	for (int x = 0; x < chunks_x; x++)
+	{
+		for (int y = 0; y < chunks_y; y++)
+		{
+			heights[x][y] = 1;
 		}
-		std::cout << std::endl;
-	}*/
-	//std::cin.get();
+	}
+
 	for (int chY = 1; chY < chunks_y - 1; chY++) {
 		for (int chX = 1; chX < chunks_x - 1; chX++) {
 			int current_height = heights[chY][chX];
@@ -63,7 +64,7 @@ int main() {
 				for (int x = 0; x < chunk_width; ++x) {
 					int true_x = x + (chunk_width * chX);
 					int true_y = y + (chunk_width * chY);
-					float z = Simplex::octave_noise(8, 0.05f, 0.005f, true_x, true_y) * 2 + calculate_height(x, y, chX, chY);
+					float z = Simplex::octave_noise(3, 0.005f, 0.05f, true_x, true_y) + calculate_height(x, y, chX, chY);
 					point_z_values[true_y][true_x] = z;
 				}
 			}

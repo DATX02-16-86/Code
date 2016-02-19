@@ -100,28 +100,28 @@ unsigned char Simplex::perm[512] = {151,160,137,91,90,15,
  * float SLnoise = (SimplexNoise1234::noise(x,y,z) + 1.0) * 0.5;
  */
 
-float  Simplex::grad( int hash, float x ) {
+float  Simplex::grad(int hash, float x ) {
     int h = hash & 15;
     float grad = 1.0f + (h & 7);   // Gradient value 1.0, 2.0, ..., 8.0
     if (h&8) grad = -grad;         // Set a random sign for the gradient
     return ( grad * x );           // Multiply the gradient with the distance
 }
 
-float  Simplex::grad( int hash, float x, float y ) {
+float  Simplex::grad(int hash, float x, float y ) {
     int h = hash & 7;      // Convert low 3 bits of hash code
     float u = h<4 ? x : y;  // into 8 simple gradient directions,
     float v = h<4 ? y : x;  // and compute the dot product with (x,y).
     return ((h&1)? -u : u) + ((h&2)? -2.0f*v : 2.0f*v);
 }
 
-float  Simplex::grad( int hash, float x, float y , float z ) {
+float  Simplex::grad(int hash, float x, float y , float z ) {
     int h = hash & 15;     // Convert low 4 bits of hash code into 12 simple
     float u = h<8 ? x : y; // gradient directions, and compute dot product.
     float v = h<4 ? y : h==12||h==14 ? x : z; // Fix repeats at h = 12 to 15
     return ((h&1)? -u : u) + ((h&2)? -v : v);
 }
 
-float  Simplex::grad( int hash, float x, float y, float z, float t ) {
+float  Simplex::grad(int hash, float x, float y, float z, float t ) {
     int h = hash & 31;      // Convert low 5 bits of hash code into 32 simple
     float u = h<24 ? x : y; // gradient directions, and compute dot product.
     float v = h<16 ? y : z;
@@ -300,28 +300,28 @@ float Simplex::noise(float x, float y, float z) {
     int kk = k & 0xff;
 
     // Calculate the contribution from the four corners
-    float t0 = 0.6f - x0*x0 - y0*y0 - z0*z0;
+    float t0 = 0.5f - x0*x0 - y0*y0 - z0*z0;
     if(t0 < 0.0f) n0 = 0.0f;
     else {
       t0 *= t0;
       n0 = t0 * t0 * grad(perm[ii+perm[jj+perm[kk]]], x0, y0, z0);
     }
 
-    float t1 = 0.6f - x1*x1 - y1*y1 - z1*z1;
+    float t1 = 0.5f - x1*x1 - y1*y1 - z1*z1;
     if(t1 < 0.0f) n1 = 0.0f;
     else {
       t1 *= t1;
       n1 = t1 * t1 * grad(perm[ii+i1+perm[jj+j1+perm[kk+k1]]], x1, y1, z1);
     }
 
-    float t2 = 0.6f - x2*x2 - y2*y2 - z2*z2;
+    float t2 = 0.5f - x2*x2 - y2*y2 - z2*z2;
     if(t2 < 0.0f) n2 = 0.0f;
     else {
       t2 *= t2;
       n2 = t2 * t2 * grad(perm[ii+i2+perm[jj+j2+perm[kk+k2]]], x2, y2, z2);
     }
 
-    float t3 = 0.6f - x3*x3 - y3*y3 - z3*z3;
+    float t3 = 0.5f - x3*x3 - y3*y3 - z3*z3;
     if(t3<0.0f) n3 = 0.0f;
     else {
       t3 *= t3;
