@@ -1,5 +1,5 @@
 #include "simplex.h"
-#include "..\..\Tritium\Code\Core\Math\Math.h";
+#include <math.h>
 
 const float F = 1 / 3;
 const float G = 1 / 6;
@@ -10,9 +10,9 @@ float simplex3D(float x, float y, float z)
 
 	float s = (x + y + z) * F;
 
-	int i = Tritium::Math::floorInt(x + s);
-	int j = Tritium::Math::floorInt(y + s);
-	int k = Tritium::Math::floorInt(z + s);
+	int i = floor(x + s);
+	int j = floor(y + s);
+	int k = floor(z + s);
 	
 	float t = (i + j + k) * G;
 
@@ -127,6 +127,18 @@ float simplex3D(float x, float y, float z)
 		n0 = t0 * t0 * dot(grad3[gi0], x0, y0, z0);
 	}
 
+	float t1 = 0.6 - x1*x1 - y1*y1 - z1*z1;
+
+	if (t1 < 0)
+	{
+		n1 = 0.0;
+	}
+	else
+	{
+		t1 *= t1;
+		n1 = t1 * t1 * dot(grad3[gi1], x1, y1, z1);
+	}
+
 	float t2 = 0.6 - x2*x2 - y2*y2 - z2*z2;
 	if (t2<0)
 	{
@@ -156,3 +168,5 @@ float dot(const int * grad, float x, float y, float z)
 {
 	return grad[0] * x + grad[1] * y + grad[2]*z;
 }
+
+

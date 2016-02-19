@@ -47,14 +47,14 @@ float calculate_height(int x, int y, int chunkX, int chunkY)
 
 int main() {
 
-	for (int chY = 0; chY < chunks_y; chY++) {
+	/*for (int chY = 0; chY < chunks_y; chY++) {
 		for (int j = 0; j < chunks_x; j++) {
 			std::cout << heights[chY][j];
 			std::cout << ",";
 		}
 		std::cout << std::endl;
-	}
-	std::cin.get();
+	}*/
+	//std::cin.get();
 	for (int chY = 1; chY < chunks_y - 1; chY++) {
 		for (int chX = 1; chX < chunks_x - 1; chX++) {
 			int current_height = heights[chY][chX];
