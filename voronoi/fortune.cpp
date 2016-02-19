@@ -147,20 +147,17 @@ TEST_CASE("Voronoi: points in same width") {
 
 #endif // TESTING
 
-
+// ---- General helper functions ---- //
 
 double frand(double fmin, double fmax) {
   double f = (double) rand() / RAND_MAX;
   return fmin + f * (fmax - fmin);
 }
 
-// Generates a random point;
 Point randomPoint(double xmax, double ymax) {
   return {frand(0, xmax), frand(0, ymax)};
 }
 
-// Returns the line perpendicular to the segment bisector,
-// going through their central point
 Vector bisector(Point a, Point b) {
   Point p = {(a.x + b.x) / 2, (a.y + b.y) / 2};
   Point direction = {a.y - b.y, b.x - a.x };
@@ -195,7 +192,7 @@ Optional<Point> intersect(Vector a, Vector b) {
   return {true, a.point + a.direction * t};
 }
 
-// Will a new parabola at point p intersect with arc i?
+// ---- Voronoi helper functions ---- //
 Optional<Point> intersect(Point p, arc & arc)
 {
   if (arc.p.x == p.x) return{ false };
@@ -235,9 +232,6 @@ Optional<std::pair<double, Point>> circle(Point a, Point b, Point c)
   return{ true, {x, o}};
 }
 
-
-
-// Where do two parabolas intersect?
 Point intersection(Point p0, Point p1, double sweep)
 {
   Point p = p0;
@@ -281,6 +275,7 @@ void finishSegments(arc *arc, Point p) {
   if (arc->s1) arc->s1->finish(p);
 }
 
+// ---- Voronoi implementation ---- //
 
 void Voronoi::processNextCircleEvent()
 {
