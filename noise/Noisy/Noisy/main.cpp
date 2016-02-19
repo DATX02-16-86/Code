@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include "..\simplex.h"
+#include "..\..\Simplex\simplex.h"
 
 const int chunk_width = 10;
 const int chunks_y = 4;
@@ -63,12 +63,13 @@ int main() {
 				for (int x = 0; x < chunk_width; ++x) {
 					int true_x = x + (chunk_width * chX);
 					int true_y = y + (chunk_width * chY);
-					float z = simplex3D(true_x, true_y, 0) + calculate_height(x, y, chX, chY);
+					float z = Simplex::octave_noise(8, 0.05f, 0.005f, true_x, true_y) * 2 + calculate_height(x, y, chX, chY);
 					point_z_values[true_y][true_x] = z;
 				}
 			}
 		}
 	}
+
 	// basic file operations
 	std::ofstream myfile;
 	myfile.open("points.txt");
