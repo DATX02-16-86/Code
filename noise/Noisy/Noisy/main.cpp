@@ -4,8 +4,8 @@
 #include <math.h>
 
 const int chunk_width = 10;
-const int chunks_y = 100;
-const int chunks_x = 100;
+const int chunks_y = 10;
+const int chunks_x = 10;
 
 float point_z_values[chunk_width*chunks_y][chunk_width*chunks_x];
 
@@ -56,6 +56,8 @@ int main() {
 		}
 	}
 
+	NoiseContext nc = NoiseContext(23190);
+
 	for (int chY = 1; chY < chunks_y - 1; chY++) {
 		for (int chX = 1; chX < chunks_x - 1; chX++) {
 			int current_height = heights[chY][chX];
@@ -64,7 +66,7 @@ int main() {
 				for (int x = 0; x < chunk_width; ++x) {
 					int true_x = x + (chunk_width * chX);
 					int true_y = y + (chunk_width * chY);
-					float z = Simplex::octave_noise(3, 0.005f, 0.05f, true_x, true_y) + calculate_height(x, y, chX, chY);
+					float z = Simplex::octave_noise(8, 0.5f, 0.005f, true_x, true_y, &nc) * 2 + calculate_height(x, y, chX, chY);
 					point_z_values[true_y][true_x] = z;
 				}
 			}
