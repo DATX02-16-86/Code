@@ -55,6 +55,9 @@ int main() {
 		std::cout << std::endl;
 	}*/
 	//std::cin.get();
+
+	NoiseContext nc = NoiseContext(23190);
+
 	for (int chY = 1; chY < chunks_y - 1; chY++) {
 		for (int chX = 1; chX < chunks_x - 1; chX++) {
 			int current_height = heights[chY][chX];
@@ -63,7 +66,7 @@ int main() {
 				for (int x = 0; x < chunk_width; ++x) {
 					int true_x = x + (chunk_width * chX);
 					int true_y = y + (chunk_width * chY);
-					float z = Simplex::octave_noise(8, 0.05f, 0.005f, true_x, true_y) * 2 + calculate_height(x, y, chX, chY);
+					float z = Simplex::octave_noise(8, 0.5f, 0.005f, true_x, true_y, &nc) * 2 + calculate_height(x, y, chX, chY);
 					point_z_values[true_y][true_x] = z;
 				}
 			}

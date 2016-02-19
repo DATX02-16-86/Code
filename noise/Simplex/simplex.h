@@ -32,27 +32,71 @@
  * http://staffwww.itn.liu.se/~stegu/aqsis/aqsis-newnoise/
  */
 
-class Simplex {
 
-  public:
-    Simplex() {}
-    ~Simplex() {}
-
-/** 1D, 2D, 3D and 4D float Simplex noise
+ /*
+ * Noise Context contains the context that is needed to generate noise.
+ * The same context needs to always generate exactly the same noise!
+ * It needs to be exactly the same on all platforms, so it can either be
+ * kept as static explicit data or be generated using a platform-independent
+ * seeded, deterministic random number generator.
+ *
+ * Currently only holds the permutation table.
+ *
+ * Note that making this an int[] instead of a char[] might make the
+ * code run faster on platforms with a high penalty for unaligned single
+ * byte addressing. Intel x86 is generally single-byte-friendly, but
+ * some other CPUs are faster with 4-aligned reads.
+ * However, a char[] is smaller, which avoids cache trashing, and that
+ * is probably the most important aspect on most architectures.
+ * This array is accessed a *lot* by the noise functions.
+ * A vector-valued noise over 3D accesses it 96 times, and a
+ * float-valued 4D noise 64 times. We want this to fit in the cache!
  */
-	static float Simplex::noise(float x);
-	static float Simplex::noise(float x, float y);
-	static float Simplex::noise(float x, float y, float z);
-	static float Simplex::noise(float x, float y, float z, float w);
+struct NoiseContext {
 
-	static float Simplex::octave_noise(int octaves, float freq, float persistence, float x, float y);
-	static float Simplex::octave_noise(int octaves, float freq, float persistence, float x, float y, float z);
+	/** Creates default perm table*/
+	NoiseContext();
+	
+	/** Creates perm table based on seed*/
+	NoiseContext(int seed);
 
-  private:
-    static unsigned char Simplex::perm[];
-    static float  Simplex::grad( int hash, float x );
-    static float  Simplex::grad( int hash, float x, float y );
-    static float  Simplex::grad( int hash, float x, float y , float z );
-    static float  Simplex::grad( int hash, float x, float y, float z, float t );
+	/*
+ 	* Permutation table. This is just a random jumble of all numbers 0-255,* repeated twice to avoid wrapping the index at 255 for each lookup.
+	*
+	* Note that making this an int[] instead of a char[] might make the
+	* code run faster on platforms with a high penalty for unaligned single
+	* A vector-valued noise over 3D accesses it 96 times, and a
+	* byte addressing. Intel x86 is generally single-byte-friendly, but
+	* some other CPUs are faster with 4-aligned reads.
+	* However, a char[] is smaller, which avoids cache trashing, and that
+	* is probably the most important aspect on most architectures.
+	* This array is accessed a *lot* by the noise functions.
+	* float-valued 4D noise 64 times. We want this to fit in the cache!
+	*/
+	unsigned char perm[512];
+};
+
+class Simplex
+{
+public:
+	Simplex() {}
+	~Simplex() {}
+
+	/** 1D, 2D, 3D and 4D float Simplex noise */
+	static float noise(float x, NoiseContext* nc = &defaultNoiseContext);
+	static float noise(float x, float y, NoiseContext* nc = &defaultNoiseContext);
+	static float noise(float x, float y, float z, NoiseContext* nc = &defaultNoiseContext);
+	static float noise(float x, float y, float z, float w, NoiseContext* nc = &defaultNoiseContext);
+
+	static float octave_noise(int octaves, float freq, float persistence, float x, float y, NoiseContext* nc = &defaultNoiseContext);
+	static float octave_noise(int octaves, float freq, float persistence, float x, float y, float z, NoiseContext* nc = &defaultNoiseContext);
+
+private:
+	static NoiseContext defaultNoiseContext;
+
+	static float grad(int hash, float x);
+	static float grad(int hash, float x, float y);
+	static float grad(int hash, float x, float y, float z);
+	static float grad(int hash, float x, float y, float z, float t);
 
 };
