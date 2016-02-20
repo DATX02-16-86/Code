@@ -1,4 +1,5 @@
 #pragma once
+#include "..\Simplex\simplex.h"
 
 class Terrain
 {

@@ -6,7 +6,7 @@
 
 Terrain::Terrain(int chunks, int chunkSize, int seed)
 {
-	nc = NoiseContext(seed);
+	this->nc = NoiseContext(seed);
 	this->chunks = chunks;
 	this->chunkSize = chunkSize;
 }
@@ -44,7 +44,7 @@ float Terrain::calculate_height(int x, int y, int chunkX, int chunkY)
 	}
 	float interpolationHeights[4] = { heights[chunkY][chunkX], heights[chunkY + 1][chunkX], heights[chunkY + 1][chunkX + 1], heights[chunkY][chunkX + 1] };
 
-	return Tools::bilinearInterpolation(interpX / chunk_width, interpY / chunk_width, interpolationHeights);
+	return Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationHeights);
 }
 
 void Terrain::generateHeights()
