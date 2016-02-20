@@ -9,14 +9,7 @@ const int chunks_x = 10;
 
 float point_z_values[chunk_width*chunks_y][chunk_width*chunks_x];
 
-int heights[chunks_x][chunks_y] = { { 1, 2, 1, 5 },{ 3, 6, 2, 4 },{ 2, 6, 3, 6 },{ 3, 0, 1, 2 } };
-//int heights[chunks_y][chunks_x] = { { 1, 2, 1 },{ 3, 6, 2 },{ 2, 6, 3 } };
 
-// heights in order: (0,0), (1,0), (1,1), (0,1)
-static float bilinearInterpolation(float x, float y, float* interpolationHeights)
-{
-	return interpolationHeights[0] * (1 - x) * (1 - y) + interpolationHeights[3] * x*(1 - y) + interpolationHeights[1] * (1 - x)*y + interpolationHeights[2] * x*y;
-}
 
 float calculate_height(int x, int y, int chunkX, int chunkY)
 {
@@ -48,30 +41,9 @@ float calculate_height(int x, int y, int chunkX, int chunkY)
 
 int main() {
 
-	for (int x = 0; x < chunks_x; x++)
-	{
-		for (int y = 0; y < chunks_y; y++)
-		{
-			heights[x][y] = 1;
-		}
-	}
-
 	NoiseContext nc = NoiseContext(23190);
 
-	for (int chY = 1; chY < chunks_y - 1; chY++) {
-		for (int chX = 1; chX < chunks_x - 1; chX++) {
-			int current_height = heights[chY][chX];
 
-			for (int y = 0; y < chunk_width; ++y) {
-				for (int x = 0; x < chunk_width; ++x) {
-					int true_x = x + (chunk_width * chX);
-					int true_y = y + (chunk_width * chY);
-					float z = Simplex::octave_noise(8, 0.5f, 0.005f, true_x, true_y, &nc) * 2 + calculate_height(x, y, chX, chY);
-					point_z_values[true_y][true_x] = z;
-				}
-			}
-		}
-	}
 
 	// basic file operations
 	std::ofstream myfile;
