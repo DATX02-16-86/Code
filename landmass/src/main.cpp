@@ -6,37 +6,29 @@
 
 #include <boost/polygon/voronoi.hpp>
 
+#include <GL/glut.h>
+
 using namespace boost::polygon;
 
 typedef double coordinate_type;
 typedef point_data<coordinate_type> Point;
 typedef voronoi_diagram<double> VD;
 
-int main(int argc, char* argv[])
+VD vd;
+std::vector<Point> points;
+
+void displayMe(void)
 {
-  std::vector<Point> points;
-
-  //    points.push_back(Point(0, 0));
-  //    points.push_back(Point(1, 0));
-  //    points.push_back(Point(0, 1));
-  //    points.push_back(Point(1, 1));
-  int n;
-  std::cin >> n;
-  double x, y;
-  for (int i = 0; i<n; i++) {
-    std::cin >> x >> y;
-    points.push_back(Point(x, y));
-  }
-  VD vd;
-  construct_voronoi(points.begin(), points.end(), &vd);
-
+  glClear(GL_COLOR_BUFFER_BIT);
+  glBegin(GL_LINES);
   for (VD::const_edge_iterator it = vd.edges().begin(); it != vd.edges().end(); ++it)
   {
     if (it->is_primary())
     {
       if (it->is_finite())
       {
-        std::cout << "(" << it->vertex0()->x() << "," << it->vertex0()->y() << ") --- (" << it->vertex1()->x() << "," << it->vertex1()->y() << ")" << std::endl;
+        glVertex2d(it->vertex0()->x(), it->vertex0()->y());
+        glVertex2d(it->vertex1()->x(), it->vertex1()->y());
       }
       else
       {
@@ -51,20 +43,51 @@ int main(int argc, char* argv[])
         direction.x(p1.y() - p2.y());
         direction.y(p2.x() - p1.x());
         if (it->vertex0() == NULL) {
-          std::cout << "(" << origin.x() - direction.x() * koef << "," << origin.y() - direction.y() * koef << ") --- ";
+          glVertex2d(origin.x() - direction.x() * koef, origin.y() - direction.y() * koef);
         }
         else {
-          std::cout << "(" << it->vertex0()->x() << "," << it->vertex0()->y() << ")  --- ";
+          glVertex2d(it->vertex0()->x(), it->vertex0()->y());
         }
 
         if (it->vertex1() == NULL) {
-          std::cout << "(" << origin.x() + direction.x() * koef << "," << origin.y() + direction.y() * koef << ")" << std::endl;
+          glVertex2d(origin.x() + direction.x() * koef, origin.y() + direction.y() * koef);
         }
         else {
-          std::cout << "(" << it->vertex1()->x() << "," << it->vertex1()->y() << ")" << std::endl;
+          glVertex2d(it->vertex1()->x(), it->vertex1()->y());
         }
       }
     }
   }
+  glEnd();
+  glFlush();
+}
+
+int main(int argc, char* argv[])
+{
+
+  points.push_back(Point(0, 0));
+  points.push_back(Point(100, 0));
+  points.push_back(Point(0, 100));
+  points.push_back(Point(100, 100));
+  points.push_back(Point(800, 800));
+
+  construct_voronoi(points.begin(), points.end(), &vd);
+
+  int width = 800, height = 800;
+  glutInit(&argc, argv);
+  glutInitDisplayMode(GLUT_SINGLE);
+  glutInitWindowSize(width, height);
+  glutInitWindowPosition(100, 100);
+  glutCreateWindow("Hello world :D");
+  glViewport(0, 0, width, height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(0, width, height, 0, 1, -1);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glutDisplayFunc(displayMe);
+  glutMainLoop();
+
+
   return 0;
 }
