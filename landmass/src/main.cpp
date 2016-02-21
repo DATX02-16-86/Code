@@ -3,6 +3,7 @@
 // Example from http://whyalgorithm.com/blog/2015/08/26/reliable-voronoi-implementation/
 
 #include <iostream>
+#include <random>
 
 #include <boost/polygon/voronoi.hpp>
 
@@ -62,14 +63,31 @@ void displayMe(void)
   glFlush();
 }
 
+#define CHUNK_SIZE 800
+
+int chunkSeed(int chunkX, int chunkY, int seed) {
+  return (chunkX * 31 + chunkY * CHUNK_SIZE) * 31 * seed;
+}
+void insertRandomPoints(int chunkX, int chunkY, int count, int seed) {
+  std::random_device rd;
+  std::mt19937 gen(chunkSeed(chunkX, chunkY, seed));
+  std::uniform_int_distribution<> dis(0, CHUNK_SIZE - 1);
+  for (int i = 0; i < count; i++) {
+    int x = dis(gen);
+    int y = dis(gen);
+    points.push_back(Point(CHUNK_SIZE * chunkX + x, CHUNK_SIZE * chunkY + y));
+  }
+}
+
 int main(int argc, char* argv[])
 {
 
   points.push_back(Point(0, 0));
-  points.push_back(Point(100, 0));
-  points.push_back(Point(0, 100));
-  points.push_back(Point(100, 100));
+  points.push_back(Point(800, 0));
+  points.push_back(Point(0, 800));
   points.push_back(Point(800, 800));
+  insertRandomPoints(0, 0, 100, 0);
+
 
   construct_voronoi(points.begin(), points.end(), &vd);
 
