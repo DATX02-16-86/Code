@@ -17,18 +17,44 @@ typedef voronoi_diagram<double> VD;
 
 VD vd;
 std::vector<Point> points;
+std::vector<int> vertex0height;
+std::vector<int> vertex1height;
+int maxHeight = 0;
+int j = 0;
+int clrs[5][3] = {
+  { 1, 0, 0 },
+  { 1, 1, 0 },
+  { 0, 0, 1 },
+  { 1, 0, 0 },
+  { 1, 0, 1 }
+};
+
+
+void nextColor() {
+  j = (j + 1) % 5;
+  auto clr = clrs[j];
+  int r = clr[0];
+  int g = clr[1];
+  int b = clr[2];
+  glColor3d(r, g, b);
+}
+
 
 void displayMe(void)
 {
   glClear(GL_COLOR_BUFFER_BIT);
   glBegin(GL_LINES);
+  
   for (VD::const_edge_iterator it = vd.edges().begin(); it != vd.edges().end(); ++it)
   {
+    
     if (it->is_primary())
     {
       if (it->is_finite())
       {
+        nextColor();
         glVertex2d(it->vertex0()->x(), it->vertex0()->y());
+        nextColor();
         glVertex2d(it->vertex1()->x(), it->vertex1()->y());
       }
       else
@@ -44,16 +70,20 @@ void displayMe(void)
         direction.x(p1.y() - p2.y());
         direction.y(p2.x() - p1.x());
         if (it->vertex0() == NULL) {
+          nextColor();
           glVertex2d(origin.x() - direction.x() * koef, origin.y() - direction.y() * koef);
         }
         else {
+          nextColor();
           glVertex2d(it->vertex0()->x(), it->vertex0()->y());
         }
 
         if (it->vertex1() == NULL) {
+          nextColor();
           glVertex2d(origin.x() + direction.x() * koef, origin.y() + direction.y() * koef);
         }
         else {
+          nextColor();
           glVertex2d(it->vertex1()->x(), it->vertex1()->y());
         }
       }
@@ -63,7 +93,7 @@ void displayMe(void)
   glFlush();
 }
 
-#define CHUNK_SIZE 800
+#define CHUNK_SIZE 200
 
 int chunkSeed(int chunkX, int chunkY, int seed) {
   return (chunkX * 31 + chunkY * CHUNK_SIZE) * 31 * seed;
@@ -86,8 +116,9 @@ int main(int argc, char* argv[])
   points.push_back(Point(800, 0));
   points.push_back(Point(0, 800));
   points.push_back(Point(800, 800));
-  insertRandomPoints(0, 0, 100, 0);
-
+  insertRandomPoints(1, 1, 100, 0);
+  insertRandomPoints(1, 2, 100, 0);
+  insertRandomPoints(2, 1, 100, 0);
 
   construct_voronoi(points.begin(), points.end(), &vd);
 
@@ -102,6 +133,8 @@ int main(int argc, char* argv[])
   glLoadIdentity();
   glOrtho(0, width, height, 0, 1, -1);
   glMatrixMode(GL_MODELVIEW);
+  glEnable(GL_TEXTURE_2D);
+  glShadeModel(GL_SMOOTH);
   glLoadIdentity();
   glutDisplayFunc(displayMe);
   glutMainLoop();
