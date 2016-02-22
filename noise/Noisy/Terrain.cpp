@@ -1,6 +1,7 @@
 #include "Terrain.h"
 #include "Tools.h"
 #include "..\Simplex\simplex.h"
+#include <stdlib.h>
 
 
 
@@ -58,11 +59,10 @@ void Terrain::generateHeights()
 	{
 		for (int y = 0; y < chunks; y++)
 		{
-			heights[x][y] = 1;
+			heights[x][y] = (int)(Simplex::octave_noise(4, 0.02f, 0.5, x, y, &nc) * 5 + 1);
 		}
 	}
 }
-
 
 void Terrain::generate2D(float** zValues)
 {
@@ -74,7 +74,7 @@ void Terrain::generate2D(float** zValues)
 				for (int x = 0; x < chunkSize; ++x) {
 					int true_x = x + (chunkSize * chX);
 					int true_y = y + (chunkSize * chY);
-					float z = Simplex::octave_noise(8, 0.5f, 0.005f, true_x, true_y, &nc) * 2 + calculate_height(x, y, chX, chY);
+					float z = Simplex::octave_noise(8, 0.0005f, 0.5f, true_x, true_y, &nc) * 5 + calculate_height(x, y, chX, chY);
 					zValues[true_y][true_x] = z;
 				}
 			}

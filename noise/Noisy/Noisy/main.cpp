@@ -7,16 +7,16 @@
 int main() {
 
 	const int seed = 23195;
-	const int chunkSize = 10;
-	const int chunks = 10;
+	const int chunkSize = 32;
+	const int chunks = 15;
 
 	// Allocate memory for points
 	float **point_z_values = (float**) std::malloc(chunks * chunkSize * sizeof(float * ));
 	for (int i = 0; i < chunkSize * chunks; i++)
 		point_z_values[i] = (float*) std::malloc(chunks * chunkSize * sizeof(float *));
 
-	// Create perm table from seed
-	NoiseContext nc = NoiseContext(seed);
+	// Create perm table from seed (not used??)
+	// NoiseContext nc = NoiseContext(seed);
 
 	// Init and generate terrain
 	Terrain t = Terrain(chunks, chunkSize, seed);
