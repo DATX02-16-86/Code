@@ -15,9 +15,11 @@ public:
 
 	void generate2D(float** zvalues);
 
+	void generate3D(bool* allValues, int height);
+
 private:
 	NoiseContext nc;
 	int chunks;
 	int chunkSize;
-	int** heights;
+	int** chunkHeights;
 };
