@@ -83,13 +83,13 @@ public:
 	~Simplex() {}
 
 	/** 1D, 2D, 3D and 4D float Simplex noise */
-	static float noise(float x, NoiseContext* nc = &defaultNoiseContext);
-	static float noise(float x, float y, NoiseContext* nc = &defaultNoiseContext);
-	static float noise(float x, float y, float z, NoiseContext* nc = &defaultNoiseContext);
-	static float noise(float x, float y, float z, float w, NoiseContext* nc = &defaultNoiseContext);
+	static float noise(float x, NoiseContext& nc = defaultNoiseContext);
+	static float noise(float x, float y, NoiseContext& nc = defaultNoiseContext);
+	static float noise(float x, float y, float z, NoiseContext& nc = defaultNoiseContext);
+	static float noise(float x, float y, float z, float w, NoiseContext& nc = defaultNoiseContext);
 
-	static float octave_noise(int octaves, float freq, float persistence, float x, float y, NoiseContext* nc = &defaultNoiseContext);
-	static float octave_noise(int octaves, float freq, float persistence, float x, float y, float z, NoiseContext* nc = &defaultNoiseContext);
+	static float octave_noise(int octaves, float freq, float persistence, float x, float y, NoiseContext& nc = defaultNoiseContext);
+	static float octave_noise(int octaves, float freq, float persistence, float x, float y, float z, NoiseContext& nc = defaultNoiseContext);
 
 private:
 	static NoiseContext defaultNoiseContext;
@@ -98,5 +98,4 @@ private:
 	static float grad(int hash, float x, float y);
 	static float grad(int hash, float x, float y, float z);
 	static float grad(int hash, float x, float y, float z, float t);
-
 };

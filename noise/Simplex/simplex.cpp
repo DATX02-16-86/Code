@@ -102,7 +102,7 @@ float  Simplex::grad(int hash, float x, float y, float z, float t) {
 }
 
 // 1D simplex noise
-float Simplex::noise(float x, NoiseContext* nc) {
+float Simplex::noise(float x, NoiseContext& nc) {
 
 	int i0 = FASTFLOOR(x);
 	int i1 = i0 + 1;
@@ -114,12 +114,12 @@ float Simplex::noise(float x, NoiseContext* nc) {
 	float t0 = 1.0f - x0*x0;
 	//  if(t0 < 0.0f) t0 = 0.0f;
 	t0 *= t0;
-	n0 = t0 * t0 * grad(nc->perm[i0 & 0xff], x0);
+	n0 = t0 * t0 * grad(nc.perm[i0 & 0xff], x0);
 
 	float t1 = 1.0f - x1*x1;
 	//  if(t1 < 0.0f) t1 = 0.0f;
 	t1 *= t1;
-	n1 = t1 * t1 * grad(nc->perm[i1 & 0xff], x1);
+	n1 = t1 * t1 * grad(nc.perm[i1 & 0xff], x1);
 	// The maximum value of this noise is 8*(3/4)^4 = 2.53125
 	// A factor of 0.395 would scale to fit exactly within [-1,1], but
 	// we want to match PRMan's 1D noise, so we scale it down some more.
@@ -128,7 +128,7 @@ float Simplex::noise(float x, NoiseContext* nc) {
 }
 
 // 2D simplex noise
-float Simplex::noise(float x, float y, NoiseContext* nc) {
+float Simplex::noise(float x, float y, NoiseContext& nc) {
 
 #define F2 0.366025403f // F2 = 0.5*(sqrt(3.0)-1.0)
 #define G2 0.211324865f // G2 = (3.0-Math.sqrt(3.0))/6.0
@@ -172,21 +172,21 @@ float Simplex::noise(float x, float y, NoiseContext* nc) {
 	if (t0 < 0.0f) n0 = 0.0f;
 	else {
 		t0 *= t0;
-		n0 = t0 * t0 * grad(nc->perm[ii + nc->perm[jj]], x0, y0);
+		n0 = t0 * t0 * grad(nc.perm[ii + nc.perm[jj]], x0, y0);
 	}
 
 	float t1 = 0.5f - x1*x1 - y1*y1;
 	if (t1 < 0.0f) n1 = 0.0f;
 	else {
 		t1 *= t1;
-		n1 = t1 * t1 * grad(nc->perm[ii + i1 + nc->perm[jj + j1]], x1, y1);
+		n1 = t1 * t1 * grad(nc.perm[ii + i1 + nc.perm[jj + j1]], x1, y1);
 	}
 
 	float t2 = 0.5f - x2*x2 - y2*y2;
 	if (t2 < 0.0f) n2 = 0.0f;
 	else {
 		t2 *= t2;
-		n2 = t2 * t2 * grad(nc->perm[ii + 1 + nc->perm[jj + 1]], x2, y2);
+		n2 = t2 * t2 * grad(nc.perm[ii + 1 + nc.perm[jj + 1]], x2, y2);
 	}
 
 	// Add contributions from each corner to get the final noise value.
@@ -195,7 +195,7 @@ float Simplex::noise(float x, float y, NoiseContext* nc) {
 }
 
 // 3D simplex noise
-float Simplex::noise(float x, float y, float z, NoiseContext* nc) {
+float Simplex::noise(float x, float y, float z, NoiseContext& nc) {
 
 	// Simple skewing factors for the 3D case
 #define F3 0.333333333f
@@ -265,28 +265,28 @@ float Simplex::noise(float x, float y, float z, NoiseContext* nc) {
 	if (t0 < 0.0f) n0 = 0.0f;
 	else {
 		t0 *= t0;
-		n0 = t0 * t0 * grad(nc->perm[ii + nc->perm[jj + nc->perm[kk]]], x0, y0, z0);
+		n0 = t0 * t0 * grad(nc.perm[ii + nc.perm[jj + nc.perm[kk]]], x0, y0, z0);
 	}
 
 	float t1 = 0.6f - x1*x1 - y1*y1 - z1*z1;
 	if (t1 < 0.0f) n1 = 0.0f;
 	else {
 		t1 *= t1;
-		n1 = t1 * t1 * grad(nc->perm[ii + i1 + nc->perm[jj + j1 + nc->perm[kk + k1]]], x1, y1, z1);
+		n1 = t1 * t1 * grad(nc.perm[ii + i1 + nc.perm[jj + j1 + nc.perm[kk + k1]]], x1, y1, z1);
 	}
 
 	float t2 = 0.6f - x2*x2 - y2*y2 - z2*z2;
 	if (t2 < 0.0f) n2 = 0.0f;
 	else {
 		t2 *= t2;
-		n2 = t2 * t2 * grad(nc->perm[ii + i2 + nc->perm[jj + j2 + nc->perm[kk + k2]]], x2, y2, z2);
+		n2 = t2 * t2 * grad(nc.perm[ii + i2 + nc.perm[jj + j2 + nc.perm[kk + k2]]], x2, y2, z2);
 	}
 
 	float t3 = 0.6f - x3*x3 - y3*y3 - z3*z3;
 	if (t3 < 0.0f) n3 = 0.0f;
 	else {
 		t3 *= t3;
-		n3 = t3 * t3 * grad(nc->perm[ii + 1 + nc->perm[jj + 1 + nc->perm[kk + 1]]], x3, y3, z3);
+		n3 = t3 * t3 * grad(nc.perm[ii + 1 + nc.perm[jj + 1 + nc.perm[kk + 1]]], x3, y3, z3);
 	}
 
 	// Add contributions from each corner to get the final noise value.
@@ -295,7 +295,7 @@ float Simplex::noise(float x, float y, float z, NoiseContext* nc) {
 }
 
 // 4D simplex noise
-float Simplex::noise(float x, float y, float z, float w, NoiseContext* nc) {
+float Simplex::noise(float x, float y, float z, float w, NoiseContext& nc) {
 
 	// The skewing and unskewing factors are hairy again for the 4D case
 #define F4 0.309016994f // F4 = (Math.sqrt(5.0)-1.0)/4.0
@@ -394,35 +394,35 @@ float Simplex::noise(float x, float y, float z, float w, NoiseContext* nc) {
 	if (t0 < 0.0f) n0 = 0.0f;
 	else {
 		t0 *= t0;
-		n0 = t0 * t0 * grad(nc->perm[ii + nc->perm[jj + nc->perm[kk + nc->perm[ll]]]], x0, y0, z0, w0);
+		n0 = t0 * t0 * grad(nc.perm[ii + nc.perm[jj + nc.perm[kk + nc.perm[ll]]]], x0, y0, z0, w0);
 	}
 
 	float t1 = 0.6f - x1*x1 - y1*y1 - z1*z1 - w1*w1;
 	if (t1 < 0.0f) n1 = 0.0f;
 	else {
 		t1 *= t1;
-		n1 = t1 * t1 * grad(nc->perm[ii + i1 + nc->perm[jj + j1 + nc->perm[kk + k1 + nc->perm[ll + l1]]]], x1, y1, z1, w1);
+		n1 = t1 * t1 * grad(nc.perm[ii + i1 + nc.perm[jj + j1 + nc.perm[kk + k1 + nc.perm[ll + l1]]]], x1, y1, z1, w1);
 	}
 
 	float t2 = 0.6f - x2*x2 - y2*y2 - z2*z2 - w2*w2;
 	if (t2 < 0.0f) n2 = 0.0f;
 	else {
 		t2 *= t2;
-		n2 = t2 * t2 * grad(nc->perm[ii + i2 + nc->perm[jj + j2 + nc->perm[kk + k2 + nc->perm[ll + l2]]]], x2, y2, z2, w2);
+		n2 = t2 * t2 * grad(nc.perm[ii + i2 + nc.perm[jj + j2 + nc.perm[kk + k2 + nc.perm[ll + l2]]]], x2, y2, z2, w2);
 	}
 
 	float t3 = 0.6f - x3*x3 - y3*y3 - z3*z3 - w3*w3;
 	if (t3 < 0.0f) n3 = 0.0f;
 	else {
 		t3 *= t3;
-		n3 = t3 * t3 * grad(nc->perm[ii + i3 + nc->perm[jj + j3 + nc->perm[kk + k3 + nc->perm[ll + l3]]]], x3, y3, z3, w3);
+		n3 = t3 * t3 * grad(nc.perm[ii + i3 + nc.perm[jj + j3 + nc.perm[kk + k3 + nc.perm[ll + l3]]]], x3, y3, z3, w3);
 	}
 
 	float t4 = 0.6f - x4*x4 - y4*y4 - z4*z4 - w4*w4;
 	if (t4 < 0.0f) n4 = 0.0f;
 	else {
 		t4 *= t4;
-		n4 = t4 * t4 * grad(nc->perm[ii + 1 + nc->perm[jj + 1 + nc->perm[kk + 1 + nc->perm[ll + 1]]]], x4, y4, z4, w4);
+		n4 = t4 * t4 * grad(nc.perm[ii + 1 + nc.perm[jj + 1 + nc.perm[kk + 1 + nc.perm[ll + 1]]]], x4, y4, z4, w4);
 	}
 
 	// Sum up and scale the result to cover the range [-1,1]
@@ -430,7 +430,7 @@ float Simplex::noise(float x, float y, float z, float w, NoiseContext* nc) {
 }
 
 // Octaves of 2d simplex noise
-float Simplex::octave_noise(int octaves, float freq, float persistence, float x, float y, NoiseContext* nc)
+float Simplex::octave_noise(int octaves, float freq, float persistence, float x, float y, NoiseContext& nc)
 {
 	float max = 0;
 	float sum = 0;
@@ -453,7 +453,7 @@ float Simplex::octave_noise(int octaves, float freq, float persistence, float x,
 }
 
 // Octaves of 3d simplex noise
-float Simplex::octave_noise(int octaves, float freq, float persistence, float x, float y, float z, NoiseContext* nc)
+float Simplex::octave_noise(int octaves, float freq, float persistence, float x, float y, float z, NoiseContext& nc)
 {
 	float max = 0;
 	float sum = 0;

@@ -3,7 +3,6 @@
 #include "..\Simplex\simplex.h"
 
 
-
 Terrain::Terrain(int chunks, int chunkSize, int seed)
 {
 	this->nc = NoiseContext(seed);
@@ -63,7 +62,6 @@ void Terrain::generateHeights()
 	}
 }
 
-
 void Terrain::generate2D(float** zValues)
 {
 	for (int chY = 1; chY < chunks - 1; chY++) {
@@ -74,7 +72,7 @@ void Terrain::generate2D(float** zValues)
 				for (int x = 0; x < chunkSize; ++x) {
 					int true_x = x + (chunkSize * chX);
 					int true_y = y + (chunkSize * chY);
-					float z = Simplex::octave_noise(8, 0.5f, 0.005f, true_x, true_y, &nc) * 2 + calculate_height(x, y, chX, chY);
+					float z = Simplex::octave_noise(8, 0.5f, 0.005f, true_x, true_y, nc) * 2 + calculate_height(x, y, chX, chY);
 					zValues[true_y][true_x] = z;
 				}
 			}
