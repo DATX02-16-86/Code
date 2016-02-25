@@ -273,12 +273,20 @@ void relaxPoints(int chunkX, int chunkY, std::vector<Point>& points) {
   }
 }
 
+void insertGridPoints(int chunkX, int chunkY, int pointDistance, std::vector<Point>& points) {
 
+  for (int y = 0; y <= CHUNK_SIZE; y += pointDistance) {
+    for (int x = 0; x <= CHUNK_SIZE; x += pointDistance) {
+      points.push_back(Point(CHUNK_SIZE * chunkX + x, CHUNK_SIZE * chunkY + y));
+    }
+  }
+}
 
 int main(int argc, char* argv[])
 {
-  insertRandomPoints(0, 0, 1000, 0, globalPoints);
-  relaxPoints(0, 0, globalPoints);
+  //insertRandomPoints(0, 0, 1000, 0, globalPoints);
+  //relaxPoints(0, 0, globalPoints);
+  insertGridPoints(0, 0, 5, globalPoints);
 
   construct_voronoi(globalPoints.begin(), globalPoints.end(), &vd);
 
