@@ -5,6 +5,8 @@ if(WIN32)
 set(BIN_DIR "Win32")
 elseif(APPLE)
 set(BIN_DIR "OSX")
+else()
+set(BIN_DIR "Linux")
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../Bin/${BIN_DIR}")
@@ -12,6 +14,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.1")
 
 include_directories(../../Tritium/Code/Core)
 include_directories(../../Tritium/Code)
+include_directories(../../Libraries)
 
 add_library(Generator
     Geometry/Geometry.cpp
@@ -35,4 +38,6 @@ add_library(Generator
     Pipeline/Height/HeightStage.cpp
 
     Pipeline/Landmass/LandmassStage.cpp
-    Pipeline/Landmass/LandmassStage.h)
+    Pipeline/Landmass/LandmassStage.h Tests/Pipeline.cpp)
+
+add_executable(GeneratorTest Tests/Pipeline.cpp)
