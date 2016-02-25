@@ -26,14 +26,12 @@ struct IdMatrix {
     bool isEmpty() const {return !items;}
 
 private:
-    static Size getItemShift(Size itemBits);
-    static Size getItemMask(Size itemBits, Size itemShift);
-
     Size* items = nullptr;
     U32 wordsPerRow;
     U16 itemShift;
     U8 itemBits;
     U8 detail;
+    U8 itemsPerWord;
 };
 
 struct TiledMatrix {
