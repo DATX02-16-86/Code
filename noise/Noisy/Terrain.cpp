@@ -2,6 +2,7 @@
 #include "Tools.h"
 #include "..\Simplex\simplex.h"
 #include <stdlib.h>
+#include <iostream>
 
 
 Terrain::Terrain(int chunks, int chunkSize, int seed)
@@ -91,7 +92,8 @@ void Terrain::generate3D(bool* density, int height)
 					int true_x = x + (chunkSize * chX);
 					for (int z = 0; z < height; ++z)
 					{
-						density[true_y*chunkSize*height + true_x*height + z] = Simplex::octave_noise(8, 0.0005f, 0.5f, true_x, true_y, nc) > 0;
+						density[true_y*chunkSize*chunks*height + true_x*height + z] = Simplex::octave_noise(8, 0.5f, 0.5f, true_x, true_y, z, nc) > 0.2f;
+						//std::cout << d;
 					}
 				}
 			}
