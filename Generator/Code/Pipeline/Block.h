@@ -39,7 +39,7 @@ struct Block {
  * This must be done for all blocks that are used through the pipeline.
  * Block types are used in voxel chunk generation and determine how voxels are rendered.
  */
-const Block& registerBlock(Block::Phase phase = Block::Solid, F32 opacity = 1f, F32 friction = 1f, F32 hardness = 1f);
+const Block& registerBlock(Block::Phase phase = Block::Solid, F32 opacity = 1.f, F32 friction = 1.f, F32 hardness = 1.f);
 
 
 /*

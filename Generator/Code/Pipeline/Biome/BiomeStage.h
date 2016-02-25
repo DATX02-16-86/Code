@@ -48,6 +48,11 @@ using GenerateChunk = void(*)(Chunk&, Pipeline&);
  */
 BiomeId registerBiome(GenerateChunk generateChunk);
 
+/**
+ * Returns the biome generator at the provided id.
+ */
+GenerateChunk findBiome(BiomeId id);
+
 /// This is the global default biome that is used when no specific biome is defined or the requested biome doesn't exist.
 /// It creates a flat world at a low height.
 struct DefaultBiome {

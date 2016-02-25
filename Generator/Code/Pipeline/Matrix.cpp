@@ -1,6 +1,6 @@
 #include "Matrix.h"
 #include <Math/Math.h>
-#include <string.h>
+#include <string>
 
 namespace generator {
 
@@ -62,10 +62,10 @@ void TiledMatrix::create(Size detail, Size itemBits, U8 tileSize) {
 }
 
 void TiledMatrix::resize(Int x, Int y) {
-    auto left = Tritium::Math::min(x, this->x);
-    auto right = Tritium::Math::max(x, this->x + width);
-    auto bottom = Tritium::Math::min(y, this->y);
-    auto top = Tritium::Math::max(y, this->y + height);
+    auto left = Tritium::Math::min((I32)x, this->x);
+    auto right = Tritium::Math::max((I32)x, this->x + width);
+    auto bottom = Tritium::Math::min((I32)y, this->y);
+    auto top = Tritium::Math::max((I32)y, this->y + height);
 
     auto w = right - left;
     auto h = top - bottom;

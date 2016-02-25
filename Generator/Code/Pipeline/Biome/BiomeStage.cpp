@@ -19,6 +19,10 @@ BiomeId registerBiome(GenerateChunk generateChunk) {
     return (BiomeId)registeredBiomes.size();
 }
 
+GenerateChunk findBiome(BiomeId id) {
+    return registeredBiomes[id];
+}
+
 const BiomeId DefaultBiome::id = registerBiome(DefaultBiome::fillChunk);
 
 void DefaultBiome::fillChunk(Chunk& chunk, Pipeline& pipeline) {
