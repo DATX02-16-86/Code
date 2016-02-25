@@ -38,8 +38,8 @@ struct Segment {
     /// Calls the provided mapper for each element in this segment.
     template<class F> void map(F&& f) const {
         auto step = Size(1) << detail;
-        auto yMax = y + height;
-        auto xMax = x + width;
+        auto yMax = y + (I32)height;
+        auto xMax = x + (I32)width;
         for(auto row = y; row < yMax; row += step) {
             for(auto column = x; column < xMax; column += step) {
                 f(column, row);
@@ -50,7 +50,7 @@ struct Segment {
 
 /// The common interface for generators inside a stage.
 struct Generator {
-    Generator(std::vector<StreamId> auxiliaryStreams): auxiliaryStreams(auxiliaryStreams) {}
+    Generator(std::vector<StreamId>&& auxiliaryStreams = std::vector<StreamId>{}): auxiliaryStreams(move(auxiliaryStreams)) {}
     virtual void generate(const Segment& segment, IdMatrix** auxiliaries, Pipeline& pipeline) = 0;
 
     const std::vector<StreamId> auxiliaryStreams;
