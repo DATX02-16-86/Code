@@ -5,7 +5,7 @@
 namespace generator {
 
 static Segment toSegment(Area area) {
-    return Segment {area.x, area.y, area.worldWidth(), area.worldHeight(), 1.f, 0};
+    return Segment {area.x, area.y, (U32)area.worldWidth(), (U32)area.worldHeight(), 1.f, 0};
 }
 
 TiledMatrix* Pipeline::Data::get(StreamId stream) {
@@ -29,15 +29,23 @@ void Pipeline::Data::resize(Size count) {
 }
 
 void Pipeline::fillChunk(Chunk& chunk) {
-    // Generate base data around the chunk location.
+    // Create a segment larger than the chunk size, which allows biomes to loop up metadata outside of the chunk area.
     auto segment = toSegment(chunk.area);
+    segment.x -= chunk.area.width;
+    segment.y -= chunk.area.height;
+    segment.width += chunk.area.width * 2;
+    segment.height += chunk.area.height * 2;
+
+    // Generate base data around the chunk location.
     landmassStage.generate(segment, *this);
     heightStage.generate(segment, *this);
     biomeStage.generate(segment, *this);
 
     // Generate the terrain for this chunk.
     if(auto biomes = data.get(Biomes)) {
-        biomes->get(chunk.area.x, chunk.area.y, 0)
+        auto id = (BiomeId)biomes->get(chunk.area.x, chunk.area.y, 0);
+        auto biome = findBiome(id);
+        biome(chunk, *this);
     }
 }
 
