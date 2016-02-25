@@ -1,6 +1,6 @@
 
 #include "Geometry.h"
-#include "Voxel.h"
+#include "../Pipeline/Voxel.h"
 
 namespace generator {
 

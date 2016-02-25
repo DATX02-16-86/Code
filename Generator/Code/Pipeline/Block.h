@@ -2,7 +2,7 @@
 #ifndef GENERATOR_BLOCK_H
 #define GENERATOR_BLOCK_H
 
-#include "Base.h"
+#include <Base.h>
 
 namespace generator {
 
