@@ -7,40 +7,37 @@ namespace generator {
 void IdMatrix::create(Size w, Size h, Size detail, Size itemBits) {
     free(items);
 
-    wordsPerRow = (U32)(h >> getItemShift(itemBits));
-    itemShift = 0;
     this->itemBits = (U8)itemBits;
     this->detail = (U8)detail;
-    items = (Size*)malloc(sizeof(Size) * wordsPerRow * w);
+    itemsPerWord = (U8)1 << Tritium::Math::findLastBit(sizeof(Size) * 8 / itemBits);
+    itemShift = Tritium::Math::findLastBit(itemBits) - U8(1);
+
+    wordsPerRow = (U32)(h >> itemShift);
+    items = (Size*)malloc(sizeof(Size) * wordsPerRow * h);
 }
 
 Size IdMatrix::get(Size x, Size y, Size detail) const {
-    auto row = x >> ((Int)detail - (Int)this->detail);
-    auto offset = y >> ((Int)detail - (Int)this->detail);
-    auto index = x * row + (y >> itemShift);
+    auto row = y >> ((Int)detail - (Int)this->detail);
+    auto offset = x >> ((Int)detail - (Int)this->detail);
+    auto index = row * wordsPerRow + (offset >> itemShift);
+    auto mask = (Size(1) << itemBits) - 1;
+    auto maskOffset = offset & (itemsPerWord - 1);
 
-    auto mask = 0;
-    return items[row * wordsPerRow + offset] & mask;
+    return items[index] >> (maskOffset * itemBits) & mask;
 }
 
 void IdMatrix::set(Size x, Size y, Size detail, Size value) {
-    auto row = x >> ((Int)detail - (Int)this->detail);
-    auto offset = y >> ((Int)detail - (Int)this->detail);
-    auto index = 0;
-    auto mask = 0;
+    auto row = y >> ((Int)detail - (Int)this->detail);
+    auto offset = x >> ((Int)detail - (Int)this->detail);
+    auto index = row * wordsPerRow + (offset >> itemShift);
+    auto maskOffset = offset & (itemsPerWord - 1);
+    auto totalShift = maskOffset * itemBits;
+    auto mask = ((Size(1) << itemBits) - 1) << totalShift;
 
     auto c = items[index];
     c &= ~mask;
-    c |= value;
+    c |= (value << totalShift);
     items[index] = c;
-}
-
-Size IdMatrix::getItemShift(Size itemBits) {
-    return Tritium::Math::findLastBit(sizeof(Size) * 8 / itemBits) - 1;
-}
-
-Size IdMatrix::getItemMask(Size itemBits, Size itemShift) {
-    return ~Size(0) >> (sizeof(Size) * 8 - itemShift);
 }
 
 TiledMatrix::~TiledMatrix() {
