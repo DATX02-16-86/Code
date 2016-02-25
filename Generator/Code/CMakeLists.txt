@@ -13,5 +13,39 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.1")
 include_directories(../../Tritium/Code/Core)
 include_directories(../../Tritium/Code)
 
-set(SOURCE_FILES Pipeline/Pipeline.h Pipeline/Biome/BiomeStage.h Pipeline/Feature/FeatureStage.h Pipeline/Height/HeightStage.h Pipeline/Landmass/LandmassStage.h Pipeline/Structure/StructureStage.h Pipeline/Landmass/LandmassStage.cpp Pipeline/Voxel.h Pipeline/Matrix.h Pipeline/Generator.h Pipeline/Height/HeightStage.cpp Pipeline/Biome/BiomeStage.cpp Pipeline/Generator.cpp Pipeline/Voxel.cpp Pipeline/Pipeline.cpp Pipeline/Matrix.cpp World/World.h Pipeline/Block.h Pipeline/Block.cpp)
+set(SOURCE_FILES
+    Pipeline/Block.cpp
+    Pipeline/Block.h
+    Pipeline/Generator.cpp
+    Pipeline/Generator.h
+    Pipeline/Geometry.cpp
+    Pipeline/Geometry.h
+    Pipeline/Matrix.cpp
+    Pipeline/Matrix.h
+    Pipeline/Pipeline.cpp
+    Pipeline/Pipeline.h
+    Pipeline/Voxel.cpp
+    Pipeline/Voxel.h
+)
+
+set(SOURCE_FILES ${SOURCE_FILES} 
+    Pipeline/Biome/BiomeStage.h
+    Pipeline/Biome/BiomeStage.cpp
+)
+
+set(SOURCE_FILES ${SOURCE_FILES}
+    Pipeline/Height/HeightStage.h
+    Pipeline/Height/HeightStage.cpp
+)
+
+set(SOURCE_FILES ${SOURCE_FILES} 
+    Pipeline/Landmass/LandmassStage.cpp
+    Pipeline/Landmass/LandmassStage.h
+)
+
+set(SOURCE_FILES ${SOURCE_FILES} 
+    Pipeline/Structure/StructureStage.h
+    Pipeline/Feature/FeatureStage.h
+)
+
 add_library(Generator ${SOURCE_FILES})
