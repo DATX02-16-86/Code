@@ -10,7 +10,9 @@ const Block& registerBlock(Block::Phase phase, F32 opacity, F32 friction, F32 ha
     return registeredBlocks.back();
 }
 
-const Block& air = registerBlock(Block::Gaseous, 0, 0, 0);
-const Block& solid = registerBlock();
-
+	
+namespace block {
+	const Block air = registerBlock(Block::Gaseous, 0, 0, 0);
+	const Block solid = registerBlock();
+} // namespace Block
 } // namespace generator

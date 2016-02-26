@@ -40,8 +40,7 @@ struct Block {
  * Block types are used in voxel chunk generation and determine how voxels are rendered.
  */
 const Block& registerBlock(Block::Phase phase = Block::Solid, F32 opacity = 1.f, F32 friction = 1.f, F32 hardness = 1.f);
-
-
+	
 /*
  * Default block types.
  */
@@ -49,10 +48,10 @@ const Block& registerBlock(Block::Phase phase = Block::Solid, F32 opacity = 1.f,
 namespace block {
 
 /// Represents an empty block. Empty voxels should have this block type, as it may be used for compression.
-extern const Block& air;
+extern const Block air;
 
 /// Represents a generic solid block, used for testing.
-extern const Block& solid;
+extern const Block solid;
 
 } // namespace block
 } // namespace generator
