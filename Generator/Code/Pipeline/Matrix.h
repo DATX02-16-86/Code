@@ -27,8 +27,8 @@ struct IdMatrix {
 
 private:
     Size* items = nullptr;
-    U32 wordsPerRow;
-    U16 itemShift;
+    U32 wordsPerRow = 0;
+    U8 itemShift;
     U8 itemBits;
     U8 detail;
     U8 itemsPerWord;
@@ -66,8 +66,7 @@ private:
     }
 
     Size indexInTile(Int position) const {
-        auto shift = sizeof(position) * 8 - tileSize;
-        return position << shift >> shift;
+        return position & ((Int(1) << tileSize) - 1);
     }
 
     IdMatrix* tiles = nullptr;

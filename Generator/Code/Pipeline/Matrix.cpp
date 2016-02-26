@@ -10,7 +10,7 @@ void IdMatrix::create(Size w, Size h, Size detail, Size itemBits) {
     this->itemBits = (U8)itemBits;
     this->detail = (U8)detail;
     itemsPerWord = (U8)1 << Tritium::Math::findLastBit(sizeof(Size) * 8 / itemBits);
-    itemShift = Tritium::Math::findLastBit(itemBits) - U8(1);
+    itemShift = Tritium::Math::findLastBit(sizeof(Size) * 8 / itemBits);
 
     wordsPerRow = (U32)(h >> itemShift);
     items = (Size*)malloc(sizeof(Size) * wordsPerRow * h);
@@ -60,9 +60,9 @@ void TiledMatrix::create(Size detail, Size itemBits, U8 tileSize) {
 
 void TiledMatrix::resize(Int x, Int y) {
     auto left = Tritium::Math::min((I32)x, this->x);
-    auto right = Tritium::Math::max((I32)x, this->x + width);
+    auto right = Tritium::Math::max((I32)x + 1, this->x + width);
     auto bottom = Tritium::Math::min((I32)y, this->y);
-    auto top = Tritium::Math::max((I32)y, this->y + height);
+    auto top = Tritium::Math::max((I32)y + 1, this->y + height);
 
     auto w = right - left;
     auto h = top - bottom;
@@ -111,10 +111,12 @@ void TiledMatrix::resize(Int x, Int y) {
 }
 
 IdMatrix& TiledMatrix::getTile(Int x, Int y) {
-    auto tileX = tileIndex(x - this->x);
-    auto tileY = tileIndex(y - this->y);
-    if(tileX < this->x || tileY < this->y || this->x + width <= tileX || this->y + height <= tileY) {
+    auto tileX = tileIndex(x) - this->x;
+    auto tileY = tileIndex(y) - this->y;
+    if(tileX < 0 || tileY < 0 || width <= tileX || height <= tileY) {
         resize(tileX, tileY);
+		tileX = tileIndex(x) - this->x;
+		tileY = tileIndex(y) - this->y;
     }
 
     auto& tile = tiles[width * tileY + tileX];
@@ -126,9 +128,9 @@ IdMatrix& TiledMatrix::getTile(Int x, Int y) {
 }
 
 Size TiledMatrix::get(Int x, Int y, Size detail) const {
-    auto tileX = tileIndex(x - this->x);
-    auto tileY = tileIndex(y - this->y);
-    if(tileX < this->x || tileY < this->y || this->x + width <= tileX || this->y + height <= tileY) return 0;
+    auto tileX = tileIndex(x) - this->x;
+    auto tileY = tileIndex(y) - this->y;
+    if(tileX < 0 || tileY < 0 || width <= tileX || height <= tileY) return 0;
 
     return tiles[width * tileY + tileX].get(indexInTile(x), indexInTile(y), detail);
 }
