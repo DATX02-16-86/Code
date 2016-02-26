@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <random>
+#include <algorithm>
 
 #include <boost/polygon/voronoi.hpp>
 
@@ -11,7 +12,7 @@
 
 #include "../../noise/Simplex/simplex.h"
 
-#define CHUNK_SIZE 800
+#define CHUNK_SIZE 200
 #define GRID_DIVISIONS 10
 
 
@@ -70,7 +71,7 @@ void color(double clr) {
   glColor3d(clr, clr, clr);
 }
 
-std::pair<Point, Point> getEdgePoints(const boost::polygon::voronoi_edge<double>& edge) {
+std::pair<Point, Point> getEdgePoints(const boost::polygon::voronoi_edge<double>& edge, std::vector<Point>& points) {
   if (edge.is_primary())
   {
     if (edge.is_finite())
@@ -84,8 +85,8 @@ std::pair<Point, Point> getEdgePoints(const boost::polygon::voronoi_edge<double>
     }
     else
     {
-      Point p1 = globalPoints[edge.cell()->source_index()];
-      Point p2 = globalPoints[edge.twin()->cell()->source_index()];
+      Point p1 = points[edge.cell()->source_index()];
+      Point p2 = points[edge.twin()->cell()->source_index()];
       Point origin;
       Point direction;
       coordinate_type koef = 1.0;
@@ -164,7 +165,7 @@ void render() {
 
     do {
       edge = edge->next();
-      auto points = getEdgePoints(*edge);
+      auto points = getEdgePoints(*edge, globalPoints);
 
       if (avarageHeight > 0.4) {
         color(avarageHeight);
@@ -262,9 +263,9 @@ void relaxPoints(int chunkX, int chunkY, std::vector<Point>& points) {
       int count = 0;
       do {
         edge = edge->next();
-        auto points = getEdgePoints(*edge);
-        x += points.first.x() - chunkX * CHUNK_SIZE;
-        y += points.first.y() - chunkY * CHUNK_SIZE;
+        auto edgepPoints = getEdgePoints(*edge, points);
+        x += edgepPoints.first.x() - chunkX * CHUNK_SIZE;
+        y += edgepPoints.first.y() - chunkY * CHUNK_SIZE;
         ++count;
       } while (edge != it.incident_edge());
       points[it.source_index()].x(x / count + chunkX * CHUNK_SIZE);
@@ -272,6 +273,13 @@ void relaxPoints(int chunkX, int chunkY, std::vector<Point>& points) {
     }
   }
 }
+
+void filterPointsOutsideChunks(int chunkX, int chunkY, std::vector<Point>& points) {
+  points.erase(std::remove_if(points.begin(), points.end(), [&](Point p) {return p.x() < chunkX * CHUNK_SIZE ||
+                                                                                  p.x() > (chunkX + 1) * CHUNK_SIZE ||
+                                                                                  p.y() < chunkY * CHUNK_SIZE ||
+                                                                                  p.y() > (chunkY + 1) * CHUNK_SIZE; }), points.end());
+  }
 
 void insertGridPoints(int chunkX, int chunkY, int pointDistance, std::vector<Point>& points) {
 
@@ -284,9 +292,21 @@ void insertGridPoints(int chunkX, int chunkY, int pointDistance, std::vector<Poi
 
 int main(int argc, char* argv[])
 {
-  //insertRandomPoints(0, 0, 1000, 0, globalPoints);
-  //relaxPoints(0, 0, globalPoints);
-  insertGridPoints(0, 0, 5, globalPoints);
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      std::vector<Point> points;
+      insertRandomPoints(i, j, 300, 0, points);
+      relaxPoints(i, j, points);
+      filterPointsOutsideChunks(i, j, points);
+      globalPoints.reserve(globalPoints.size() + 1000);
+      for (auto point : points) {
+        globalPoints.push_back(point);
+      }
+    }
+  }
+  
+
+  //insertGridPoints(0, 0, 5, globalPoints);
 
   construct_voronoi(globalPoints.begin(), globalPoints.end(), &vd);
 
