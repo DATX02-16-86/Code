@@ -7,7 +7,7 @@
 
 namespace generator {
 
-GeneratorStream(Landmass, 1);
+DeclareStream(Landmass);
 
 /**
  * Helper base class for landmass generators.
@@ -16,13 +16,13 @@ GeneratorStream(Landmass, 1);
 struct LandmassGenerator: Generator {
     using Generator::Generator;
 
-    void generate(const Segment& segment, IdMatrix** auxiliaries, Pipeline& pipeline) override;
+    void generate(const Segment& segment, TiledMatrix** auxiliaries, Pipeline& pipeline) override;
 
     /**
      * Generates landmass data for a specific sample segment.
      * The default implementation just creates an endless continent without any other data.
      */
-    virtual void generate(const Segment& segment, IdMatrix& map, IdMatrix** auxiliaries, Pipeline& pipeline) {
+    virtual void generate(const Segment& segment, TiledMatrix& map, TiledMatrix** auxiliaries, Pipeline& pipeline) {
         segment.map([&](auto x, auto y) {
             map.set(x, y, segment.detail, 1);
         });

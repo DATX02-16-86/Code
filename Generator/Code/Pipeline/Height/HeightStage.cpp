@@ -4,9 +4,11 @@
 
 namespace generator {
 
-void HeightGenerator::generate(const Segment& segment, IdMatrix** auxiliaries, Pipeline& pipeline) {
+DefineStream(BaseHeight, 16);
+	
+void HeightGenerator::generate(const Segment& segment, TiledMatrix** auxiliaries, Pipeline& pipeline) {
     auto heightTiles = pipeline.data.getOrCreate(BaseHeight, segment.detail);
-    generate(segment, heightTiles->getTile(segment.x, segment.y), auxiliaries, pipeline);
+    generate(segment, *heightTiles, auxiliaries, pipeline);
 }
 
 } // namespace generator

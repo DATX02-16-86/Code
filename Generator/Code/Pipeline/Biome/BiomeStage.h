@@ -9,7 +9,7 @@ namespace generator {
 
 struct Pipeline;
 
-GeneratorStream(Biomes, 8);
+DeclareStream(Biomes);
 
 /**
  * Helper base class for biome id generators.
@@ -18,13 +18,13 @@ GeneratorStream(Biomes, 8);
 struct BiomeGenerator: Generator {
     using Generator::Generator;
 
-    void generate(const Segment& segment, IdMatrix** auxiliaries, Pipeline& pipeline) override;
+    void generate(const Segment& segment, TiledMatrix** auxiliaries, Pipeline& pipeline) override;
 
     /**
      * Generates biome id data for a specific sample segment.
      * The default implementation just sets the default biome everywhere.
      */
-    virtual void generate(const Segment& segment, IdMatrix& map, IdMatrix** auxiliaries, Pipeline& pipeline) {
+    virtual void generate(const Segment& segment, TiledMatrix& map, TiledMatrix** auxiliaries, Pipeline& pipeline) {
         segment.map([&](auto x, auto y) {
             map.set(x, y, segment.detail, 0);
         });

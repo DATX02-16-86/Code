@@ -23,7 +23,7 @@ TiledMatrix* Pipeline::Data::getOrCreate(StreamId stream, Size detail) {
 void Pipeline::Data::resize(Size count) {
     matrices = (TiledMatrix*)realloc(matrices, sizeof(TiledMatrix) * count);
     for(Size i = this->count; i < count; i++) {
-        new (matrices + i) IdMatrix;
+        new (matrices + i) TiledMatrix;
     }
     this->count = (U32)count;
 }

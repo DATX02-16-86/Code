@@ -5,10 +5,11 @@
 
 namespace generator {
 
-
-void BiomeGenerator::generate(const Segment& segment, IdMatrix** auxiliaries, Pipeline& pipeline) {
+DefineStream(Biomes, 8);
+	
+void BiomeGenerator::generate(const Segment& segment, TiledMatrix** auxiliaries, Pipeline& pipeline) {
     auto map = pipeline.data.getOrCreate(Biomes, segment.detail);
-    generate(segment, map->getTile(segment.x, segment.y), auxiliaries, pipeline);
+    generate(segment, *map, auxiliaries, pipeline);
 }
 
 

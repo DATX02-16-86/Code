@@ -6,7 +6,7 @@
 
 namespace generator {
 
-GeneratorStream(BaseHeight, 16);
+DeclareStream(BaseHeight);
 
 /**
  * Helper base class for height generators.
@@ -16,13 +16,13 @@ struct HeightGenerator: Generator {
     using Generator::Generator;
     static const Size kDefaultOceanHeight = 100;
 
-    void generate(const Segment& segment, IdMatrix** auxiliaries, Pipeline& pipeline) override;
+    void generate(const Segment& segment, TiledMatrix** auxiliaries, Pipeline& pipeline) override;
 
     /**
      * Generates height data for a specific sample segment.
      * The default implementation uses the default ocean height as base.
      */
-    virtual void generate(const Segment& segment, IdMatrix& heightMap, IdMatrix** auxiliaries, Pipeline& pipeline) {
+    virtual void generate(const Segment& segment, TiledMatrix& heightMap, TiledMatrix** auxiliaries, Pipeline& pipeline) {
         segment.map([&](auto x, auto y) {
             heightMap.set(x, y, segment.detail, kDefaultOceanHeight);
         });

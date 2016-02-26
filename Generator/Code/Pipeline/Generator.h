@@ -21,7 +21,8 @@ struct StreamCounter {
     static Size currentId;
 };
 
-#define GeneratorStream(name, bits) static const StreamId name {(U16)StreamCounter::currentId++, (U16)bits};
+#define DefineStream(name, bits) const StreamId name {(U16)StreamCounter::currentId++, (U16)bits};
+#define DeclareStream(name) extern const StreamId name;
 
 
 struct Pipeline;
@@ -51,7 +52,7 @@ struct Segment {
 /// The common interface for generators inside a stage.
 struct Generator {
     Generator(std::vector<StreamId>&& auxiliaryStreams = std::vector<StreamId>{}): auxiliaryStreams(move(auxiliaryStreams)) {}
-    virtual void generate(const Segment& segment, IdMatrix** auxiliaries, Pipeline& pipeline) = 0;
+    virtual void generate(const Segment& segment, TiledMatrix** auxiliaries, Pipeline& pipeline) = 0;
 
     const std::vector<StreamId> auxiliaryStreams;
 };
@@ -60,7 +61,7 @@ struct Generator {
 struct Stage {
     virtual void generate(const Segment& segment, Pipeline& pipeline) {
         for(auto& g: generators) {
-            auto streams = (IdMatrix**)alloca(sizeof(IdMatrix*) * g->auxiliaryStreams.size());
+            auto streams = (TiledMatrix**)alloca(sizeof(TiledMatrix*) * g->auxiliaryStreams.size());
             g->generate(segment, streams, pipeline);
         }
     }
