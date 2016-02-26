@@ -24,7 +24,7 @@ endif()
 include_directories(../../boost/)
 
 
-set(SOURCE_FILES main.cpp)
+set(SOURCE_FILES main.cpp ../../noise/Simplex/simplex.h ../../noise/Simplex/simplex.cpp)
 add_executable(Landmass ${SOURCE_FILES})
 
 target_link_libraries(Landmass ${OPENGL_LIBRARIES} )
