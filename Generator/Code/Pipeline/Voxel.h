@@ -39,6 +39,9 @@ struct Voxel {
 
 /// Represents a chunk of generated voxel data.
 struct Chunk {
+    /// A chunk ID value that can be used by clients to identify this chunk.
+    Size id = 0;
+
     /// Creates a chunk of the provided size and initializes the voxels to air.
     Chunk(Area area);
     ~Chunk();
