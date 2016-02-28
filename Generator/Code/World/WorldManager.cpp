@@ -1,4 +1,5 @@
 #include "WorldManager.h"
+#include <Math/Math.h>
 
 namespace generator {
 

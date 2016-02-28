@@ -2,7 +2,6 @@
 #ifndef GENERATOR_PIPELINE_H
 #define GENERATOR_PIPELINE_H
 
-#include <Base.h>
 #include "Generator.h"
 
 namespace generator {
