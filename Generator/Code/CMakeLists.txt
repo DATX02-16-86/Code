@@ -17,7 +17,7 @@ include_directories(../../Tritium/Code/Core)
 include_directories(../../Tritium/Code)
 include_directories(../../Libraries)
 
-link_directories(../../Tritium/Core)
+link_directories(../../Tritium/Core ../../Tritium/Bin/Debug)
 
 add_library(Generator
     Geometry/Geometry.cpp

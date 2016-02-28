@@ -6,17 +6,18 @@ namespace generator {
 World::World(Size drawDistance, Size regionSize, Size chunkSize, Size chunkHeight):
     manager(regionSize, chunkSize, chunkHeight), drawDistance((U8)drawDistance) {}
 
-void World::update(std::initializer_list<WorldPosition> positions) {
+void World::update(WorldPosition* positions, Size count) {
     // TODO: Update blocks and stuff.
 }
 
-void World::updateView(std::initializer_list<WorldPosition> positions, ViewCallback callback) {
-    for(auto pos: positions) {
-        fillArea(Tritium::Math::roundInt(pos.x), Tritium::Math::roundInt(pos.y), callback);
+void World::updateView(WorldPosition* positions, Size count, ViewCallback& callback) {
+    for(Size i = 0; i < count; i++) {
+        fillArea(Tritium::Math::roundInt(positions[i].x), Tritium::Math::roundInt(positions[i].y), callback);
     }
 }
 
-void World::fillArea(Int x, Int y, ViewCallback callback) {
+void World::fillArea(Int x, Int y, ViewCallback& callback) {
+    // TODO: Do this as a background task.
     for(Int column = x - drawDistance; column < x + drawDistance; column++) {
         for(Int row = y - drawDistance; row < y + drawDistance; row++) {
             callback.addChunk(fetchChunk(column, row));

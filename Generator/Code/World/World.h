@@ -19,14 +19,14 @@ struct World {
 
     /// Updates the generated world.
     /// @param positions A list of world locations that are currently active.
-    void update(std::initializer_list<WorldPosition> positions);
+    void update(WorldPosition* positions, Size count);
 
     /// Updates the rendering of the world for the provided viewpoints.
     /// Any missing chunks are generated around each position.
-    void updateView(std::initializer_list<WorldPosition> positions, ViewCallback callback);
+    void updateView(WorldPosition* positions, Size count, ViewCallback& callback);
 
 private:
-    void fillArea(Int x, Int y, ViewCallback callback);
+    void fillArea(Int x, Int y, ViewCallback& callback);
     Chunk& fetchChunk(Int x, Int y);
 
     /// Stores regions and their chunks.
