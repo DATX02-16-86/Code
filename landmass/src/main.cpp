@@ -226,6 +226,38 @@ void insertGridPoints(int chunkX, int chunkY, int pointDistance, std::vector<Poi
   }
 }
 
+void insertHexPoints(int chunkX, int chunkY, int pointDistance, std::vector<Point>& points) {
+  int stepsNeeded = CHUNK_SIZE / pointDistance;
+  for (int i = 0; i < stepsNeeded; ++i) {
+    for (int j = 0; j < stepsNeeded; ++j) {
+      int x = j * pointDistance;
+      int y = i * pointDistance;
+      auto offset = i & 1 ? 0 : (pointDistance / 2);
+      points.push_back(Point(CHUNK_SIZE * chunkX + x + offset, CHUNK_SIZE * chunkY + y));
+    }
+  }
+}
+
+void insertHexPointsWithRandomness(int chunkX, int chunkY, int pointDistance, int seed, std::vector<Point>& points) {
+  int stepsNeeded = CHUNK_SIZE / pointDistance;
+
+  std::random_device rd;
+  std::mt19937 gen(chunkSeed(chunkX, chunkY, seed));
+  int maxDistance = pointDistance / 3;
+  std::uniform_int_distribution<> dis(-maxDistance, maxDistance);
+
+  for (int i = 0; i < stepsNeeded; ++i) {
+    for (int j = 0; j < stepsNeeded; ++j) {
+      int x = j * pointDistance;
+      int y = i * pointDistance;
+      auto hexOffset = i & 1 ? 0 : (pointDistance / 2);
+      int xOffset = dis(gen);
+      int yOffset = dis(gen);
+      points.push_back(Point(CHUNK_SIZE * chunkX + x + hexOffset + xOffset, CHUNK_SIZE * chunkY + y + yOffset));
+    }
+  }
+}
+
 
 //Neighoburs to a chunk, inclouding the chunk itself
 std::vector<Chunk*> neighbourChunks(int x, int y, std::vector<Chunk>& in) {
@@ -259,9 +291,11 @@ int main(int argc, char* argv[])
     for (int x = chunk.x - 1; x <= chunk.x + 1; ++x) {
       for (int y = chunk.y - 1; y <= chunk.y + 1; ++y) {
         std::vector<Point> points;
-        insertRandomPoints(x, y, 300, 0, points);
-        relaxPoints(x, y, points, 5);
-        filterPointsOutsideChunks(x, y, points);
+        //insertRandomPoints(x, y, 300, 0, points);
+        //insertHexPoints(x, y, 100, points);
+        insertHexPointsWithRandomness(x, y, 10, 0, points);
+        //relaxPoints(x, y, points, 5);
+        //filterPointsOutsideChunks(x, y, points);
         chunk.points.reserve(chunk.points.size() + points.size());
         for (auto point : points) {
           chunk.points.push_back(point);
@@ -289,7 +323,8 @@ int main(int argc, char* argv[])
 
       for (auto& it : chunk.voronoi->vertices())
       {
-        auto height = Simplex::octave_noise(3, 0.002f, 0.5f, it.x(), it.y(), a) + 0.5;
+        auto height = (Simplex::octave_noise(3, 0.006f, 0.5f, it.x(), it.y(), a) + 0.5) * 0.3;
+        height += (Simplex::octave_noise(3, 0.003f, 0.5f, it.x(), it.y(), a) + 0.5) * 0.7;
         it.color(chunk.metadata.size());
         chunk.metadata.push_back({ height });
       }
