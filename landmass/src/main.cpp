@@ -24,9 +24,18 @@ typedef point_data<coordinate_type> Point;
 typedef voronoi_diagram<double> VD;
 
 
-struct meta {
+struct vertexmeta {
   double height;
 };
+
+struct cellmeta {
+  double avarageheight;
+};
+
+struct edgemeta {
+  bool isRiver;
+};
+
 
 struct Chunk {
   Chunk(int x, int y) : x(x), y(y), voronoi(std::make_shared<VD>()) {}
@@ -37,7 +46,9 @@ struct Chunk {
   std::vector<Point> points;
   std::vector<Point> neighbourPoints;
   std::shared_ptr<VD> voronoi;
-  std::vector<meta> metadata;
+  std::vector<vertexmeta> vertexmetas;
+  std::vector<cellmeta> cellmetas;
+  std::vector<edgemeta> edgemetas;
 };
 
 template <class T>
@@ -114,7 +125,7 @@ bool pointIsInChunk(int chunkX, int chunkY, Point p) {
     p.y() < (chunkY + 1) * CHUNK_SIZE;
 }
 
-std::pair<Optional<meta>, Optional<meta>> getEdgeMetas(const boost::polygon::voronoi_edge<double>& edge, const std::vector<meta>& metadata) {
+std::pair<Optional<vertexmeta>, Optional<vertexmeta>> getEdgeMetas(const boost::polygon::voronoi_edge<double>& edge, const std::vector<vertexmeta>& metadata) {
   if (edge.is_primary())
   {
     if (edge.is_finite())
@@ -143,31 +154,60 @@ void render() {
       glBegin(GL_POLYGON);
       double totalHeight = 0;
       int count = 0;
-      do {
-        edge = edge->next();
-        auto metas = getEdgeMetas(*edge, chunk.metadata);
 
-
-        if (metas.first.just) {
-          totalHeight += metas.first.value.height;
-          ++count;
-        }
-      } while (edge != it.incident_edge());
-
-      double avarageHeight = count > 0 ? totalHeight / count : 0;
+      auto meta = chunk.cellmetas[it.color()];
+      auto avarageHeight = meta.avarageheight;
 
       do {
         edge = edge->next();
         auto points = getEdgePoints(*edge, chunk.neighbourPoints);
 
-        if (avarageHeight > 0.4) {
-          color(avarageHeight);
-          glVertex2d(points.first.x(), points.first.y());
+        if (avarageHeight < 0.3) {
+          glColor3f(44.f / 255.f, 127.f / 255.f, 1);
+
         }
+        else if (avarageHeight < 0.43) {
+          glColor3f(246.f / 255.f, 223.f / 255.f, 179.f / 255.f);
+        }
+        else if (avarageHeight < 0.5) {
+          glColor3f(44.f / 255.f, 104.f / 255.f, 3.f / 255.f);
+        }
+        else if (avarageHeight < 0.6) {
+          glColor3f(53.f / 255.f, 114.f / 255.f, 13.f / 255.f);
+        }
+        else if (avarageHeight < 0.7) {
+          glColor3f(70.f / 255.f, 138.f / 255.f, 13.f / 255.f);
+        }
+        else if (avarageHeight < 0.8) {
+          glColor3f(80.f / 255.f, 166.f / 255.f, 21.f / 255.f);
+        }
+        else if (avarageHeight < 0.9) {
+          glColor3f(94.f / 255.f, 181.f / 255.f, 30.f / 255.f);
+        }
+        else {
+          color(avarageHeight);
+        }
+        glVertex2d(points.first.x(), points.first.y());
 
       } while (edge != it.incident_edge());
       glEnd();
     }
+    glLineWidth(30);
+    glBegin(GL_LINES);
+    glColor3f(44.f / 255.f, 127.f / 255.f, 1);
+    
+    for (auto& it : chunk.voronoi->edges())
+    {
+      if (chunk.edgemetas[it.color()].isRiver) {
+        auto points = getEdgePoints(it, chunk.neighbourPoints);
+        if (!pointIsInChunk(chunk.x, chunk.y, points.first)) {
+          continue;
+        }
+        glVertex2d(points.first.x(), points.first.y());
+        glVertex2d(points.second.x(), points.second.y());
+      }
+    }
+    glEnd();
   }
 
   
@@ -270,13 +310,44 @@ std::vector<Chunk*> neighbourChunks(int x, int y, std::vector<Chunk>& in) {
   return out;
 }
 
+void runRiver(Chunk& chunk, const boost::polygon::voronoi_edge<double>* edge) {
+  const boost::polygon::voronoi_edge<double>* it = edge->next();
+  const boost::polygon::voronoi_edge<double>* best = nullptr;
+  do {
+    it = it->next();
+    auto itMetas = getEdgeMetas(*it, chunk.vertexmetas);
+    auto edgeMetas = getEdgeMetas(*edge, chunk.vertexmetas);
+    if (itMetas.second.just && itMetas.second.value.height < edgeMetas.second.value.height) {
+      if (best == nullptr) {
+        best = it;
+      }
+      else {
+        auto bestMetas = getEdgeMetas(*it, chunk.vertexmetas);
+        if (itMetas.second.value.height < bestMetas.second.value.height) {
+          best = it;
+        }
+      }
+    }
+  } while (it != edge);
+
+  if (best != nullptr) {
+    auto& meta = chunk.edgemetas[best->color()];
+    if (meta.isRiver) {
+      // Early return if it catches an edge already in a river
+      return;
+    }
+    meta.isRiver = true;
+    runRiver(chunk, best);
+  }
+};
+
 int main(int argc, char* argv[])
 {
 
-  int minX = 0;
-  int maxX = 1;
-  int minY = 0;
-  int maxY = 1;
+  int minX = -1;
+  int maxX = 2;
+  int minY = -1;
+  int maxY = 2;
 
   for (int x = minX - 1; x <= maxX + 1; ++x) {
     for (int y = minY - 1; y <= maxY + 1; ++y) {
@@ -291,9 +362,9 @@ int main(int argc, char* argv[])
     for (int x = chunk.x - 1; x <= chunk.x + 1; ++x) {
       for (int y = chunk.y - 1; y <= chunk.y + 1; ++y) {
         std::vector<Point> points;
-        //insertRandomPoints(x, y, 300, 0, points);
-        //insertHexPoints(x, y, 100, points);
-        insertHexPointsWithRandomness(x, y, 10, 0, points);
+        //insertRandomPoints(x, y, 700, 0, points);
+        //insertHexPoints(x, y, 10, points);
+        insertHexPointsWithRandomness(x, y, 35, 0, points);
         //relaxPoints(x, y, points, 5);
         //filterPointsOutsideChunks(x, y, points);
         chunk.points.reserve(chunk.points.size() + points.size());
@@ -321,12 +392,76 @@ int main(int argc, char* argv[])
 
       construct_voronoi(chunk.neighbourPoints.begin(), chunk.neighbourPoints.end(), &*chunk.voronoi);
 
+
+      // Calculate height of vertex
       for (auto& it : chunk.voronoi->vertices())
       {
-        auto height = (Simplex::octave_noise(3, 0.006f, 0.5f, it.x(), it.y(), a) + 0.5) * 0.3;
-        height += (Simplex::octave_noise(3, 0.003f, 0.5f, it.x(), it.y(), a) + 0.5) * 0.7;
-        it.color(chunk.metadata.size());
-        chunk.metadata.push_back({ height });
+        auto height = (Simplex::octave_noise(5, 0.003f, 0.5f, it.x(), it.y(), a) + 0.2);
+        //height += (Simplex::octave_noise(3, 0.010f, 0.5f, it.x(), it.y(), a) + 0.5) * 0.7;
+        //auto height = Simplex::octave_noise(3, 0.002f, 0.5f, it.x(), it.y(), a) + 0.5;
+        it.color(chunk.vertexmetas.size());
+        chunk.vertexmetas.push_back({ height });
+      }
+
+
+      // Calculate avarage height of cell
+      for (auto& it : chunk.voronoi->cells()) {
+        if (!pointIsInChunk(chunk.x, chunk.y, chunk.neighbourPoints[it.source_index()])) {
+          continue;
+        }
+        const voronoi_edge<double>* edge = it.incident_edge();
+        double totalHeight = 0;
+        int count = 0;
+        do {
+          edge = edge->next();
+          auto metas = getEdgeMetas(*edge, chunk.vertexmetas);
+
+
+          if (metas.first.just) {
+            totalHeight += metas.first.value.height;
+            ++count;
+          }
+        } while (edge != it.incident_edge());
+
+        it.color(chunk.cellmetas.size());
+
+        double avarageHeight = count > 0 ? totalHeight / count : 0;
+        chunk.cellmetas.push_back({ avarageHeight });
+      }
+
+      // Give each edge an index
+      for (auto& it : chunk.voronoi->edges())
+      {
+        it.color(chunk.edgemetas.size());
+        chunk.edgemetas.push_back({ });
+      }
+
+      // Add rivers
+      std::vector<int> sourceCandidates;
+      auto& vertices = chunk.voronoi->vertices();
+      for (int i = 0; i < vertices.size(); ++i) {
+        auto height = chunk.vertexmetas[vertices[i].color()].height;
+        if (height > 0.8 && height < 0.9) {
+          sourceCandidates.push_back(i);
+        }
+      }
+
+      std::vector<int> sources;
+      for (int i : sourceCandidates) {
+        auto& vertex = vertices[i];
+        if (!std::any_of(sources.begin(), sources.end(), [&vertices, &vertex](int j) {return vertices[j].x() <= vertex.x() + 100
+                                                                                        && vertices[j].x() >= vertex.x() - 100
+                                                                                        && vertices[j].y() <= vertex.y() + 100
+                                                                                        && vertices[j].y() >= vertex.y() - 100; })) {
+          sources.push_back(i);
+        }
+      }
+
+      for (int i: sources) {
+        auto& vertex = vertices[i];
+        {
+          runRiver(chunk, vertex.incident_edge());
+        }
       }
     }
   }
@@ -337,7 +472,7 @@ int main(int argc, char* argv[])
   glutInitDisplayMode(GLUT_SINGLE);
   glutInitWindowSize(width, height);
   glutInitWindowPosition(100, 100);
-  glutCreateWindow("Hello world :D");
+  glutCreateWindow("Compelling Landscape");
   glViewport(0, 0, width, height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
