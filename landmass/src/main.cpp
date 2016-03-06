@@ -400,15 +400,20 @@ int main(int argc, char* argv[])
 
       construct_voronoi(chunk.neighbourPoints.begin(), chunk.neighbourPoints.end(), &*chunk.voronoi);
 
+      double groupA = (Simplex::octave_noise(5, 0.00003f, 0.5f, chunk.x, chunk.y, 0, a) + 1.0);
+      double groupB = (Simplex::octave_noise(5, 0.00003f, 0.5f, chunk.x, chunk.y, 1000, a) + 1.0) * 0.8;
+      double groupC = (Simplex::octave_noise(5, 0.00003f, 0.5f, chunk.x, chunk.y, 2000, a) + 1.0) * 0.2;
+      double sum = groupA + groupB + groupC;
+      double multiplier = 1 / (sum > 0.2 ? sum : 0.2);
 
       // Calculate height of vertex
       for (auto& it : chunk.voronoi->vertices())
       {
-        auto height = (Simplex::octave_noise(5, 0.003f, 0.5f, it.x(), it.y(), a) + 0.2);
-        //height += (Simplex::octave_noise(3, 0.010f, 0.5f, it.x(), it.y(), a) + 0.5) * 0.7;
-        //auto height = Simplex::octave_noise(3, 0.002f, 0.5f, it.x(), it.y(), a) + 0.5;
+        double heightA = (Simplex::octave_noise(5, 0.003f, 0.5f, it.x(), it.y(), a) + 0.2);
+        double heightB = Simplex::octave_noise(3, 0.002f, 0.5f, it.x(), it.y(), a) + 0.5;
+        double heightC = 0.4;
         it.color(chunk.vertexmetas.size());
-        chunk.vertexmetas.push_back({ height });
+        chunk.vertexmetas.push_back({ (heightA * groupA + heightB * groupB + heightC * groupC) * multiplier });
       }
 
 
