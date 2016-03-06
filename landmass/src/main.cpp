@@ -310,25 +310,33 @@ std::vector<Chunk*> neighbourChunks(int x, int y, std::vector<Chunk>& in) {
   return out;
 }
 
-void runRiver(Chunk& chunk, const boost::polygon::voronoi_edge<double>* edge) {
-  const boost::polygon::voronoi_edge<double>* it = edge->next();
+
+// Sets isRiver recursively and greedily for the edge that has the most slope.
+// incidentEdge is an incident edge of the vertex that is the water source
+// which means that rot_next will be used to check all edges originating from that point.
+void runRiver(Chunk& chunk, const boost::polygon::voronoi_edge<double>* incidentEdge) {
+  const boost::polygon::voronoi_edge<double>* it = incidentEdge;
+  auto edgeMetas = getEdgeMetas(*incidentEdge, chunk.vertexmetas);
+  double vertexHeight = edgeMetas.first.value.height;
+  double bestHeight;
+
   const boost::polygon::voronoi_edge<double>* best = nullptr;
   do {
-    it = it->next();
+    it = it->rot_next();
     auto itMetas = getEdgeMetas(*it, chunk.vertexmetas);
-    auto edgeMetas = getEdgeMetas(*edge, chunk.vertexmetas);
-    if (itMetas.second.just && itMetas.second.value.height < edgeMetas.second.value.height) {
+    
+    // Is the end point lower than the vertex height?
+    if (itMetas.second.just && itMetas.second.value.height < vertexHeight) {
       if (best == nullptr) {
         best = it;
+        bestHeight = itMetas.second.value.height;
       }
-      else {
-        auto bestMetas = getEdgeMetas(*it, chunk.vertexmetas);
-        if (itMetas.second.value.height < bestMetas.second.value.height) {
-          best = it;
-        }
+      else if (itMetas.second.value.height < bestHeight) {
+        best = it;
+        bestHeight = itMetas.second.value.height;
       }
     }
-  } while (it != edge);
+  } while (it != incidentEdge);
 
   if (best != nullptr) {
     auto& meta = chunk.edgemetas[best->color()];
@@ -337,7 +345,7 @@ void runRiver(Chunk& chunk, const boost::polygon::voronoi_edge<double>* edge) {
       return;
     }
     meta.isRiver = true;
-    runRiver(chunk, best);
+    runRiver(chunk, best->next());
   }
 };
 
