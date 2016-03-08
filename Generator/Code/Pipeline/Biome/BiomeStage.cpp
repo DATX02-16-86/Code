@@ -17,7 +17,7 @@ static std::vector<GenerateChunk> registeredBiomes;
 
 BiomeId registerBiome(GenerateChunk generateChunk) {
     registeredBiomes.push_back(generateChunk);
-    return (BiomeId)registeredBiomes.size();
+    return (BiomeId)registeredBiomes.size() - 1;
 }
 
 GenerateChunk findBiome(BiomeId id) {

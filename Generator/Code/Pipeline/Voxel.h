@@ -64,9 +64,9 @@ struct Chunk {
     /// Calls the provided builder for each voxel in this area. The mapper should return a voxel for that location.
     template<class F> void build(F&& f) {
         auto step = Size(1) << area.lod;
-        auto x = area.x;
-        auto y = area.y;
-        auto z = area.z;
+        auto x = area.x * area.width;
+        auto y = area.y * area.height;
+        auto z = area.z * area.depth;
         Size height = area.height;
         Size width = area.width;
         Size depth = area.depth;

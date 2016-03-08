@@ -17,7 +17,7 @@ include_directories(../../Tritium/Code/Core)
 include_directories(../../Tritium/Code)
 include_directories(../../Libraries)
 
-link_directories(../../Tritium/Core ../../Tritium/Bin/Debug)
+link_directories(../../Tritium/Bin/Release)
 
 add_library(Generator
     Geometry/Geometry.cpp
@@ -49,4 +49,4 @@ add_library(Generator
     World/WorldManager.cpp)
 
 add_executable(GeneratorTest Tests/Pipeline.cpp Tests/Matrix.cpp)
-target_link_libraries(GeneratorTest TritiumCore Generator)
+target_link_libraries(GeneratorTest Generator TritiumCore)
