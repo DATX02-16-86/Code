@@ -1,4 +1,5 @@
 #include "Biomes.h"
+#include "..\noise\simplex\simplex.h"
 
 namespace generator {
 
@@ -6,27 +7,37 @@ namespace generator {
 
 	void WeirdBiome::fillChunk(Chunk& chunk, Pipeline& pipeline) {
 		auto baseHeight = pipeline.data.get(BaseHeight);
+		int weirdnessHeight = 20;
+
 		chunk.build([=](Voxel& current, Int x, Int y, Int z) -> Voxel {
 			Size height = 0;
 			if (baseHeight) height = baseHeight->get(x, y, z);
 
 			U16 blockType = 0;
 
-			int weirdnessHeight = 20;
-			float desnityThreshold;
 			// under a certain height it is solid
 			if (z < height - weirdnessHeight) blockType = 1;
-			else if (z <= height + weirdnessHeight) {
+			else {
 				//calculate density with simplex noise
-				float density = Simplex::octave_noise(8, 0.5f, 0.5f, x, y, z);
+				float density = Simplex::octave_noise(8, 0.005f, 0.5f, x, y, z);
 
-				//scale with z
-				density +=  density - (z - (height + weirdnessHeight)) / (2*weirdnessHeight);
+				//scale density depending on height
+				float scale = 1.f;
+
+				//decrease density with z over a certain height
+				if (z > height + weirdnessHeight) {
+					scale = (z - height) / ((float)height);
+					scale = scale * scale;
+				}
+				else if (z < height) {
+					//increase density 
+					scale = (2 * ((float)z - height / 2) / height);
+				}
+				density -= scale;
 
 				//determine whether its solid or air
-				if (density > 0.6f) blockType = 1;
+				if (density > 0.3f) blockType = 1;
 			}
-			
 			return Voxel{ blockType };
 		});
 	}

@@ -1,4 +1,3 @@
-
 #include "BiomeStage.h"
 
 namespace generator {
