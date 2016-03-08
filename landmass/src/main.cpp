@@ -353,7 +353,7 @@ int main(int argc, char* argv[])
 {
 
   int minX = -1;
-  int maxX = 2;
+  int maxX = 4;
   int minY = -1;
   int maxY = 2;
 
@@ -364,7 +364,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  NoiseContext a(3);
+  NoiseContext a(120);
 
   for (auto& chunk: chunks) {
     for (int x = chunk.x - 1; x <= chunk.x + 1; ++x) {
@@ -372,7 +372,7 @@ int main(int argc, char* argv[])
         std::vector<Point> points;
         //insertRandomPoints(x, y, 700, 0, points);
         //insertHexPoints(x, y, 10, points);
-        insertHexPointsWithRandomness(x, y, 35, 0, points);
+        insertHexPointsWithRandomness(x, y, 10, 0, points);
         //relaxPoints(x, y, points, 5);
         //filterPointsOutsideChunks(x, y, points);
         chunk.points.reserve(chunk.points.size() + points.size());
@@ -400,18 +400,20 @@ int main(int argc, char* argv[])
 
       construct_voronoi(chunk.neighbourPoints.begin(), chunk.neighbourPoints.end(), &*chunk.voronoi);
 
-      double groupA = (Simplex::octave_noise(5, 0.00003f, 0.5f, chunk.x, chunk.y, 0, a) + 1.0);
-      double groupB = (Simplex::octave_noise(5, 0.00003f, 0.5f, chunk.x, chunk.y, 1000, a) + 1.0) * 0.8;
-      double groupC = (Simplex::octave_noise(5, 0.00003f, 0.5f, chunk.x, chunk.y, 2000, a) + 1.0) * 0.2;
-      double sum = groupA + groupB + groupC;
-      double multiplier = 1 / (sum > 0.2 ? sum : 0.2);
-
       // Calculate height of vertex
       for (auto& it : chunk.voronoi->vertices())
       {
+        double groupA = (Simplex::octave_noise(1, 0.0003f, 0.5f, it.x(), it.y(), 0, a) + 1.0);
+        double groupB = (Simplex::octave_noise(1, 0.0003f, 0.5f, it.x(), it.y(), 1000, a) + 1.0);
+        double groupC = (Simplex::octave_noise(1, 0.0003f, 0.5f, it.x(), it.y(), 2000, a) + 1.0) * 2;
+        double sum = groupA + groupB + groupC;
+        double multiplier = 1 / (sum > 0.2 ? sum : 0.2);
+
+        double persistanceB = (Simplex::octave_noise(1, 0.0003f, 0.5f, it.x(), it.y(), 2000, a) + 1.0) * 0.15 + 0.5;
+
         double heightA = (Simplex::octave_noise(5, 0.003f, 0.5f, it.x(), it.y(), a) + 0.2);
-        double heightB = Simplex::octave_noise(3, 0.002f, 0.5f, it.x(), it.y(), a) + 0.5;
-        double heightC = 0.4;
+        double heightB = Simplex::octave_noise(3, 0.0025f, persistanceB, it.x(), it.y(), a) + 0.25;
+        double heightC = Simplex::octave_noise(3, 0.00002f, 0.5f, it.x(), it.y(), a) + 0.5;
         it.color(chunk.vertexmetas.size());
         chunk.vertexmetas.push_back({ (heightA * groupA + heightB * groupB + heightC * groupC) * multiplier });
       }
@@ -480,7 +482,7 @@ int main(int argc, char* argv[])
   }
 
 
-  int width = 800, height = 800;
+  int width = 1600, height = 800;
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_SINGLE);
   glutInitWindowSize(width, height);
