@@ -33,6 +33,8 @@ add_library(Generator
 
     Pipeline/Biome/BiomeStage.h
     Pipeline/Biome/BiomeStage.cpp
+    Pipeline/Biome/Biomes.h
+    Pipeline/Biome/Biomes.cpp
 
     Pipeline/Height/HeightStage.h
     Pipeline/Height/HeightStage.cpp
