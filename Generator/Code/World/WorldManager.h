@@ -12,7 +12,7 @@ struct WorldPosition {
 };
 
 struct Region {
-    Chunk** chunks;
+    Chunk** chunks = nullptr;
 };
 
 struct WorldManager {

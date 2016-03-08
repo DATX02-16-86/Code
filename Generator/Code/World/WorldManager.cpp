@@ -25,7 +25,7 @@ Region& WorldManager::regionAt(Int x, Int y) {
 
 Chunk& WorldManager::at(Int x, Int y, Pipeline& pipeline) {
     auto& region = regionAt(x, y);
-    auto index = Size(1) << (regionSize * indexInRegion(y) + indexInRegion(x));
+    auto index = (Size(1) << regionSize) * indexInRegion(y) + indexInRegion(x);
     if(region.chunks[index] == nullptr) {
         auto chunkWidth = U16(1) << chunkSize;
         Area area {(I32)x, (I32)y, 0, (U16)chunkWidth, (U16)chunkWidth, U16(1 << chunkHeight), 0};
