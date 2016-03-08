@@ -49,7 +49,7 @@ template<class V> struct ChunkGeometry {
     }
 
 private:
-    mutable U16 refCount = 0;
+    mutable U16 refCount = 1;
 };
 
 ChunkGeometry<CubeVoxelVertex> buildCubeGeometry(const Chunk& chunk);
