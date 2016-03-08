@@ -462,7 +462,7 @@ float Simplex::octave_noise(int octaves, float freq, float persistence, float x,
 	for (int i = 0; i < octaves; i++)
 	{
 		// add a layer of noise
-		sum += noise(x + freq, y + freq, z + freq, nc) * amplitude;
+		sum += noise(x * freq, y * freq, z * freq, nc) * amplitude;
 
 		// double frequency
 		freq *= 2;
