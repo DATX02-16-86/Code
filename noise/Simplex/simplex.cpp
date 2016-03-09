@@ -35,6 +35,7 @@
 
 #include "simplex.h"
 #include <stdlib.h>
+#include <math.h>
 
 #define FASTFLOOR(x) ( ((x)>0) ? ((int)x) : (((int)x)-1) )
 
@@ -462,7 +463,7 @@ float Simplex::octave_noise(int octaves, float freq, float persistence, float x,
 	for (int i = 0; i < octaves; i++)
 	{
 		// add a layer of noise
-		sum += noise(x + freq, y + freq, z + freq, nc) * amplitude;
+		sum += noise(x * freq, y * freq, z * freq, nc) * amplitude;
 
 		// double frequency
 		freq *= 2;
@@ -470,6 +471,52 @@ float Simplex::octave_noise(int octaves, float freq, float persistence, float x,
 		max += amplitude;
 		// get next amplitude
 		amplitude *= persistence;
+	}
+
+	return sum / max;
+}
+
+float Simplex::turbulence(int octaves, float freq, float gain, float x, float y, NoiseContext& nc)
+{
+	float max = 0;
+	float sum = 0;
+	float amplitude = 1;
+
+	for (int i = 0; i < octaves; i++)
+	{
+		// add a layer of noise
+		float signal = (1 - fabs(noise(x * freq, y * freq, nc)));
+		signal = signal * signal;
+		sum += signal * amplitude * pow(freq,-gain);
+		// increase normalization
+		max += amplitude * pow(freq, -gain);
+		// double frequency
+		freq *= 2;
+		// get next amplitude
+		amplitude = signal * gain;
+	}
+
+	return sum/max;
+}
+
+float Simplex::turbulence(int octaves, float freq, float gain, float x, float y, float z, NoiseContext& nc)
+{
+	float max = 0;
+	float sum = 0;
+	float amplitude = 1;
+	
+	for (int i = 0; i < octaves; i++)
+	{
+		// add a layer of noise
+		float signal = (1 - fabs(noise(x * freq, y * freq, z * freq, nc)));
+		signal = signal * signal;
+		sum += signal * amplitude * pow(freq, -gain);
+		// increase normalization
+		max += amplitude * pow(freq, -gain);
+		// double frequency
+		freq *= 2;
+		// get next amplitude
+		amplitude = signal * gain;
 	}
 
 	return sum / max;
