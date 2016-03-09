@@ -3,7 +3,6 @@
 #define GENERATOR_MATRIX_H
 
 #include "Base.h"
-#include <Math/Math.h>
 #include <stdlib.h>
 
 namespace generator {

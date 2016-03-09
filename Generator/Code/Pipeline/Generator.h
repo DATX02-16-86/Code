@@ -2,13 +2,14 @@
 #ifndef GENERATOR_GENERATOR_H
 #define GENERATOR_GENERATOR_H
 
-#include <Base.h>
 #include <vector>
-#include "Matrix.h"
 #include <memory>
 #ifndef _WIN32
 #include <alloca.h>
 #endif //!_WIN32
+
+#include <Base.h>
+#include "Matrix.h"
 
 namespace generator {
 

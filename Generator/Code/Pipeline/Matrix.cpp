@@ -1,6 +1,6 @@
+#include <memory>
 #include "Matrix.h"
 #include <Math/Math.h>
-#include <string>
 
 namespace generator {
 

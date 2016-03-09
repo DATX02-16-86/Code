@@ -1,6 +1,6 @@
 
-#include "../Pipeline/Matrix.h"
 #include <catch.hpp>
+#include "../Pipeline/Matrix.h"
 
 using namespace generator;
 
