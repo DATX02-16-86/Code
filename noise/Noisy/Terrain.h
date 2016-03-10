@@ -23,6 +23,8 @@ public:
 
 	void generate3DComposite(bool* density, int height);
 
+	void generate3DCaverns(bool* density, int height);
+
 private:
 	NoiseContext nc;
 	int chunks;
