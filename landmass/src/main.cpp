@@ -6,6 +6,7 @@
 #include <random>
 #include <algorithm>
 #include <memory>
+#include <stack>
 
 #include <boost/polygon/voronoi.hpp>
 
@@ -23,13 +24,19 @@ typedef double coordinate_type;
 typedef point_data<coordinate_type> Point;
 typedef voronoi_diagram<double> VD;
 
+enum class WaterType { land, sea, lake, river};
+enum class Biome { sea, lake, beach, land};
 
 struct vertexmeta {
   double height;
+  WaterType wt;
+  double moisture;
 };
 
 struct cellmeta {
   double avarageheight;
+  Biome biome;
+  double avarageMoisture;
 };
 
 struct edgemeta {
@@ -39,7 +46,6 @@ struct edgemeta {
 
 struct Chunk {
   Chunk(int x, int y) : x(x), y(y), voronoi(std::make_shared<VD>()) {}
-  //Chunk(const Chunk& c): x(c.x), y(c.y), points(c.points), voronoi(c.voronoi), metadata(c.metadata) {}
 
   int x;
   int y;
@@ -157,17 +163,26 @@ void render() {
 
       auto meta = chunk.cellmetas[it.color()];
       auto avarageHeight = meta.avarageheight;
+      double avarageMoisture = meta.avarageMoisture;
 
       do {
         edge = edge->next();
         auto points = getEdgePoints(*edge, chunk.neighbourPoints);
 
-        if (avarageHeight < 0.3) {
-          glColor3f(44.f / 255.f, 127.f / 255.f, 1);
+
+        if (meta.biome == Biome::lake) {
+          glColor3f(40.f / 255.f, 120.f / 255.f, 0.8);
 
         }
-        else if (avarageHeight < 0.43) {
+        else if (meta.biome == Biome::sea) {
+          glColor3f(35.f / 255.f, 115.f / 255.f, 0.5);
+
+        }
+        else if (meta.biome == Biome::beach) {
           glColor3f(246.f / 255.f, 223.f / 255.f, 179.f / 255.f);
+        }
+        else if (avarageHeight < 0.5 && avarageMoisture < 0.4) {
+          glColor3d(210 / 255.f, 180 / 255.f, 140 / 255.f);
         }
         else if (avarageHeight < 0.5) {
           glColor3f(44.f / 255.f, 104.f / 255.f, 3.f / 255.f);
@@ -194,7 +209,7 @@ void render() {
     }
     glLineWidth(30);
     glBegin(GL_LINES);
-    glColor3f(44.f / 255.f, 127.f / 255.f, 1);
+    glColor3f(60.f / 255.f, 140.f / 255.f, 1);
     
     for (auto& it : chunk.voronoi->edges())
     {
@@ -303,7 +318,7 @@ void insertHexPointsWithRandomness(int chunkX, int chunkY, int pointDistance, in
 std::vector<Chunk*> neighbourChunks(int x, int y, std::vector<Chunk>& in) {
   std::vector<Chunk*> out;
   for (auto& chunk: in) {
-    if (chunk.x >= x - 1 && chunk.x <= x + 1 && chunk.y >= y - 1 && chunk.y <= y + 1) {
+    if (chunk.x >= x - 1 && chunk.x <= x + 1 && chunk.y >= y - 1 && chunk.y <= y + 1 && !(chunk.y == y && chunk.x == x)) {
       out.push_back(&chunk);
     }
   }
@@ -318,7 +333,7 @@ void runRiver(Chunk& chunk, const boost::polygon::voronoi_edge<double>* incident
   const boost::polygon::voronoi_edge<double>* it = incidentEdge;
   auto edgeMetas = getEdgeMetas(*incidentEdge, chunk.vertexmetas);
   double vertexHeight = edgeMetas.first.value.height;
-  double bestHeight;
+  auto bestMetas = edgeMetas;
 
   const boost::polygon::voronoi_edge<double>* best = nullptr;
   do {
@@ -327,27 +342,46 @@ void runRiver(Chunk& chunk, const boost::polygon::voronoi_edge<double>* incident
     
     // Is the end point lower than the vertex height?
     if (itMetas.second.just && itMetas.second.value.height < vertexHeight) {
-      if (best == nullptr) {
+      if (best == nullptr || itMetas.second.value.height < bestMetas.second.value.height) {
         best = it;
-        bestHeight = itMetas.second.value.height;
-      }
-      else if (itMetas.second.value.height < bestHeight) {
-        best = it;
-        bestHeight = itMetas.second.value.height;
+        bestMetas = itMetas;
       }
     }
   } while (it != incidentEdge);
 
   if (best != nullptr) {
     auto& meta = chunk.edgemetas[best->color()];
+    bool firstIsLand = bestMetas.first.just && bestMetas.first.value.wt == WaterType::land;
+    bool secondIsLand = bestMetas.second.just && bestMetas.second.value.wt == WaterType::land;
+
+    if (firstIsLand) {
+      bestMetas.first.value.wt = WaterType::river;
+      bestMetas.first.value.moisture = 1;
+    }
+    if (secondIsLand) {
+      bestMetas.second.value.wt = WaterType::river;
+      bestMetas.first.value.moisture = 1;
+    }
+
     if (meta.isRiver) {
       // Early return if it catches an edge already in a river
       return;
     }
     meta.isRiver = true;
-    runRiver(chunk, best->next());
+    if (!secondIsLand) {
+      // Don't run rivers into water
+      return;
+    }
+    runRiver(chunk, best->vertex1()->incident_edge());
   }
 };
+
+bool calculationWorthy(double x, double y, const Chunk &chunk) {
+  return x >= (chunk.x - 0.3) * CHUNK_SIZE &&
+    x < (chunk.x + 1.3) * CHUNK_SIZE &&
+    y >= (chunk.y - 0.3) * CHUNK_SIZE &&
+    y < (chunk.y + 1.3) * CHUNK_SIZE;
+}
 
 int main(int argc, char* argv[])
 {
@@ -386,63 +420,105 @@ int main(int argc, char* argv[])
   for (auto& chunk : chunks) {
     if (chunk.x >= minX && chunk.x <= maxX && chunk.y >= minY && chunk.y <= maxY) {
       auto neighbours = neighbourChunks(chunk.x, chunk.y, chunks);
-      int size = 0;
+      int size = chunk.points.size();
       for (auto chunk : neighbours) {
         size += chunk->points.size();
       }
 
       chunk.neighbourPoints.reserve(size);
+      for (Point point : chunk.points) {
+        chunk.neighbourPoints.push_back(point);
+      }
+
       for (auto& neighbour : neighbours) {
         for (Point point : neighbour->points) {
-          chunk.neighbourPoints.push_back(point);
+          if(calculationWorthy(point.x(), point.y(), chunk)) {
+            chunk.neighbourPoints.push_back(point);
+          }
         }
       }
 
       construct_voronoi(chunk.neighbourPoints.begin(), chunk.neighbourPoints.end(), &*chunk.voronoi);
+      std::vector<bool> checkForLake;
+      std::vector<int> colorToIndex;
+
+      const auto& vertices = chunk.voronoi->vertices();
 
       // Calculate height of vertex
-      for (auto& it : chunk.voronoi->vertices())
+      for (int i = 0; i < vertices.size(); ++i)
       {
-        double groupA = (Simplex::octave_noise(1, 0.0003f, 0.5f, it.x(), it.y(), 0, a) + 1.0);
-        double groupB = (Simplex::octave_noise(1, 0.0003f, 0.5f, it.x(), it.y(), 1000, a) + 1.0);
-        double groupC = (Simplex::octave_noise(1, 0.0003f, 0.5f, it.x(), it.y(), 2000, a) + 1.0) * 2;
+        auto& it = vertices[i];
+        if (!calculationWorthy(it.x(), it.y(), chunk)) {
+          continue;
+        }
+        double groupA = (Simplex::octave_noise(1, 0.0003f, 0.5f, it.x(), it.y(), 0, a) + 1.0) * 2;
+        double groupB = (Simplex::octave_noise(1, 0.0003f, 0.5f, it.x(), it.y(), 1000, a) + 1.0) * 0;
+        double groupC = (Simplex::octave_noise(1, 0.0003f, 0.5f, it.x(), it.y(), 2000, a) + 1.0) * 0;
         double sum = groupA + groupB + groupC;
         double multiplier = 1 / (sum > 0.2 ? sum : 0.2);
 
         double persistanceB = (Simplex::octave_noise(1, 0.0003f, 0.5f, it.x(), it.y(), 2000, a) + 1.0) * 0.15 + 0.5;
 
-        double heightA = (Simplex::octave_noise(5, 0.003f, 0.5f, it.x(), it.y(), a) + 0.2);
+        double heightA = (Simplex::octave_noise(5, 0.003f, 0.5f, it.x(), it.y(), a) + 0.5);
         double heightB = Simplex::octave_noise(3, 0.0025f, persistanceB, it.x(), it.y(), a) + 0.25;
         double heightC = Simplex::octave_noise(3, 0.00002f, 0.5f, it.x(), it.y(), a) + 0.5;
         it.color(chunk.vertexmetas.size());
-        chunk.vertexmetas.push_back({ (heightA * groupA + heightB * groupB + heightC * groupC) * multiplier });
-      }
-
-
-      // Calculate avarage height of cell
-      for (auto& it : chunk.voronoi->cells()) {
-        if (!pointIsInChunk(chunk.x, chunk.y, chunk.neighbourPoints[it.source_index()])) {
-          continue;
+        double height = (heightA * groupA + heightB * groupB + heightC * groupC) * multiplier;
+        WaterType wt = WaterType::land;
+        bool isWater = height < 0.3;
+        double moisture = 0;
+        if (isWater) {
+          wt = WaterType::sea;
+          moisture = 1;
         }
-        const voronoi_edge<double>* edge = it.incident_edge();
-        double totalHeight = 0;
-        int count = 0;
-        do {
-          edge = edge->next();
-          auto metas = getEdgeMetas(*edge, chunk.vertexmetas);
-
-
-          if (metas.first.just) {
-            totalHeight += metas.first.value.height;
-            ++count;
-          }
-        } while (edge != it.incident_edge());
-
-        it.color(chunk.cellmetas.size());
-
-        double avarageHeight = count > 0 ? totalHeight / count : 0;
-        chunk.cellmetas.push_back({ avarageHeight });
+        checkForLake.push_back(isWater);
+        colorToIndex.push_back(i);
+        chunk.vertexmetas.push_back({ height, wt, moisture });
       }
+
+      //Has to be small for now since chunks aren't handled well
+      int LAKE_SIZE = 200;
+
+      // Convert small seas to lakes
+      for (int i = 0; i < checkForLake.size(); ++i) {
+        if (checkForLake[i]) {
+          auto& vertex = vertices[colorToIndex[i]];
+          std::stack<const boost::polygon::voronoi_edge<double>*> stack;
+          std::vector<const boost::polygon::voronoi_vertex<double>*> visitedVerts;
+          stack.push(vertex.incident_edge());
+          // Whole stack has to be emptied so we don't start work on connected water twice
+          while (!stack.empty()) {
+            auto* startedge = stack.top();
+            auto* it = startedge;
+            stack.pop();
+            do {
+              it = it->rot_next();
+              if (it->is_primary())
+              {
+                if (it->is_finite())
+                {
+                  auto* itVert = it->vertex1();
+                  int itVertIndex = itVert->color();
+                  if (chunk.vertexmetas[itVertIndex].wt == WaterType::sea && checkForLake[itVertIndex]) {
+                    checkForLake[itVertIndex] = false;
+                    stack.push(itVert->incident_edge());
+                    visitedVerts.push_back(itVert);
+                  }
+                }
+              }
+            } while (it != startedge);
+          }
+          
+          if (visitedVerts.size() <= LAKE_SIZE) {
+            for (auto* vert : visitedVerts) {
+              chunk.vertexmetas[vert->color()].wt = WaterType::lake;
+            }
+          }
+
+        }
+      }
+
+      
 
       // Give each edge an index
       for (auto& it : chunk.voronoi->edges())
@@ -453,9 +529,12 @@ int main(int argc, char* argv[])
 
       // Add rivers
       std::vector<int> sourceCandidates;
-      auto& vertices = chunk.voronoi->vertices();
       for (int i = 0; i < vertices.size(); ++i) {
-        auto height = chunk.vertexmetas[vertices[i].color()].height;
+        auto& vertex = vertices[i];
+        if (!pointIsInChunk(chunk.x, chunk.y, { vertex.x(), vertex.y() })) {
+          continue;
+        }
+        auto height = chunk.vertexmetas[vertex.color()].height;
         if (height > 0.8 && height < 0.9) {
           sourceCandidates.push_back(i);
         }
@@ -477,6 +556,107 @@ int main(int argc, char* argv[])
         {
           runRiver(chunk, vertex.incident_edge());
         }
+      }
+
+      // Spread moisture
+      std::stack<const boost::polygon::voronoi_vertex<double>*> stack;
+      for (auto& it : vertices) {
+        auto wt = chunk.vertexmetas[it.color()].wt;
+        if (wt == WaterType::lake || wt == WaterType::river) {
+          stack.push(&it);
+        }
+      }
+
+      while (!stack.empty()) {
+        auto vert = stack.top();
+        stack.pop();
+        auto startedge = vert->incident_edge();
+        auto it = startedge;
+
+        double vertMoist = chunk.vertexmetas[vert->color()].moisture;
+
+        do {
+          it = it->rot_next();
+          if (it->is_primary())
+          {
+            if (it->is_finite())
+            {
+              auto* itVert = it->vertex1();
+              int itVertIndex = itVert->color();
+              auto& meta = chunk.vertexmetas[itVertIndex];
+              double newMoist = vertMoist * 0.9;
+              if (meta.moisture < newMoist) {
+                meta.moisture = newMoist;
+                stack.push(itVert);
+              }
+            }
+          }
+        } while (it != startedge);
+
+      }
+
+      // Calculate avarage height etc. for cell
+      for (auto& it : chunk.voronoi->cells()) {
+        if (!pointIsInChunk(chunk.x, chunk.y, chunk.neighbourPoints[it.source_index()])) {
+          continue;
+        }
+        const voronoi_edge<double>* edge = it.incident_edge();
+        double totalHeight = 0;
+        double totalMoisture = 0;
+        int count = 0;
+        int land = 0;
+        int sea = 0;
+        int lake = 0;
+        do {
+          edge = edge->next();
+          auto metas = getEdgeMetas(*edge, chunk.vertexmetas);
+
+          if (metas.first.just) {
+            auto& vertex = metas.first.value;
+            totalHeight += vertex.height;
+            totalMoisture += vertex.moisture;
+            
+            //Count WaterTypes
+            switch (vertex.wt)
+            {
+            case WaterType::land:
+              land++;
+              break;
+            case WaterType::sea:
+              sea++;
+              break;
+            case WaterType::lake:
+              lake++;
+              break;
+            case WaterType::river:
+              land++;
+              break;
+            }
+            ++count;
+          }
+        } while (edge != it.incident_edge());
+
+        it.color(chunk.cellmetas.size());
+
+        double avarageHeight = count > 0 ? totalHeight / count : 0;
+        double avarageMoisture = count > 0 ? totalMoisture / count : 0;
+        Biome biome;
+        if (sea == count) {
+          biome = Biome::sea;
+        }
+        else if (lake == count) {
+          biome = Biome::lake;
+        }
+        else {
+          if (sea > 1) {
+            biome = Biome::beach;
+          }
+          else {
+            biome = Biome::land;
+          }
+        }
+
+        chunk.cellmetas.push_back({ avarageHeight, biome, avarageMoisture });
       }
     }
   }
