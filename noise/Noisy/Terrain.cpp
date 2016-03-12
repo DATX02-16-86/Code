@@ -237,7 +237,7 @@ void Terrain::generate3DCaverns(bool* density, int height)
 {
 	int offset = 10;
 	int baseHeight = height / 2;
-	float densityThreshold = 0.1f;
+	float densityThreshold = 0.3f;
 
 	for (int chY = 1; chY < chunks - 1; chY++) {
 		for (int chX = 1; chX < chunks - 1; chX++) {
@@ -250,10 +250,46 @@ void Terrain::generate3DCaverns(bool* density, int height)
 						float fz = (float)z;
 						float d = 0;
 
-						float dz = -(z - height/2) * (z - height / 2) * 2 /height + height/2;
-						d = Simplex::octave_noise(8, 0.04f, 0.5f, true_x, true_y, dz, nc);
+						float f = 0.009f;
+						float dz = -(z - height/2) * (z - height / 2) * 2 /height + height/2 + 0.1f;
 
-						density[true_y*chunkSize*chunks*height + true_x*height + z] = d > densityThreshold + 0.4f * dz / height;
+						d = Simplex::octave_noise(5, f, 0.5f, true_x, true_y, dz, nc) * 0.7f;
+						d += Simplex::octave_noise(5, f, 0.5f, true_x, true_y, z, nc) * 0.3f;
+
+						density[true_y*chunkSize*chunks*height + true_x*height + z] = d > densityThreshold;
+					}
+				}
+			}
+		}
+	}
+}
+
+void Terrain::generate3DPillars(bool* density, int height)
+{
+	int offset = 10;
+	int baseHeight = height / 2;
+	float densityThreshold = 0.3f;
+
+	for (int chY = 1; chY < chunks - 1; chY++) {
+		for (int chX = 1; chX < chunks - 1; chX++) {
+			for (int y = 0; y < chunkSize; ++y) {
+				int true_y = y + (chunkSize * chY);
+				for (int x = 0; x < chunkSize; ++x) {
+					int true_x = x + (chunkSize * chX);
+					for (int z = 0; z < height; ++z)
+					{
+						float fz = (float)z;
+						float d = 0;
+
+						float f = 0.01f;
+						float dz = z * z / height;
+
+						d += Simplex::octave_noise(5, f, 0.4f, true_x + 20, true_y + 20, dz, nc);
+						if (z > baseHeight)
+						{
+							d += Simplex::octave_noise(5, f, 0.4f, true_x + 20, true_y + 20, z, nc) * 0.5f;
+						}
+						density[true_y*chunkSize*chunks*height + true_x*height + z] = d > densityThreshold;
 					}
 				}
 			}

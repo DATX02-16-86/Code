@@ -25,6 +25,8 @@ public:
 
 	void generate3DCaverns(bool* density, int height);
 
+	void generate3DPillars(bool * density, int height);
+
 private:
 	NoiseContext nc;
 	int chunks;

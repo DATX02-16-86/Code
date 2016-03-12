@@ -90,7 +90,7 @@ void generateAndWrite3D(int seed, int chunkSize, int chunks, int height)
 	// Init and generate terrain
 	Terrain t = Terrain(chunks, chunkSize, seed);
 	t.generateHeights();
-	t.generate3DCaverns(point_z_values, height);
+	t.generate3DPillars(point_z_values, height);
 
 	// basic file operations
 	std::ofstream myfile;
@@ -131,9 +131,9 @@ int main() {
 
 	//const int seed = 23195;
 	const int seed = 624534;
-	const int chunkSize = 15;
-	const int chunks = 15;
-	const int height = 150;
+	const int chunkSize = 10;
+	const int chunks = 13;
+	const int height = chunkSize * 8;
 
 	generateAndWrite3D(seed, chunkSize, chunks, height);
 
