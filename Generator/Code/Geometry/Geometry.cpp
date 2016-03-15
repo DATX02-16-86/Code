@@ -38,14 +38,17 @@ static void makeFace(ChunkBuilder<CubeVoxelVertex>& b, U32 x, U32 y, U32 z, Voxe
     b->normal = normal;
     b++;
     b->x = (U16)x; b->y = (U16)y; b->z = (U16)z;
+    b->light = 1;
     b->normal = normal;
     b->u = 1; b->v = 0;
     b++;
     b->x = (U16)x; b->y = (U16)y; b->z = (U16)z;
+    b->light = 1;
     b->normal = normal;
     b->u = 1; b->v = 1;
     b++;
     b->x = (U16)x; b->y = (U16)y; b->z = (U16)z;
+    b->light = 1;
     b->normal = normal;
     b->u = 0; b->v = 1;
     b++;
@@ -103,9 +106,9 @@ static void makeTopFace(ChunkBuilder<CubeVoxelVertex>& v, U32 x, U32 y, U32 z, c
 }
 
 static void makeCube(const Chunk& c, ChunkBuilder<CubeVoxelVertex>& v, U32 x, U32 y, U32 z, char light) {
-    auto w = c.area.width;
-    auto h = c.area.height;
-    auto d = c.area.depth;
+    auto w = c.area.width - 1;
+    auto h = c.area.height - 1;
+    auto d = c.area.depth - 1;
 
     if(x >= w || !c.at(x+1, y, z).blockType)
         makeEastFace(v, x, y, z, light);
@@ -127,15 +130,13 @@ static void makeCube(const Chunk& c, ChunkBuilder<CubeVoxelVertex>& v, U32 x, U3
             bottom = true;
     } else if(z == 0) {
         // The bottom of the world can never be visible.
-        if(c.area.z != 0) {
+        if(c.area.z != 0)
             bottom = true;
-            if(!c.at(x, y, z+1).blockType)
-                top = true;
-        }
+        if(!c.at(x, y, z+1).blockType)
+            top = true;
     } else {
         if(!c.at(x, y, z+1).blockType)
             top = true;
-
         if(!c.at(x, y, z-1).blockType)
             bottom = true;
     }

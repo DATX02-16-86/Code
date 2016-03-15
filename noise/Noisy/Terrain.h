@@ -17,6 +17,16 @@ public:
 
 	void generate3D(bool* allValues, int height);
 
+	void generate2DTunnels(float** zValues);
+
+	void generate3DTunnels(bool* density, int height);
+
+	void generate3DComposite(bool* density, int height);
+
+	void generate3DCaverns(bool* density, int height);
+
+	void generate3DPillars(bool * density, int height);
+
 private:
 	NoiseContext nc;
 	int chunks;
