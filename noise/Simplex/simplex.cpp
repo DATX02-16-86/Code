@@ -476,6 +476,30 @@ float Simplex::octave_noise(int octaves, float freq, float persistence, float x,
 	return sum / max;
 }
 
+// Octaves of 3d simplex noise
+float Simplex::octave_noise(int octaves, float baseFreq, float heightFreq, float persistence, float x, float y, float z, NoiseContext& nc)
+{
+	float max = 0;
+	float sum = 0;
+	float amplitude = 1;
+
+	for (int i = 0; i < octaves; i++)
+	{
+		// add a layer of noise
+		sum += noise(x * baseFreq, y * baseFreq, z * heightFreq, nc) * amplitude;
+
+		// double frequency
+		heightFreq *= 2;
+		baseFreq *= 2;
+		// increase normalization
+		max += amplitude;
+		// get next amplitude
+		amplitude *= persistence;
+	}
+
+	return sum / max;
+}
+
 float Simplex::turbulence(int octaves, float freq, float gain, float x, float y, NoiseContext& nc)
 {
 	float max = 0;
