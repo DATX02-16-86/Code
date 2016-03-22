@@ -91,6 +91,7 @@ public:
 	static float octave_noise(int octaves, float freq, float persistence, float x, float y, NoiseContext& nc = defaultNoiseContext);
 	static float octave_noise(int octaves, float freq, float persistence, float x, float y, float z, NoiseContext& nc = defaultNoiseContext);
 
+	static float octave_noise(int octaves, float baseFreq, float heightFreq, float persistence, float x, float y, float z, NoiseContext& nc);
 	static float turbulence(int octaves, float freq, float gain, float x, float y, NoiseContext & nc);
 
 	static float turbulence(int octaves, float freq, float gain, float x, float y, float z, NoiseContext & nc);
