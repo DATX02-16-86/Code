@@ -22,6 +22,7 @@ endif()
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.1")
 
 include_directories(../../boost/)
+include_directories(../../Tritium/Code/Core)
 
 
 set(SOURCE_FILES main.cpp ../../noise/Simplex/simplex.h ../../noise/Simplex/simplex.cpp)
