@@ -17,7 +17,7 @@
 #include <Base.h>
 #include "main.h"
 
-#define CHUNK_SIZE 800
+#define CHUNK_SIZE 400
 #define GRID_DIVISIONS 10
 
 
@@ -76,6 +76,7 @@ bool operator==(const Vertex& lhs, const Vertex& rhs)
 }
 
 struct VertexIndex { U32 chunkIndex : 4; U32 index : 28; };
+struct EdgeIndex { U32 chunkIndex : 4; U32 index : 28; };
 
 bool operator==(const VertexIndex& lhs, const VertexIndex& rhs)
 {
@@ -93,7 +94,7 @@ bool operator==(const Edge& lhs, const Edge& rhs)
 }
 
 enum ChunkState {
-  NOTHING, POINTS_ADDED, VERTICES, VORONOI, VERTEXMETA, RIVERS, MOISTURE, BIOMES
+  NOTHING, POINTS_ADDED, VERTICES, EDGES, CONNECTED_EDGES, VERTEXMETA, RIVERS, MOISTURE, BIOMES
 };
 
 struct ChunkWithIndexes {
@@ -103,7 +104,7 @@ struct ChunkWithIndexes {
   std::vector<Point> cellPoints;
   std::vector<std::vector<int>> cellEdges;
   std::vector<Vertex> vertices;
-  std::vector<std::vector<int>> verticeEdges;
+  std::vector<std::vector<EdgeIndex>> verticeEdges;
   std::vector<Edge> edges;
   std::vector<vertexmeta> vertexmetas;
   std::vector<cellmeta> cellmetas;
@@ -380,7 +381,7 @@ void render() {
       }
       else if (meta.biome == Biome::sea) {
         glColor3f(35.f / 255.f, 115.f / 255.f, 0.5);
-      }
+      }/*
       else if (meta.biome == Biome::beach) {
         glColor3f(246.f / 255.f, 223.f / 255.f, 179.f / 255.f);
       }
@@ -401,9 +402,9 @@ void render() {
       }
       else if (avarageHeight < 0.9) {
         glColor3f(94.f / 255.f, 181.f / 255.f, 30.f / 255.f);
-      }
+      }*/
       else {
-        color(avarageHeight);
+        color(avarageMoisture);
       }
 
 
@@ -637,12 +638,13 @@ void runRiver(ChunkWithIndexes& chunk, U32 v) {
   const auto& vertex = chunk.vertices[v];
   vertexmeta& bestMeta = chunk.vertexmetas[v];
   VertexIndex bestVertex;
-  int bestEdge;
+  EdgeIndex bestEdge;
   bool anyBest = false;
 
-  for (int i : chunk.verticeEdges[v]) {
-    auto j = neighbourVertexIndex(chunk, chunk.edges[i], vertex);
-    auto& meta = getVertexMeta(chunk, j, vertexMeta);
+  for (EdgeIndex i : chunk.verticeEdges[v]) {
+    auto& edgeChunk = findChunkWithChunkIndex(chunk, i.chunkIndex);
+    auto j = neighbourVertexIndex(edgeChunk, edgeChunk.edges[i.index], vertex);
+    auto& meta = getVertexMeta(edgeChunk, j, vertexMeta);
     if (meta.height < bestMeta.height) {
       anyBest = true;
       bestVertex = j;
@@ -652,9 +654,10 @@ void runRiver(ChunkWithIndexes& chunk, U32 v) {
   }
 
   if (anyBest) {
-    auto& edgeMeta = chunk.edgemetas[bestEdge];
-    auto& aMeta = getVertexMeta(chunk, chunk.edges[bestEdge].a, vertexMeta);
-    auto& bMeta = getVertexMeta(chunk, chunk.edges[bestEdge].b, vertexMeta);
+    auto& edgeChunk = findChunkWithChunkIndex(chunk, bestEdge.chunkIndex);
+    auto& edgeMeta = edgeChunk.edgemetas[bestEdge.index];
+    auto& aMeta = getVertexMeta(edgeChunk, edgeChunk.edges[bestEdge.index].a, vertexMeta);
+    auto& bMeta = getVertexMeta(edgeChunk, edgeChunk.edges[bestEdge.index].b, vertexMeta);
     bool aIsLand = aMeta.wt == WaterType::land;
     bool bIsLand = bMeta.wt == WaterType::land;
     bool bestIsLand = bestMeta.wt == WaterType::land;
@@ -677,7 +680,7 @@ void runRiver(ChunkWithIndexes& chunk, U32 v) {
       // Don't run rivers into water
       return;
     }
-    runRiver(findChunkWithChunkIndex(chunk, bestVertex.chunkIndex), bestVertex.index);
+    runRiver(findChunkWithChunkIndex(edgeChunk, bestVertex.chunkIndex), bestVertex.index);
   }
 }
 
@@ -761,7 +764,7 @@ int findVertexIndex(const ChunkWithIndexes& chunk, Vertex v) {
 }
 
 void addVoronoi(ChunkWithIndexes& chunk) {
-  if (chunk.state >= ChunkState::VORONOI) {
+  if (chunk.state >= ChunkState::EDGES) {
     return;
   }
   addVertices(chunk);
@@ -840,7 +843,7 @@ void addVoronoi(ChunkWithIndexes& chunk) {
         }
         if (edge.color() != 0) {
           // Add the edge index, subtract 1 since 1 was added to avoid 0
-          chunk.verticeEdges[vi - 1].push_back(edge.color() - 1);
+          chunk.verticeEdges[vi - 1].push_back({ CURRENT_CHUNK_INDEX, edge.color() - 1 });
         }
       } while (it != incident_edge);
       
@@ -874,7 +877,7 @@ void addVoronoi(ChunkWithIndexes& chunk) {
     }
   }
 
-  chunk.state = ChunkState::VORONOI;
+  chunk.state = ChunkState::EDGES;
 }
 
 
@@ -929,8 +932,9 @@ void vertexMeta(ChunkWithIndexes& chunk) {
         int it = stack.top();
         VertexIndex vi{ CURRENT_CHUNK_INDEX, it };
         stack.pop();
-        for (int j : chunk.verticeEdges[it]) {
-          auto ni = nextVertexIndex(vi, chunk.edges[j]);
+        for (EdgeIndex j : chunk.verticeEdges[it]) {
+          auto& edgeChunk = findChunkWithChunkIndex(chunk, j.chunkIndex);
+          auto ni = nextVertexIndex(vi, edgeChunk.edges[j.index]);
           if (ni.chunkIndex == CURRENT_CHUNK_INDEX && checkForLake[ni.index]) {
             checkForLake[ni.index] = false;
             stack.push(ni.index);
@@ -995,29 +999,41 @@ void addMoisture(ChunkWithIndexes& chunk) {
   }
   addRivers(chunk);
 
-  std::stack<int> stack;
+  std::stack<std::pair<ChunkWithIndexes*, U32>> stack;
   for (size_t i = 0; i < chunk.vertices.size(); ++i) {
     auto wt = chunk.vertexmetas[i].wt;
     if (wt == WaterType::lake || wt == WaterType::river) {
-      stack.push(i);
+      stack.push({ &chunk, i });
     }
   }
 
   while (!stack.empty()) {
-    int it = stack.top();
-    VertexIndex vi{ CURRENT_CHUNK_INDEX, it };
+    auto pair = stack.top();
+    auto* pairChunk = pair.first;
+    VertexIndex vi{ CURRENT_CHUNK_INDEX, pair.second };
     stack.pop();
-    double vertMoist = chunk.vertexmetas[it].moisture;
+    double vertMoist = pairChunk->vertexmetas[pair.second].moisture;
 
-    for (auto i : chunk.verticeEdges[it]) {
-      auto ni = nextVertexIndex(vi, chunk.edges[i]);
-      if (ni.chunkIndex == CURRENT_CHUNK_INDEX) {
-        auto& meta = getVertexMeta(chunk, ni, addRivers);
-        double newMoist = vertMoist * 0.85;
-        if (meta.moisture < newMoist) {
-          meta.moisture = newMoist;
-          stack.push(ni.index);
+    for (auto i : pairChunk->verticeEdges[pair.second]) {
+      auto& edgeChunk = findChunkWithChunkIndex(*pairChunk, i.chunkIndex);
+      auto ni = nextVertexIndex(vi, edgeChunk.edges[i.index]);
+      auto& niChunk = findChunkWithChunkIndex(edgeChunk, ni.chunkIndex);
+      if (chunk.x == 2 && chunk.y == 0 && niChunk.x == 1 && niChunk.y == 0) {
+        // std::cout << "Gone left!\n";
+      }
+      addRivers(niChunk);
+      auto& meta = niChunk.vertexmetas[ni.index];
+      double newMoist = vertMoist * 0.9;
+      if (meta.moisture < newMoist && newMoist > 0.05) {
+        if (chunk.x == 2 && chunk.y == 0 && niChunk.x == 1 && niChunk.y == 0) {
+          std::cout << "Pushing on the left! ( " << niChunk.vertices[ni.index].x << ", " << niChunk.vertices[ni.index].y << " ) = "<< meta.moisture << " -> " << newMoist << "\n";
+          if (closeEnough(niChunk.vertices[ni.index].x, 763.25, 0.0001), closeEnough(niChunk.vertices[ni.index].y, 368.75, 0.0001)) {
+            auto* mois = &meta.moisture;
+            std::cout << niChunk.vertices[ni.index].x << " " << niChunk.vertices[ni.index].y << "\n";
+          }
         }
+        meta.moisture = newMoist;
+        stack.push({ &niChunk, ni.index });
       }
     }
   }
@@ -1040,6 +1056,10 @@ void addBiomes(ChunkWithIndexes& chunk) {
     int lake = 0;
     for (int j : chunk.cellEdges[i]) {
       auto ei = chunk.edges[j];
+      auto vertexChunk = findChunkWithChunkIndex(chunk, ei.a.chunkIndex);
+      if (vertexChunk.x == 1 && vertexChunk.y == 0 && ei.a.index == 722) {
+        std::cout << "Hej!";
+      }
       auto vertex = getVertexMeta(chunk, ei.a, addMoisture);
       totalHeight += vertex.height;
       //totalMoisture += vertex.moisture;
