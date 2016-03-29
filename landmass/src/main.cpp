@@ -11,11 +11,10 @@
 
 #include <boost/polygon/voronoi.hpp>
 
-#include <GL/glut.h>
+#include <GLUT/glut.h>
 
 #include "../../noise/Simplex/simplex.h"
 #include <Base.h>
-#include "main.h"
 
 #define CHUNK_SIZE 800
 #define GRID_DIVISIONS 10
@@ -927,7 +926,7 @@ void vertexMeta(ChunkWithIndexes& chunk) {
       // Whole stack has to be emptied so we don't start work on connected water twice
       while (!stack.empty()) {
         int it = stack.top();
-        VertexIndex vi{ CURRENT_CHUNK_INDEX, it };
+        VertexIndex vi{ CURRENT_CHUNK_INDEX, (U32)it };
         stack.pop();
         for (int j : chunk.verticeEdges[it]) {
           auto ni = nextVertexIndex(vi, chunk.edges[j]);
@@ -1005,7 +1004,7 @@ void addMoisture(ChunkWithIndexes& chunk) {
 
   while (!stack.empty()) {
     int it = stack.top();
-    VertexIndex vi{ CURRENT_CHUNK_INDEX, it };
+    VertexIndex vi{ CURRENT_CHUNK_INDEX, (U32)it };
     stack.pop();
     double vertMoist = chunk.vertexmetas[it].moisture;
 

@@ -13,9 +13,14 @@ endif(NOT OPENGL_FOUND)
 #########################################################
 
 if(WIN32)
-
+    
 elseif(APPLE)
 set(BIN_DIR "OSX")
+
+find_package(GLUT REQUIRED)
+include_directories(${GLUT_INCLUDE_DIRS})
+link_directories(${GLUT_LIBRARY_DIRS})
+add_definitions(${GLUT_DEFINITIONS})
 endif()
 
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../Bin/${BIN_DIR}")
@@ -28,4 +33,4 @@ include_directories(../../Tritium/Code/Core)
 set(SOURCE_FILES main.cpp ../../noise/Simplex/simplex.h ../../noise/Simplex/simplex.cpp)
 add_executable(Landmass ${SOURCE_FILES})
 
-target_link_libraries(Landmass ${OPENGL_LIBRARIES} )
+target_link_libraries(Landmass ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
