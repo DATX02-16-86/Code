@@ -75,6 +75,19 @@ bool operator==(const Vertex& lhs, const Vertex& rhs)
   return closeEnough(lhs.x, rhs.x, 0.0000000001) && closeEnough(lhs.y, rhs.y, 0.0000000001);
 }
 
+bool operator<(const Vertex& lhs, const Vertex& rhs)
+{
+  if (lhs.x < rhs.x) {
+    return true;
+  }
+  else if (lhs.x > rhs.x) {
+    return false;
+  }
+  else {
+    return lhs.y < rhs.y;
+  }
+}
+
 struct VertexIndex { U32 chunkIndex : 4; U32 index : 28; };
 struct EdgeIndex { U32 chunkIndex : 4; U32 index : 28; };
 
@@ -88,13 +101,20 @@ struct Edge {
   VertexIndex b;
 };
 
+struct UnconnectedEdge {
+  Vertex a;
+  Vertex b;
+  U8 connectToChunk : 4;
+  size_t position;
+};
+
 bool operator==(const Edge& lhs, const Edge& rhs)
 {
   return (lhs.a == rhs.a && lhs.b == rhs.b) || (lhs.a == rhs.b && lhs.b == rhs.a);
 }
 
 enum ChunkState {
-  NOTHING, POINTS_ADDED, VERTICES, EDGES, CONNECTED_EDGES, VERTEXMETA, RIVERS, MOISTURE, BIOMES
+  NOTHING, POINTS_ADDED, VERTICES, EDGES, CONNECTED_EDGES, VERTEXMETA, RIVERS, MOISTURE, MOISTURE_NEIGHBOURS, BIOMES
 };
 
 struct ChunkWithIndexes {
@@ -105,6 +125,8 @@ struct ChunkWithIndexes {
   std::vector<std::vector<int>> cellEdges;
   std::vector<Vertex> vertices;
   std::vector<std::vector<EdgeIndex>> verticeEdges;
+  std::vector<std::vector<UnconnectedEdge>> unconnectedVerticeEdges;
+  std::vector<size_t> edgesConnectCandidates;
   std::vector<Edge> edges;
   std::vector<vertexmeta> vertexmetas;
   std::vector<cellmeta> cellmetas;
@@ -322,6 +344,7 @@ void render2() {
     glLineWidth(1);
     glBegin(GL_LINES);
     glColor3f(60.f / 255.f, 140.f / 255.f, 1);
+
     
     for (auto& it : chunk.voronoi->edges())
     {
@@ -438,6 +461,7 @@ void render() {
   }
 
 
+  // Lines around cells
   for (auto& chunk : hexChunks) {
     if (!(chunk.state >= ChunkState::RIVERS)) {
       continue;
@@ -449,7 +473,7 @@ void render() {
       if (edgemeta.isRiver) {
         std::cout << "River!";
         glLineWidth(2);
-        glColor3f(60.f / 255.f, 140.f / 255.f, 1);
+       glColor3f(60.f / 255.f, 140.f / 255.f, 1);
       }
       else {
         glLineWidth(1);
@@ -763,6 +787,29 @@ int findVertexIndex(const ChunkWithIndexes& chunk, Vertex v) {
   throw std::range_error("Vertex wasn't in the chunk");
 }
 
+int findEdgeIndex(const ChunkWithIndexes& chunk, Vertex a, Vertex b) {
+  for (auto i : chunk.edgesConnectCandidates) {
+    auto e = chunk.edges[i];
+    auto ea = findChunkWithChunkIndex(chunk, e.a.chunkIndex).vertices[e.a.index];
+
+    if (ea == a) {
+      auto eb = findChunkWithChunkIndex(chunk, e.b.chunkIndex).vertices[e.b.index];
+      if (eb == b) {
+        return i;
+      }
+    }
+    else if (ea == b) {
+      auto eb = findChunkWithChunkIndex(chunk, e.b.chunkIndex).vertices[e.b.index];
+      if (eb == a) {
+        return i;
+      }
+    }
+  }
+
+  std::cout << "Edge wasn't in the chunk";
+  throw std::range_error("Edge wasn't in the chunk");
+}
+
 void addVoronoi(ChunkWithIndexes& chunk) {
   if (chunk.state >= ChunkState::EDGES) {
     return;
@@ -804,6 +851,7 @@ void addVoronoi(ChunkWithIndexes& chunk) {
   }
 
   chunk.verticeEdges.resize(i - 1);
+  chunk.unconnectedVerticeEdges.resize(i - 1);
 
   for (auto& vertex : voronoi.vertices()) {
     auto vi = vertex.color();
@@ -811,6 +859,7 @@ void addVoronoi(ChunkWithIndexes& chunk) {
     if (vi != 0) {
       auto* incident_edge = vertex.incident_edge();
       auto* it = incident_edge;
+      size_t position = 0;
       do {
         it = it->rot_next();
         auto& edge = *it;
@@ -828,22 +877,36 @@ void addVoronoi(ChunkWithIndexes& chunk) {
           U32 vertIndex1 = vert1.color();
 
           // Is one of the vertices outside this chunk?
-          if (chunkIndex0 != CURRENT_CHUNK_INDEX) {
-            vertIndex0 = findVertexIndex(findChunkWithChunkIndex(chunk, chunkIndex0), point0) + 1;
-          }
-          if (chunkIndex1 != CURRENT_CHUNK_INDEX) {
-            vertIndex1 = findVertexIndex(findChunkWithChunkIndex(chunk, chunkIndex1), point1) + 1;
+          if (chunkIndex0 != CURRENT_CHUNK_INDEX || chunkIndex1 != CURRENT_CHUNK_INDEX) {
+            // Should this edge be in this chunk?
+            auto decidingVertex = std::min(point0, point1);
+            U8 decidingIndex = chunkIndex(chunk.x, chunk.y, decidingVertex);
+            if (decidingIndex != CURRENT_CHUNK_INDEX) {
+              edge.color(1);
+              edge.twin()->color(1);
+              UnconnectedEdge ue{ point0, point1, decidingIndex, position++ };
+              chunk.unconnectedVerticeEdges[vi - 1].push_back(std::move(ue));
+              continue;
+            }
+            chunk.edgesConnectCandidates.push_back(chunk.edges.size());
+            if (chunkIndex0 != CURRENT_CHUNK_INDEX) {
+              vertIndex0 = findVertexIndex(findChunkWithChunkIndex(chunk, chunkIndex0), point0) + 1;
+            }
+            if (chunkIndex1 != CURRENT_CHUNK_INDEX) {
+              vertIndex1 = findVertexIndex(findChunkWithChunkIndex(chunk, chunkIndex1), point1) + 1;
+            }
           }
 
-          // Avoid having color accidentaly set to 0
-          edge.color(chunk.edges.size() + 1);
-          edge.twin()->color(chunk.edges.size() + 1);
+          // 0 and 1 are reserved numbers
+          edge.color(chunk.edges.size() + 2);
+          edge.twin()->color(chunk.edges.size() + 2);
 
           chunk.edges.push_back({ { chunkIndex0, vertIndex0 - 1 },{ chunkIndex1, vertIndex1 - 1} });
         }
-        if (edge.color() != 0) {
+        if (edge.color() >= 2) {
           // Add the edge index, subtract 1 since 1 was added to avoid 0
-          chunk.verticeEdges[vi - 1].push_back({ CURRENT_CHUNK_INDEX, edge.color() - 1 });
+          chunk.verticeEdges[vi - 1].push_back({ CURRENT_CHUNK_INDEX, edge.color() - 2 });
+          ++position;
         }
       } while (it != incident_edge);
       
@@ -866,9 +929,9 @@ void addVoronoi(ChunkWithIndexes& chunk) {
       do {
         it = it->next();
 
-        if (it->color() != 0) {
-          // Add the edge index, subtract 1 since 1 was added to avoid 0
-          chunk.cellEdges[cellIndex].push_back(it->color() - 1);
+        if (it->color() >= 2) {
+          // Add the edge index, subtract 2 since 0 and 1 were special numbers
+          chunk.cellEdges[cellIndex].push_back(it->color() - 2);
         }
         else {
           // std::cout << "Skipped one\n";
@@ -880,12 +943,35 @@ void addVoronoi(ChunkWithIndexes& chunk) {
   chunk.state = ChunkState::EDGES;
 }
 
+void connectEdges(ChunkWithIndexes& chunk) {
+  if (chunk.state >= ChunkState::CONNECTED_EDGES) {
+    return;
+  }
+  addVoronoi(chunk);
+
+  auto neighbours = neighbourChunks(chunk.x, chunk.y, hexChunks);
+
+  for (auto* nei : neighbours) {
+    addVoronoi(*nei);
+  }
+
+  for (int i = 0; i < chunk.verticeEdges.size(); ++i) {
+    for (auto e : chunk.unconnectedVerticeEdges[i]) {
+      auto echunk = findChunkWithChunkIndex(chunk, e.connectToChunk);
+      EdgeIndex ei{ e.connectToChunk, findEdgeIndex(echunk, e.a, e.b) };
+      chunk.verticeEdges[i].insert(chunk.verticeEdges[i].begin() + e.position, ei);
+    }
+  }
+
+  chunk.state = CONNECTED_EDGES;
+}
+
 
 void vertexMeta(ChunkWithIndexes& chunk) {
   if (chunk.state >= ChunkState::VERTEXMETA) {
     return;
   }
-  addVoronoi(chunk);
+  connectEdges(chunk);
 
   NoiseContext a(120);
   std::vector<bool> checkForLake;
@@ -999,6 +1085,8 @@ void addMoisture(ChunkWithIndexes& chunk) {
   }
   addRivers(chunk);
 
+  
+
   std::stack<std::pair<ChunkWithIndexes*, U32>> stack;
   for (size_t i = 0; i < chunk.vertices.size(); ++i) {
     auto wt = chunk.vertexmetas[i].wt;
@@ -1018,20 +1106,10 @@ void addMoisture(ChunkWithIndexes& chunk) {
       auto& edgeChunk = findChunkWithChunkIndex(*pairChunk, i.chunkIndex);
       auto ni = nextVertexIndex(vi, edgeChunk.edges[i.index]);
       auto& niChunk = findChunkWithChunkIndex(edgeChunk, ni.chunkIndex);
-      if (chunk.x == 2 && chunk.y == 0 && niChunk.x == 1 && niChunk.y == 0) {
-        // std::cout << "Gone left!\n";
-      }
       addRivers(niChunk);
       auto& meta = niChunk.vertexmetas[ni.index];
       double newMoist = vertMoist * 0.9;
       if (meta.moisture < newMoist && newMoist > 0.05) {
-        if (chunk.x == 2 && chunk.y == 0 && niChunk.x == 1 && niChunk.y == 0) {
-          std::cout << "Pushing on the left! ( " << niChunk.vertices[ni.index].x << ", " << niChunk.vertices[ni.index].y << " ) = "<< meta.moisture << " -> " << newMoist << "\n";
-          if (closeEnough(niChunk.vertices[ni.index].x, 763.25, 0.0001), closeEnough(niChunk.vertices[ni.index].y, 368.75, 0.0001)) {
-            auto* mois = &meta.moisture;
-            std::cout << niChunk.vertices[ni.index].x << " " << niChunk.vertices[ni.index].y << "\n";
-          }
-        }
         meta.moisture = newMoist;
         stack.push({ &niChunk, ni.index });
       }
@@ -1040,11 +1118,26 @@ void addMoisture(ChunkWithIndexes& chunk) {
   chunk.state = ChunkState::MOISTURE;
 }
 
+void addMoistureNeighbours(ChunkWithIndexes& chunk) {
+  if (chunk.state >= ChunkState::MOISTURE_NEIGHBOURS) {
+    return;
+  }
+
+  auto neighbours = neighbourChunks(chunk.x, chunk.y, hexChunks);
+
+  for (auto* nei : neighbours) {
+    addMoisture(*nei);
+  }
+
+  chunk.state = ChunkState::MOISTURE_NEIGHBOURS;
+}
+
+
 void addBiomes(ChunkWithIndexes& chunk) {
   if (chunk.state >= ChunkState::BIOMES) {
     return;
   }
-  addMoisture(chunk);
+  addMoistureNeighbours(chunk);
 
   // Calculate avarage height etc. for cell
   for (size_t i = 0; i < chunk.cellEdges.size(); ++i) {
@@ -1057,15 +1150,9 @@ void addBiomes(ChunkWithIndexes& chunk) {
     for (int j : chunk.cellEdges[i]) {
       auto ei = chunk.edges[j];
       auto vertexChunk = findChunkWithChunkIndex(chunk, ei.a.chunkIndex);
-      if (vertexChunk.x == 1 && vertexChunk.y == 0 && ei.a.index == 722) {
-        std::cout << "Hej!";
-      }
       auto vertex = getVertexMeta(chunk, ei.a, addMoisture);
       totalHeight += vertex.height;
-      //totalMoisture += vertex.moisture;
-      if (vertex.moisture > totalMoisture) {
-        totalMoisture = vertex.moisture;
-      }
+      totalMoisture += vertex.moisture;
 
       //Count WaterTypes
       switch (vertex.wt)
@@ -1087,7 +1174,7 @@ void addBiomes(ChunkWithIndexes& chunk) {
     }
 
     double avarageHeight = count > 0 ? totalHeight / count : 0;
-    double avarageMoisture = totalMoisture; //count > 0 ? totalMoisture / count : 0;
+    double avarageMoisture = count > 0 ? totalMoisture / count : 0;
     Biome biome;
     if (sea == count) {
       biome = Biome::sea;
@@ -1131,6 +1218,12 @@ int main(int argc, char* argv[])
 
   for (auto& chunk : hexChunks) {
     if (chunk.x >= minX && chunk.x <= maxX && chunk.y >= minY && chunk.y <= maxY) {
+      //addMoisture(chunk);
+    }
+  }
+
+  for (auto& chunk : hexChunks) {
+    if (chunk.x >= minX && chunk.x <= maxX && chunk.y >= minY && chunk.y <= maxY) {
       addBiomes(chunk);
     }
   }
@@ -1147,6 +1240,8 @@ int main(int argc, char* argv[])
   glOrtho(0, width, height, 0, 1, -1);
   glMatrixMode(GL_MODELVIEW);
   glEnable(GL_TEXTURE_2D);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glShadeModel(GL_SMOOTH);
   glLoadIdentity();
   glutDisplayFunc(render);
