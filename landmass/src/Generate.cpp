@@ -3,7 +3,7 @@
 #include "../../noise/Simplex/simplex.h"
 #include <stack>
 
-void vertexMeta(ChunkMap& map, ChunkWithIndexes& chunk) {
+void generateVertexMeta(ChunkMap& map, ChunkWithIndexes& chunk) {
     if (chunk.state >= ChunkState::VERTEXMETA) {
         return;
     }
@@ -131,66 +131,64 @@ void runRiver(ChunkMap& hexChunks, ChunkWithIndexes& chunk, U32 v) {
 
 
 void addRivers(ChunkMap& map, ChunkWithIndexes& chunk) {
-    if (chunk.state >= ChunkState::RIVERS) {
+    if(chunk.state >= ChunkState::RIVERS) {
         return;
     }
-    vertexMeta(map, chunk);
 
+    generateVertexMeta(map, chunk);
     chunk.state = ChunkState::RIVERS;
-    return;
 
     // Add rivers
     std::vector<int> sourceCandidates;
-    for (U32 i = 0; i < chunk.vertices.size(); ++i) {
+    for(U32 i = 0; i < chunk.vertices.size(); ++i) {
         auto height = chunk.vertexmetas[i].height;
-        if (height > 0.8 && height < 0.9) {
+        if(height > 0.8 && height < 0.9) {
             sourceCandidates.push_back(i);
         }
     }
 
     std::vector<int> sources;
-    for (int i : sourceCandidates) {
+    for(int i : sourceCandidates) {
         const auto& vertex = chunk.vertices[i];
-        if (!std::any_of(sources.begin(), sources.end(), [&chunk, &vertex](int j) {return chunk.vertices[j].x <= vertex.x + 100
-                                                                                          && chunk.vertices[j].x >= vertex.x - 100
-                                                                                          && chunk.vertices[j].y <= vertex.y + 100
-                                                                                          && chunk.vertices[j].y >= vertex.y - 100; })) {
+        if(!std::any_of(sources.begin(), sources.end(), [&chunk, &vertex](int j) {
+            return chunk.vertices[j].x <= vertex.x + 100
+              && chunk.vertices[j].x >= vertex.x - 100
+              && chunk.vertices[j].y <= vertex.y + 100
+              && chunk.vertices[j].y >= vertex.y - 100;
+        })) {
             sources.push_back(i);
         }
     }
 
-    for (U32 i : sources) {
-        {
-            runRiver(map, chunk, i);
-        }
+    for(auto i : sources) {
+        runRiver(map, chunk, i);
     }
 
     chunk.state = ChunkState::RIVERS;
 }
 
 void addMoisture(ChunkMap& map, ChunkWithIndexes& chunk) {
-    if (chunk.state >= ChunkState::MOISTURE) {
+    if(chunk.state >= ChunkState::MOISTURE) {
         return;
     }
     addRivers(map, chunk);
 
-
     std::stack<std::pair<ChunkWithIndexes*, U32>> stack;
-    for (size_t i = 0; i < chunk.vertices.size(); ++i) {
+    for(size_t i = 0; i < chunk.vertices.size(); ++i) {
         auto wt = chunk.vertexmetas[i].wt;
-        if (wt == WaterType::lake || wt == WaterType::river) {
+        if(wt == WaterType::lake || wt == WaterType::river) {
             stack.push({ &chunk, i });
         }
     }
 
-    while (!stack.empty()) {
+    while(!stack.empty()) {
         auto pair = stack.top();
         auto* pairChunk = pair.first;
         VertexIndex vi{ CURRENT_CHUNK_INDEX, pair.second };
         stack.pop();
         double vertMoist = pairChunk->vertexmetas[pair.second].moisture;
 
-        for (const auto& i : pairChunk->verticeEdges[pair.second]) {
+        for(const auto& i : pairChunk->verticeEdges[pair.second]) {
             auto& edgeChunk = findChunkWithChunkIndex(map, *pairChunk, i.chunkIndex);
             const auto ni = nextVertexIndex(vi, edgeChunk.edges[i.index]);
             auto& niChunk = findChunkWithChunkIndex(map, edgeChunk, ni.chunkIndex);
@@ -207,13 +205,13 @@ void addMoisture(ChunkMap& map, ChunkWithIndexes& chunk) {
 }
 
 void addMoistureNeighbours(ChunkMap& map, ChunkWithIndexes& chunk) {
-    if (chunk.state >= ChunkState::MOISTURE_NEIGHBOURS) {
+    if(chunk.state >= ChunkState::MOISTURE_NEIGHBOURS) {
         return;
     }
 
     const auto& neighbours = neighbourChunks(map, chunk.x, chunk.y);
 
-    for (auto* nei : neighbours) {
+    for(auto* nei : neighbours) {
         addMoisture(map, *nei);
     }
 
