@@ -165,11 +165,12 @@ void insertHexPoints(int chunkX, int chunkY, int pointDistance, std::vector<Poin
     }
 }
 
-void insertHexPointsWithRandomness(int chunkX, int chunkY, int pointDistance, int seed, std::vector<Point>& points) {
+void insertHexPointsWithRandomness(int chunkX, int chunkY, int pointDistance, int baseSeed, std::vector<Point>& points) {
     int stepsNeeded = CHUNK_SIZE / pointDistance;
+    auto seed = chunkSeed(chunkX, chunkY, baseSeed);
 
     std::random_device rd;
-    std::mt19937 gen(chunkSeed(chunkX, chunkY, seed));
+    std::mt19937 gen(seed);
     double maxDistance = pointDistance / 4.0;
     std::uniform_int_distribution<> dis(0, int (maxDistance / 2.0));
     std::bernoulli_distribution bdis(0.5);
@@ -305,7 +306,7 @@ void addPoints(ChunkWithIndexes& chunk) {
         return;
     }
 
-    insertHexPointsWithRandomness(chunk.x, chunk.y, 20, 0, chunk.cellPoints);
+    insertHexPointsWithRandomness(chunk.x, chunk.y, 20, 55454, chunk.cellPoints);
     chunk.state = ChunkState::POINTS_ADDED;
 }
 

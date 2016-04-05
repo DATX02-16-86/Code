@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
     for (auto& kv : hexChunks) {
         auto& chunk = kv.second;
         if (chunk.x >= minX && chunk.x <= maxX && chunk.y >= minY && chunk.y <= maxY) {
-            //addMoisture(chunk);
+            addMoisture(hexChunks, chunk);
         }
     }
 
