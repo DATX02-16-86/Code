@@ -30,7 +30,7 @@ include_directories(../../boost/)
 include_directories(../../Tritium/Code/Core)
 
 
-set(SOURCE_FILES main.cpp ../../noise/Simplex/simplex.h ../../noise/Simplex/simplex.cpp)
+set(SOURCE_FILES Generate.cpp Landmass.h Voronoi.h Generate.h Render.cpp Voronoi.cpp ../../noise/Simplex/simplex.h ../../noise/Simplex/simplex.cpp)
 add_executable(Landmass ${SOURCE_FILES})
 
 target_link_libraries(Landmass ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
