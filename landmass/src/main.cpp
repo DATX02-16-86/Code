@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <memory>
 #include <stack>
+#include <map>
 #include <stdexcept>
 
 #include <boost/polygon/voronoi.hpp>
@@ -122,7 +123,8 @@ struct ChunkWithIndexes {
   int y;
   ChunkState state;
   std::vector<Point> cellPoints;
-  std::vector<std::vector<int>> cellEdges;
+  std::vector<std::vector<EdgeIndex>> cellEdges;
+  std::vector<std::vector<UnconnectedEdge>> unconnectedCellEdges;
   std::vector<Vertex> vertices;
   std::vector<std::vector<EdgeIndex>> verticeEdges;
   std::vector<std::vector<UnconnectedEdge>> unconnectedVerticeEdges;
@@ -142,17 +144,8 @@ struct Optional {
 void vertexMeta(ChunkWithIndexes& chunk);
 
 std::vector<Chunk> chunks;
-std::vector<ChunkWithIndexes> hexChunks;
+std::map<std::pair<int, int>, ChunkWithIndexes> hexChunks;
 
-int findChunk(int x, int y) {
-  for (size_t i = 0; i < hexChunks.size(); ++i) {
-    if (hexChunks[i].x == x && hexChunks[i].y == y) {
-      return i;
-    }
-  }
-
-  throw std::range_error("Couldn't find chunk");
-}
 
 void color(double clr) {
   glColor3d(clr, clr, clr);
@@ -241,12 +234,30 @@ U8 chunkIndex(int chunkX, int chunkY, Vertex p) {
   throw std::range_error("Vertex wasn't in any adjacent chunks");
 }
 
+U8 oppositeChunkIndex(U8 chunkIndex) {
+  return 8 - chunkIndex;
+}
+
+U8 chunkIndex(const ChunkWithIndexes& chunk, const ChunkWithIndexes& chunk2) {
+  if (chunk.x == chunk2.x && chunk.y == chunk2.y) {
+    return CURRENT_CHUNK_INDEX;
+  }
+  for (int i = 0; i < 9; ++i) {
+    if (chunk.x + chunkIndexRelativeX[i] == chunk2.x, chunk.y + chunkIndexRelativeY[i] == chunk2.y) {
+      return i;
+    }
+  }
+
+  throw std::range_error("Chunks not close enough");
+}
+
 ChunkWithIndexes& findChunkWithChunkIndex(ChunkWithIndexes& chunk, U8 chunkIndex) {
   if (chunkIndex == CURRENT_CHUNK_INDEX) {
     return chunk;
   }
   else {
-    return hexChunks[findChunk(chunk.x + chunkIndexRelativeX[chunkIndex], chunk.y + chunkIndexRelativeY[chunkIndex])];
+    std::pair<int, int> pos{ chunk.x + chunkIndexRelativeX[chunkIndex], chunk.y + chunkIndexRelativeY[chunkIndex] };
+    return hexChunks[pos];
   }
 }
 
@@ -255,7 +266,8 @@ const ChunkWithIndexes& findChunkWithChunkIndex(const ChunkWithIndexes& chunk, U
     return chunk;
   }
   else {
-    return hexChunks[findChunk(chunk.x + chunkIndexRelativeX[chunkIndex], chunk.y + chunkIndexRelativeY[chunkIndex])];
+    std::pair<int, int> pos{ chunk.x + chunkIndexRelativeX[chunkIndex], chunk.y + chunkIndexRelativeY[chunkIndex] };
+    return hexChunks.at(pos);
   }
 }
 
@@ -370,11 +382,19 @@ Vertex getVertex(const ChunkWithIndexes& chunk, const VertexIndex& index) {
 
 VertexIndex neighbourVertexIndex(const ChunkWithIndexes& c, const Edge& e, const Vertex& v);
 
-VertexIndex sharedVertexIndex(Edge first, Edge second) {
-  if (first.a == second.a || first.a == second.b) {
+VertexIndex sharedVertexIndex(Edge first, Edge second, U8 secondChunkIndex) {
+  // Normalize chunk indexes
+  Edge normalized = first;
+  if (normalized.a.chunkIndex == CURRENT_CHUNK_INDEX) {
+    normalized.a.chunkIndex = oppositeChunkIndex(secondChunkIndex);
+  } else if (normalized.a.chunkIndex == secondChunkIndex) {
+    second.a.chunkIndex = CURRENT_CHUNK_INDEX;
+  }
+
+  if (normalized.a == second.a || normalized.a == second.b) {
     return first.a;
   }
-  return first.b;
+  return first.b; 
 }
 
 VertexIndex nextVertexIndex(VertexIndex current, Edge next) {
@@ -386,11 +406,14 @@ VertexIndex nextVertexIndex(VertexIndex current, Edge next) {
 
 void render() {
   glClear(GL_COLOR_BUFFER_BIT);
+  std::cout << "render cells!\n";
 
-  for (auto& chunk : hexChunks) {
+  for (auto& kv : hexChunks) {
+    auto& chunk = kv.second;
     if (!(chunk.state == ChunkState::BIOMES)) {
       continue;
     }
+    std::cout << "render " << chunk.x << ", " << chunk.y << "\n";
 
     for (size_t i = 0; i < chunk.cellmetas.size(); ++i) {
       glBegin(GL_POLYGON);
@@ -430,15 +453,10 @@ void render() {
         color(avarageMoisture);
       }
 
-
-      std::vector<Edge> eis;
-
-      for (int j : chunk.cellEdges[i]) {
-        eis.push_back(chunk.edges[j]);
-      }
-
       const auto& edgeIndexes = chunk.cellEdges[i];
       size_t edgeCount = edgeIndexes.size();
+      // Vertex old;
+      // ChunkWithIndexes* oldC;
 
       // Probably unneccessary check
       if (edgeCount < 2) {
@@ -446,11 +464,16 @@ void render() {
       }
 
       for (int j = 0; j < edgeCount; ++j) {
-        auto ei = chunk.edges[edgeIndexes[j]];
-        auto next = chunk.edges[edgeIndexes[(j + 1) % edgeCount]];
-        VertexIndex ind = sharedVertexIndex(ei, next);
+        const auto& ei = edgeIndexes[j];
 
-        auto vertex = findChunkWithChunkIndex(chunk, ind.chunkIndex).vertices[ind.index];
+        const auto& edgeChunk = findChunkWithChunkIndex(chunk, ei.chunkIndex);
+        const auto& edge = edgeChunk.edges[ei.index];
+        const auto& nexti = edgeIndexes[(j + 1) % edgeCount];
+        const auto& nextChunk = findChunkWithChunkIndex(chunk, nexti.chunkIndex);
+        const auto& next = nextChunk.edges[nexti.index];
+        VertexIndex ind = sharedVertexIndex(edge, next, chunkIndex(edgeChunk, nextChunk));
+
+        Vertex vertex = findChunkWithChunkIndex(edgeChunk, ind.chunkIndex).vertices[ind.index];
 
         glVertex2d(vertex.x, vertex.y);
         
@@ -460,9 +483,11 @@ void render() {
     }
   }
 
-
+  std::cout << "cells done!\n";
+  std::cout << "render lines around cells!\n";
   // Lines around cells
-  for (auto& chunk : hexChunks) {
+  for (auto& kv : hexChunks) {
+    auto& chunk = kv.second;
     if (!(chunk.state >= ChunkState::RIVERS)) {
       continue;
     }
@@ -489,8 +514,11 @@ void render() {
       glEnd();
     }
   }
+  std::cout << "lines around cells done!\n";
 
-  for (auto& chunk : hexChunks) {
+  std::cout << "render water points!\n";
+  for (auto& kv : hexChunks) {
+    auto& chunk = kv.second;
     if (!(chunk.state >= ChunkState::RIVERS)) {
       continue;
     }
@@ -514,8 +542,11 @@ void render() {
     glEnd();
 
   }
+  std::cout << "water points done!\n";
 
-  for (auto& chunk : hexChunks) {
+  std::cout << "render boxes!\n";
+  for (auto& kv : hexChunks) {
+    auto& chunk = kv.second;
     if (!(chunk.state >= ChunkState::RIVERS)) {
       continue;
     }
@@ -538,6 +569,7 @@ void render() {
 
     glEnd();
   }
+  std::cout << "flush!\n";
 
   glFlush();
 }
@@ -638,12 +670,27 @@ std::vector<Chunk*> neighbourChunks(int x, int y, std::vector<Chunk>& in) {
   return out;
 }
 
-//Neighoburs to a chunk, inclouding the chunk itself
+//Neighoburs to a chunk, not inclouding the chunk itself
 std::vector<ChunkWithIndexes*> neighbourChunks(int x, int y, std::vector<ChunkWithIndexes>& in) {
   std::vector<ChunkWithIndexes*> out;
   for (auto& chunk : in) {
     if (chunk.x >= x - 1 && chunk.x <= x + 1 && chunk.y >= y - 1 && chunk.y <= y + 1 && !(chunk.y == y && chunk.x == x)) {
       out.push_back(&chunk);
+    }
+  }
+  return out;
+}
+
+//Neighoburs to a chunk, not inclouding the chunk itself
+std::vector<ChunkWithIndexes*> neighbourChunks(int x, int y) {
+  std::vector<ChunkWithIndexes*> out;
+  for (int i = 0; i < 9; ++i) {
+    int chunkX = x + chunkIndexRelativeX[i];
+    int chunkY = y + chunkIndexRelativeY[i];
+    try {
+      std::pair<int, int> pos{ chunkX, chunkY };
+      out.push_back(&hexChunks.at(pos));
+    } catch (...) {
     }
   }
   return out;
@@ -738,7 +785,7 @@ void addVertices(ChunkWithIndexes& chunk) {
 
   addPoints(chunk);
 
-  auto neighbours = neighbourChunks(chunk.x, chunk.y, hexChunks);
+  auto neighbours = neighbourChunks(chunk.x, chunk.y);
   int size = chunk.cellPoints.size();
 
   for (auto* nei : neighbours) {
@@ -787,8 +834,31 @@ int findVertexIndex(const ChunkWithIndexes& chunk, Vertex v) {
   throw std::range_error("Vertex wasn't in the chunk");
 }
 
-int findEdgeIndex(const ChunkWithIndexes& chunk, Vertex a, Vertex b) {
+int findEdgeIndexCand(const ChunkWithIndexes& chunk, Vertex a, Vertex b) {
   for (auto i : chunk.edgesConnectCandidates) {
+    auto e = chunk.edges[i];
+    auto ea = findChunkWithChunkIndex(chunk, e.a.chunkIndex).vertices[e.a.index];
+
+    if (ea == a) {
+      auto eb = findChunkWithChunkIndex(chunk, e.b.chunkIndex).vertices[e.b.index];
+      if (eb == b) {
+        return i;
+      }
+    }
+    else if (ea == b) {
+      auto eb = findChunkWithChunkIndex(chunk, e.b.chunkIndex).vertices[e.b.index];
+      if (eb == a) {
+        return i;
+      }
+    }
+  }
+
+  std::cout << "Edge wasn't in the chunk";
+  throw std::range_error("Edge wasn't in the chunk");
+}
+
+int findEdgeIndex(const ChunkWithIndexes& chunk, Vertex a, Vertex b) {
+  for (int i = 0; i < chunk.edges.size(); ++i) {
     auto e = chunk.edges[i];
     auto ea = findChunkWithChunkIndex(chunk, e.a.chunkIndex).vertices[e.a.index];
 
@@ -816,7 +886,7 @@ void addVoronoi(ChunkWithIndexes& chunk) {
   }
   addVertices(chunk);
 
-  auto neighbours = neighbourChunks(chunk.x, chunk.y, hexChunks);
+  auto neighbours = neighbourChunks(chunk.x, chunk.y);
   int size = chunk.cellPoints.size();
 
   for (auto* nei : neighbours) {
@@ -831,7 +901,7 @@ void addVoronoi(ChunkWithIndexes& chunk) {
     cells.push_back(point);
   }
 
-  for (auto& neighbour : neighbours) {
+  for (const auto& neighbour : neighbours) {
     for (Point point : neighbour->cellPoints) {
       if (calculationWorthy(point.x(), point.y(), chunk)) {
         cells.push_back(point);
@@ -843,7 +913,7 @@ void addVoronoi(ChunkWithIndexes& chunk) {
   construct_voronoi(cells.begin(), cells.end(), &voronoi);
 
   int i = 1;
-  for (auto& vertex : voronoi.vertices()) {
+  for (const auto& vertex : voronoi.vertices()) {
     Vertex point{ vertex.x(), vertex.y() };
     if (vertexIsInChunk(chunk.x, chunk.y, point)) {
       vertex.color(i++);
@@ -917,6 +987,7 @@ void addVoronoi(ChunkWithIndexes& chunk) {
 
   auto cellCount = chunk.cellPoints.size();
   chunk.cellEdges.resize(cellCount);
+  chunk.unconnectedCellEdges.resize(cellCount);
 
 
   for (auto& cell : voronoi.cells()) {
@@ -926,16 +997,32 @@ void addVoronoi(ChunkWithIndexes& chunk) {
     if (cellIndex < cellCount) {
       auto* incident_edge = cell.incident_edge();
       auto* it = incident_edge;
+      size_t position = 0;
       do {
         it = it->next();
 
         if (it->color() >= 2) {
           // Add the edge index, subtract 2 since 0 and 1 were special numbers
-          chunk.cellEdges[cellIndex].push_back(it->color() - 2);
+          chunk.cellEdges[cellIndex].push_back({ CURRENT_CHUNK_INDEX, it->color() - 2 });
         }
         else {
-          // std::cout << "Skipped one\n";
+          const auto& vert0 = *(it->vertex0());
+          Vertex point0{ vert0.x(), vert0.y() };
+          const auto& vert1 = *(it->vertex1());
+          Vertex point1{ vert1.x(), vert1.y() };
+
+          U8 chunkIndex0 = chunkIndex(chunk.x, chunk.y, point0);
+          U8 chunkIndex1 = chunkIndex(chunk.x, chunk.y, point1);
+          U32 vertIndex0 = vert0.color();
+          U32 vertIndex1 = vert1.color();
+
+          auto decidingVertex = std::min(point0, point1);
+          U8 decidingIndex = chunkIndex(chunk.x, chunk.y, decidingVertex);
+          UnconnectedEdge ue{ point0, point1, decidingIndex, position };
+          chunk.unconnectedCellEdges[cellIndex].push_back(std::move(ue));
         }
+
+        ++position;
       } while (it != incident_edge);
     }
   }
@@ -949,7 +1036,7 @@ void connectEdges(ChunkWithIndexes& chunk) {
   }
   addVoronoi(chunk);
 
-  auto neighbours = neighbourChunks(chunk.x, chunk.y, hexChunks);
+  auto neighbours = neighbourChunks(chunk.x, chunk.y);
 
   for (auto* nei : neighbours) {
     addVoronoi(*nei);
@@ -957,9 +1044,17 @@ void connectEdges(ChunkWithIndexes& chunk) {
 
   for (int i = 0; i < chunk.verticeEdges.size(); ++i) {
     for (auto e : chunk.unconnectedVerticeEdges[i]) {
-      auto echunk = findChunkWithChunkIndex(chunk, e.connectToChunk);
-      EdgeIndex ei{ e.connectToChunk, findEdgeIndex(echunk, e.a, e.b) };
+      const auto& echunk = findChunkWithChunkIndex(chunk, e.connectToChunk);
+      EdgeIndex ei{ e.connectToChunk, findEdgeIndexCand(echunk, e.a, e.b) };
       chunk.verticeEdges[i].insert(chunk.verticeEdges[i].begin() + e.position, ei);
+    }
+  }
+
+  for (int i = 0; i < chunk.cellEdges.size(); ++i) {
+    for (auto e : chunk.unconnectedCellEdges[i]) {
+      const auto& echunk = findChunkWithChunkIndex(chunk, e.connectToChunk);
+      EdgeIndex ei{ e.connectToChunk, findEdgeIndex(echunk, e.a, e.b) };
+      chunk.cellEdges[i].insert(chunk.cellEdges[i].begin() + e.position, ei);
     }
   }
 
@@ -980,7 +1075,7 @@ void vertexMeta(ChunkWithIndexes& chunk) {
   // Calculate height of vertex
   for (size_t i = 0; i < chunk.vertices.size(); ++i)
   {
-    auto& it = chunk.vertices[i];
+    const auto& it = chunk.vertices[i];
     float groupA = (Simplex::octave_noise(1, 0.0003f, 0.5f, float(it.x), float(it.y), 0, a) + 1.0f) * 2;
     float groupB = (Simplex::octave_noise(1, 0.0003f, 0.5f, float(it.x), float(it.y), 1000, a) + 1.0f) * 0;
     float groupC = (Simplex::octave_noise(1, 0.0003f, 0.5f, float(it.x), float(it.y), 2000, a) + 1.0f) * 0;
@@ -1061,7 +1156,7 @@ void addRivers(ChunkWithIndexes& chunk) {
 
   std::vector<int> sources;
   for (int i : sourceCandidates) {
-    auto& vertex = chunk.vertices[i];
+    const auto& vertex = chunk.vertices[i];
     if (!std::any_of(sources.begin(), sources.end(), [&chunk, &vertex](int j) {return chunk.vertices[j].x <= vertex.x + 100
       && chunk.vertices[j].x >= vertex.x - 100
       && chunk.vertices[j].y <= vertex.y + 100
@@ -1102,7 +1197,7 @@ void addMoisture(ChunkWithIndexes& chunk) {
     stack.pop();
     double vertMoist = pairChunk->vertexmetas[pair.second].moisture;
 
-    for (auto i : pairChunk->verticeEdges[pair.second]) {
+    for (const auto& i : pairChunk->verticeEdges[pair.second]) {
       auto& edgeChunk = findChunkWithChunkIndex(*pairChunk, i.chunkIndex);
       auto ni = nextVertexIndex(vi, edgeChunk.edges[i.index]);
       auto& niChunk = findChunkWithChunkIndex(edgeChunk, ni.chunkIndex);
@@ -1123,7 +1218,7 @@ void addMoistureNeighbours(ChunkWithIndexes& chunk) {
     return;
   }
 
-  auto neighbours = neighbourChunks(chunk.x, chunk.y, hexChunks);
+  const auto& neighbours = neighbourChunks(chunk.x, chunk.y);
 
   for (auto* nei : neighbours) {
     addMoisture(*nei);
@@ -1147,10 +1242,11 @@ void addBiomes(ChunkWithIndexes& chunk) {
     int land = 0;
     int sea = 0;
     int lake = 0;
-    for (int j : chunk.cellEdges[i]) {
-      auto ei = chunk.edges[j];
-      auto vertexChunk = findChunkWithChunkIndex(chunk, ei.a.chunkIndex);
-      auto vertex = getVertexMeta(chunk, ei.a, addMoisture);
+    for (const auto& ei : chunk.cellEdges[i]) {
+      auto& edgeChunk = findChunkWithChunkIndex(chunk, ei.chunkIndex);
+      const auto& edge = edgeChunk.edges[ei.index];
+      auto& vertexChunk = findChunkWithChunkIndex(edgeChunk, edge.a.chunkIndex);
+      const auto& vertex = getVertexMeta(edgeChunk, edge.a, addMoisture);
       totalHeight += vertex.height;
       totalMoisture += vertex.moisture;
 
@@ -1212,17 +1308,20 @@ int main(int argc, char* argv[])
   for (int x = minX - 4; x <= maxX + 4; ++x) {
     for (int y = minY - 4; y <= maxY + 4; ++y) {
       ChunkWithIndexes chunk{ x, y };
-      hexChunks.push_back(std::move(chunk));
+      std::pair<int, int> pos{ x, y };
+      hexChunks.insert({ pos, std::move(chunk) });
     }
   }
 
-  for (auto& chunk : hexChunks) {
+  for (auto& kv : hexChunks) {
+    auto& chunk = kv.second;
     if (chunk.x >= minX && chunk.x <= maxX && chunk.y >= minY && chunk.y <= maxY) {
       //addMoisture(chunk);
     }
   }
 
-  for (auto& chunk : hexChunks) {
+  for (auto& kv : hexChunks) {
+    auto& chunk = kv.second;
     if (chunk.x >= minX && chunk.x <= maxX && chunk.y >= minY && chunk.y <= maxY) {
       addBiomes(chunk);
     }
