@@ -1,5 +1,7 @@
 #include "Biomes.h"
-#include "..\noise\simplex\simplex.h"
+#include "../noise/simplex/simplex.h"
+#include "../Pipeline.h"
+#include "../Height/HeightStage.h"
 
 namespace generator {
 

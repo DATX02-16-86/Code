@@ -12,11 +12,10 @@
 
 #include <boost/polygon/voronoi.hpp>
 
-#include <GL/glut.h>
+#include <GLUT/glut.h>
 
 #include "../../noise/Simplex/simplex.h"
 #include <Base.h>
-#include "main.h"
 
 #define CHUNK_SIZE 400
 #define GRID_DIVISIONS 10
@@ -975,7 +974,7 @@ void addVoronoi(ChunkWithIndexes& chunk) {
         }
         if (edge.color() >= 2) {
           // Add the edge index, subtract 1 since 1 was added to avoid 0
-          chunk.verticeEdges[vi - 1].push_back({ CURRENT_CHUNK_INDEX, edge.color() - 2 });
+          chunk.verticeEdges[vi - 1].push_back({ CURRENT_CHUNK_INDEX, (U32)edge.color() - 2 });
           ++position;
         }
       } while (it != incident_edge);
@@ -1003,7 +1002,7 @@ void addVoronoi(ChunkWithIndexes& chunk) {
 
         if (it->color() >= 2) {
           // Add the edge index, subtract 2 since 0 and 1 were special numbers
-          chunk.cellEdges[cellIndex].push_back({ CURRENT_CHUNK_INDEX, it->color() - 2 });
+          chunk.cellEdges[cellIndex].push_back({ CURRENT_CHUNK_INDEX, (U32)it->color() - 2 });
         }
         else {
           const auto& vert0 = *(it->vertex0());
@@ -1045,7 +1044,7 @@ void connectEdges(ChunkWithIndexes& chunk) {
   for (int i = 0; i < chunk.verticeEdges.size(); ++i) {
     for (auto e : chunk.unconnectedVerticeEdges[i]) {
       const auto& echunk = findChunkWithChunkIndex(chunk, e.connectToChunk);
-      EdgeIndex ei{ e.connectToChunk, findEdgeIndexCand(echunk, e.a, e.b) };
+      EdgeIndex ei{ e.connectToChunk, (U32)findEdgeIndexCand(echunk, e.a, e.b) };
       chunk.verticeEdges[i].insert(chunk.verticeEdges[i].begin() + e.position, ei);
     }
   }
@@ -1053,7 +1052,7 @@ void connectEdges(ChunkWithIndexes& chunk) {
   for (int i = 0; i < chunk.cellEdges.size(); ++i) {
     for (auto e : chunk.unconnectedCellEdges[i]) {
       const auto& echunk = findChunkWithChunkIndex(chunk, e.connectToChunk);
-      EdgeIndex ei{ e.connectToChunk, findEdgeIndex(echunk, e.a, e.b) };
+      EdgeIndex ei{ e.connectToChunk, (U32)findEdgeIndex(echunk, e.a, e.b) };
       chunk.cellEdges[i].insert(chunk.cellEdges[i].begin() + e.position, ei);
     }
   }
@@ -1111,7 +1110,7 @@ void vertexMeta(ChunkWithIndexes& chunk) {
       // Whole stack has to be emptied so we don't start work on connected water twice
       while (!stack.empty()) {
         int it = stack.top();
-        VertexIndex vi{ CURRENT_CHUNK_INDEX, it };
+        VertexIndex vi{ CURRENT_CHUNK_INDEX, (U32)it };
         stack.pop();
         for (EdgeIndex j : chunk.verticeEdges[it]) {
           auto& edgeChunk = findChunkWithChunkIndex(chunk, j.chunkIndex);
@@ -1199,7 +1198,7 @@ void addMoisture(ChunkWithIndexes& chunk) {
 
     for (const auto& i : pairChunk->verticeEdges[pair.second]) {
       auto& edgeChunk = findChunkWithChunkIndex(*pairChunk, i.chunkIndex);
-      auto ni = nextVertexIndex(vi, edgeChunk.edges[i.index]);
+      const auto ni = nextVertexIndex(vi, edgeChunk.edges[i.index]);
       auto& niChunk = findChunkWithChunkIndex(edgeChunk, ni.chunkIndex);
       addRivers(niChunk);
       auto& meta = niChunk.vertexmetas[ni.index];
