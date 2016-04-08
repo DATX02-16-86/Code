@@ -47,19 +47,14 @@ namespace generator {
 	const BiomeId PlainBiome::id = registerBiome(PlainBiome::fillChunk);
 
 	void PlainBiome::fillChunk(Chunk& chunk, Pipeline& pipeline) {
-		auto baseHeight = pipeline.data.get(BaseHeight);
-		chunk.build([=](Voxel& current, Int x, Int y, Int z) -> Voxel {
-			Size height = 0;
-			if (baseHeight) height = baseHeight->get(x, y, z);
 
-			U16 blockType = 0;
+		Size chunkHeight = chunk.area.depth;
+		Size baseHeight = pipeline.data.get(BaseHeight);
 
-			height += Simplex::octave_noise(8, 0.0005f, 0.5f, x, y) * 5;
 
-			if (z < height) blockType = 1;
 
-			return Voxel{ blockType };
-		});
 	}
+
+
 }
 
