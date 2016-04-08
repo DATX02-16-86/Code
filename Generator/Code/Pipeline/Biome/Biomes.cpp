@@ -59,11 +59,10 @@ namespace generator {
 		bounds.add(baseHeight * 3/4); 	// Caves
 		bounds.add(height * 3/4);		// Ground, Rest air
 
-
-		// funcs.add(NOISEFUNC);
-		// funcs.add(NOISEFUNC);
-		// funcs.add(NOISEFUNC);
-		// funcs.add(NOISEFUNC);
+		funcs.add(biomeFunctions::bedRock);
+		funcs.add(biomeFunctions::caves);
+		funcs.add(biomeFunctions::plains());
+		funcs.add(biomeFunctions::air);
 
 		fillChunkLayered(funcs, bounds, 5, chunk);
 	}
