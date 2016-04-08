@@ -58,6 +58,7 @@ namespace generator {
 		bounds.add(3); 					// Bedrock
 		bounds.add(baseHeight * 3/4); 	// Caves
 		bounds.add(height * 3/4);		// Ground, Rest air
+		bounds.add(height);
 
 		funcs.add(biomeFunctions::bedRock);
 		funcs.add(biomeFunctions::caves);
@@ -69,41 +70,63 @@ namespace generator {
 
     const BiomeId LayeredBiomeTest::id = registerBiome(LayeredBiomeTest::fillChunk);
 
-
-    void LayeredBiomeTest::fillChunk(generator::Chunk &chunk, generator::Pipeline &pipeline)
-    {
+    void LayeredBiomeTest::fillChunk(generator::Chunk &chunk, generator::Pipeline &pipeline) {
 
 	}
 
 	void fillChunkLayered(std::vector<generator::NoiseFunc> funcArray, std::vector<int> bounds,
-									   int interpDepth, generator::Chunk &chunk)
-    {
+									   int interpDepth, generator::Chunk &chunk) {
 
-        height = pipeline.get(height);
+		int layer = 0;
+		int layers = bounds.size();
 
-        int height = chunk.area.depth;
-        int baseHeight = pipeline.data.get(BaseHeight);
+		float density;
+		float alpha;
 
-        // Use noise up to coordinate
-        // Underground
-        bounds.add(3); // Bedrock
-        bounds.add(baseHeight * 3 / 4); // Caves
-        //Above ground
-        bounds.add(height * 3 / 4); // Plains
-        // Rest Air to height
+		NoiseFunc currentFunc = funcArray[0];
+		NoiseFunc lastFunc = funcArray[0];
 
-        //funcarray....
-        arr.add (Bedrock)
-        arr.add (BigCaves)
-        arr.add (Plains)
-        arr.add (Air)
+		auto step = Size(1) << area.lod;
+		auto x = area.x * area.width;
+		auto y = area.y * area.height;
+		auto z = area.z * area.depth;
 
-        InterpMastery(arr, bounds, chunk);
+		Size height = area.height;
+		Size width = area.width;
+		Size depth = area.depth;
 
+		for(Size zi = 0; zi < depth; zi++) {
+
+			if ( zi >= bounds[layer]){
+				layer++;
+				currentFunc = funcArray[layer];
+				lastFunc = funcArray[layer - 1];
+
+			}
+
+			if ( layer > 0 && zi - bounds[layer] < interpDepth){
+				alpha = ((float)zi - bounds[layer])/interpDepth;
+			}
+			else {
+				alpha = 0;
+			}
+
+
+			for(Size row = 0; row < height; row++) {
+				for(Size column = 0; column < width; column++) {
+
+					density  = NoiseLerp(currentFunc, lastFunc, alpha, x + column * step, y + row * step, z + zi * step, bounds[layer - 1], bounds[layer]);
+					U16 blockType = (U16) density > 0.5f;
+
+					Voxel& voxel = chunk.at(column, row, zi);
+					voxel = Voxel {blockType};
+
+				}
+			}
+		}
     }
 
-    float NoiseLerp(NoiseFunc funcA, NoiseFunc funcB, float alpha, float x, float y, float z, int baseHeight)
-    {
+    float NoiseLerp(NoiseFunc funcA, NoiseFunc funcB, float alpha, float x, float y, float z, int baseHeight) {
         return funcA(x, y, z, baseHeight) * alpha + funcB(x, y, z, baseHeight) * (1 - alpha);
     }
 
