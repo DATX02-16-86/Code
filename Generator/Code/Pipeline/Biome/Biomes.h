@@ -6,6 +6,8 @@ namespace generator {
 
 	static void fillChunkLayered(std::vector<NoiseFunc> funcArray, std::vector<int> bounds, int interpDepth, Chunk& chunk);
 
+	float NoiseLerp(NoiseFunc funcA, NoiseFunc funcB, float alpha, float x, float y, float z, int lowerBound, int upperBound);
+
 	struct LayeredBiomeTest{
 		static const BiomeId id;
 		static void fillChunk(Chunk& chunk, Pipeline& pipeline);
@@ -27,6 +29,8 @@ namespace generator {
 }
 
 namespace biomeFunctions{
+
+	float air(float x, float y, float z, int lowerBound, int upperBound);
 
 	float bedRock(float x, float y, float z, int lowerBound, int upperBound);
 

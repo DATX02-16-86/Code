@@ -1,3 +1,4 @@
+#include <d2d1helper.h>
 #include "Biomes.h"
 #include "../noise/simplex/simplex.h"
 #include "../Pipeline.h"
@@ -126,27 +127,65 @@ namespace generator {
 		}
     }
 
-    float NoiseLerp(NoiseFunc funcA, NoiseFunc funcB, float alpha, float x, float y, float z, int baseHeight) {
-        return funcA(x, y, z, baseHeight) * alpha + funcB(x, y, z, baseHeight) * (1 - alpha);
+
+    float NoiseLerp(NoiseFunc funcA, NoiseFunc funcB, float alpha, float x, float y, float z, int lowerBound, int upperBound)
+    {
+        return funcA(x, y, z, lowerBound, upperBound) * alpha + funcB(x, y, z, lowerBound, upperBound) * (1 - alpha);
     }
 
 }
 
 namespace biomeFunctions{
-    float bedRock(float x, float y, float z, int lowerBound, int upperBound) {
+
+    float air(float x, float y, float z, int lowerBound, int upperBound) {
         return 0;
+    }
+
+    float bedRock(float x, float y, float z, int lowerBound, int upperBound) {
+        return 1;
     }
 
     float plains(float x, float y, float z, int lowerBound, int upperBound) {
-        return 0;
-    }
+
+        float height = lowerBound + Simplex::octave_noise(8, 0.0005f, 0.5f, x, y) * 5;
+
+        if (z < height)
+            return 1;
+        else
+            return 0;
+}
 
     float caves(float x, float y, float z, int lowerBound, int upperBound) {
-        return 0;
+        return 1;
     }
 
     float weirdLand(float x, float y, float z, int lowerBound, int upperBound) {
-        return 0;
+
+        // under a certain height it is solid
+        if (z < lowerBound + 5) return 1;
+        else {
+            //calculate density with simplex noise
+            float density = Simplex::octave_noise(8, 0.005f, 0.5f, x, y, z);
+
+            //scale density depending on height
+            float scale = 1.f;
+
+            float halfHeight = (upperBound - lowerBound) * 0.5f;
+
+            //decrease density with z over a certain height
+            if (z > halfHeight) {
+                scale = (z - halfHeight) / halfHeight;
+                scale = scale * scale;
+            }
+            else{
+                //increase density
+                scale = (2 * ( halfHeight-z) / halfHeight);
+				scale = scale * scale;
+            }
+            density -= scale;
+
+            return std::max(0, std::min(density, 1));
+        }
     }
 
     float floatingIslands(float x, float y, float z, int lowerBound, int upperBound) {
