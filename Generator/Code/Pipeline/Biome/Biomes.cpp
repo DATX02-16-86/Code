@@ -51,8 +51,21 @@ namespace generator {
 		Size chunkHeight = chunk.area.depth;
 		Size baseHeight = pipeline.data.get(BaseHeight);
 
+		std::vector<generator::NoiseFunc> funcs;
+		std::vector<int> bounds;
+
+		// Z coordinate of end of layer
+		bounds.add(3); 					// Bedrock
+		bounds.add(baseHeight * 3/4); 	// Caves
+		bounds.add(height * 3/4);		// Ground, Rest air
 
 
+		// funcs.add(NOISEFUNC);
+		// funcs.add(NOISEFUNC);
+		// funcs.add(NOISEFUNC);
+		// funcs.add(NOISEFUNC);
+
+		fillChunkLayered(funcs, bounds, 5, chunk);
 	}
 
     const BiomeId LayeredBiomeTest::id = registerBiome(LayeredBiomeTest::fillChunk);
