@@ -71,19 +71,63 @@ namespace generator {
     const BiomeId LayeredBiomeTest::id = registerBiome(LayeredBiomeTest::fillChunk);
 
 
-    void LayeredBiomeTest::fillChunk(generator::Chunk &chunk, generator::Pipeline &pipeline) {
+    void LayeredBiomeTest::fillChunk(generator::Chunk &chunk, generator::Pipeline &pipeline)
+    {
 
 	}
 
 	void fillChunkLayered(std::vector<generator::NoiseFunc> funcArray, std::vector<int> bounds,
-									   int interpDepth, generator::Chunk &chunk) {
+									   int interpDepth, generator::Chunk &chunk)
+    {
 
-	}
+        height = pipeline.get(height);
 
-    float NoiseLerp(NoiseFunc funcA, NoiseFunc funcB, float alpha, float x, float y, float z, int baseHeight){
+        int height = chunk.area.depth;
+        int baseHeight = pipeline.data.get(BaseHeight);
+
+        // Use noise up to coordinate
+        // Underground
+        bounds.add(3); // Bedrock
+        bounds.add(baseHeight * 3 / 4); // Caves
+        //Above ground
+        bounds.add(height * 3 / 4); // Plains
+        // Rest Air to height
+
+        //funcarray....
+        arr.add (Bedrock)
+        arr.add (BigCaves)
+        arr.add (Plains)
+        arr.add (Air)
+
+        InterpMastery(arr, bounds, chunk);
+
+    }
+
+    float NoiseLerp(NoiseFunc funcA, NoiseFunc funcB, float alpha, float x, float y, float z, int baseHeight)
+    {
         return funcA(x, y, z, baseHeight) * alpha + funcB(x, y, z, baseHeight) * (1 - alpha);
     }
 
 }
 
+namespace biomeFunctions{
+    float bedRock(float x, float y, float z, int lowerBound, int upperBound) {
+        return 0;
+    }
 
+    float plains(float x, float y, float z, int lowerBound, int upperBound) {
+        return 0;
+    }
+
+    float caves(float x, float y, float z, int lowerBound, int upperBound) {
+        return 0;
+    }
+
+    float weirdLand(float x, float y, float z, int lowerBound, int upperBound) {
+        return 0;
+    }
+
+    float floatingIslands(float x, float y, float z, int lowerBound, int upperBound) {
+        return 0;
+    }
+}
