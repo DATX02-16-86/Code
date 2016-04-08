@@ -61,5 +61,22 @@ namespace generator {
 			return Voxel{ blockType };
 		});
 	}
+
+    const BiomeId LayeredBiomeTest::id = registerBiome(LayeredBiomeTest::fillChunk);
+
+
+    void LayeredBiomeTest::fillChunk(generator::Chunk &chunk, generator::Pipeline &pipeline) {
+
+	}
+
+	void fillChunkLayered(std::vector<generator::NoiseFunc> funcArray, std::vector<int> bounds,
+									   int interpDepth, generator::Chunk &chunk) {
+
+	}
+
+    float NoiseLerp(NoiseFunc funcA, NoiseFunc funcB, float alpha, float x, float y, float z, int baseHeight){
+        return funcA(x, y, z, baseHeight) * alpha + funcB(x, y, z, baseHeight) * (1 - alpha);
+    }
 }
+
 
