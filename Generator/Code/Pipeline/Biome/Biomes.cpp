@@ -117,7 +117,7 @@ namespace generator {
 				for(Size column = 0; column < width; column++) {
 
 					density  = NoiseLerp(currentFunc, lastFunc, alpha, x + column * step, y + row * step, z + zi * step, bounds[layer - 1], bounds[layer]);
-					U16 blockType = (U16) density > 0.5f;
+					U16 blockType = (U16) (density > 0.5f);
 
 					Voxel& voxel = chunk.at(column, row, zi);
 					voxel = Voxel {blockType};
