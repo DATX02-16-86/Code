@@ -13,8 +13,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../Bin/${BIN_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../Bin/${BIN_DIR}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.1")
 
-include_directories(../../Tritium/Code/Core)
-include_directories(../../Tritium/Code)
+include_directories(../../Tritium/Code/Tritium/Core)
+include_directories(../../Tritium/Code/Tritium)
 include_directories(../../Libraries)
 
 link_directories(../../Tritium/Bin/Release)
@@ -44,6 +44,14 @@ add_library(Generator
 
     Pipeline/Landmass/LandmassStage.cpp
     Pipeline/Landmass/LandmassStage.h
+    Pipeline/Landmass/Voronoi.h
+    Pipeline/Landmass/Voronoi.cpp
+    Pipeline/Landmass/ChunkMatrix.h
+    Pipeline/Landmass/ChunkMatrix.cpp
+    Pipeline/Landmass/Filler.cpp
+    Pipeline/Landmass/Filler.h
+    Pipeline/Landmass/Chunk.cpp
+    Pipeline/Landmass/Chunk.h
 
     World/World.h
     World/World.cpp
