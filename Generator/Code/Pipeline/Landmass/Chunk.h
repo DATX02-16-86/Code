@@ -37,6 +37,10 @@ struct Chunk {
     /// This connects the vertices produced by the previous stage.
     void buildEdges(ChunkMatrix& matrix, Filler& filler);
 
+    /// Connects the border edges in this chunk to its neighbours.
+    /// This is the last stage.
+    void connectEdges(ChunkMatrix& matrix, Filler& filler);
+
     template<class F>
     void mapNeighbours(ChunkMatrix& matrix, F&& f);
 
@@ -69,6 +73,18 @@ struct Chunk {
         return {(I32)Tritium::Math::floor(p.x) - x, (I32)Tritium::Math::floor(p.y) - y};
     }
 
+    /// Returns the absolute position of the neighbour at this offset.
+    Int2 neighbourPosition(U8);
+
+    /// Returns the neighbour at the provided offset.
+    Chunk& neighbour(ChunkMatrix& matrix, U8 offset) {
+        auto p = neighbourPosition(offset);
+        return matrix.getChunk(p.x, p.y);
+    }
+
+    U32 findEdgeIndexCand(ChunkMatrix& matrix, Vertex a, Vertex b);
+    U32 findEdgeIndex(ChunkMatrix& matrix, Vertex a, Vertex b);
+
     std::vector<Point> cellCenters;
     Array<ArrayF<EdgeIndex, kMaxCellEdges>> cellEdges;
     Array<ArrayF<UnconnectedEdge, kMaxCellEdges>> unconnectedCellEdges;
@@ -83,6 +99,9 @@ struct Chunk {
     // These are used in the Vertices and Edges stages; after that they are destroyed.
     std::vector<Point> cellCentersWithBorder;
     Uninitialized<Diagram> diagram;
+
+    // This is used in the Connections stage; after that it is destroyed.
+    std::vector<U32> edgeConnectCandidates;
 
     I32 x;
     I32 y;
