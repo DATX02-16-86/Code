@@ -5,19 +5,67 @@
 namespace generator {
 namespace landmass {
 
-static bool vertexIsInChunk(Int chunkX, Int chunkY, Vertex p, Size chunkSize) {
+inline bool vertexIsInChunk(Int chunkX, Int chunkY, Vertex p, Size chunkSize) {
     return p.x >= chunkX * chunkSize &&
            p.x < (chunkX + 1) * chunkSize &&
            p.y >= chunkY * chunkSize &&
            p.y < (chunkY + 1) * chunkSize;
 }
 
-static bool pointIsInChunk(Int chunkX, Int chunkY, Point p, Size chunkSize) {
+inline bool pointIsInChunk(Int chunkX, Int chunkY, Point p, Size chunkSize) {
     return vertexIsInChunk(chunkX, chunkY, {p.x(), p.y()}, chunkSize);
 }
 
-static U32 chunkSeed(I32 chunkX, I32 chunkY, I32 seed, Size chunkWidth) {
+inline U32 chunkSeed(I32 chunkX, I32 chunkY, I32 seed, Size chunkWidth) {
     return (U32)(chunkX * 31 + chunkY * chunkWidth) * 31 * seed;
+}
+
+static std::pair<Point, Point> getEdgePoints(const DiagramEdge& edge, std::vector<Point>& points) {
+    if(edge.is_primary()) {
+        if(edge.is_finite()) {
+            auto x0 = edge.vertex0()->x();
+            auto y0 = edge.vertex0()->y();
+
+            auto x1 = edge.vertex1()->x();
+            auto y1 = edge.vertex1()->y();
+            return{ {x0, y0}, {x1, y1} };
+        } else {
+            Point p1 = points[edge.cell()->source_index()];
+            Point p2 = points[edge.twin()->cell()->source_index()];
+            Point origin;
+            Point direction;
+            CoordinateType coefficient = 1.0;
+
+            origin.x((p1.x() + p2.x()) * 0.5);
+            origin.y((p1.y() + p2.y()) * 0.5);
+            direction.x(p1.y() - p2.y());
+            direction.y(p2.x() - p1.x());
+
+            CoordinateType x0;
+            CoordinateType y0;
+            CoordinateType x1;
+            CoordinateType y1;
+
+            if(!edge.vertex0()) {
+                x0 = origin.x() - direction.x() * coefficient;
+                y0 = origin.y() - direction.y() * coefficient;
+            } else {
+                x0 = edge.vertex0()->x();
+                y0 = edge.vertex0()->y();
+            }
+
+            if(!edge.vertex1()) {
+                x1 = origin.x() + direction.x() * coefficient;
+                y1 = origin.y() + direction.y() * coefficient;
+            } else {
+                x1 = edge.vertex1()->x();
+                y1 = edge.vertex1()->y();
+            }
+
+            return {{x0, y0}, {x1, y1}};
+        }
+    }
+    return {{0, 0}, {0, 0}};
 }
 
 static void relaxPoints(FillContext& context, Size iterations) {
@@ -30,7 +78,7 @@ static void relaxPoints(FillContext& context, Size iterations) {
         Diagram diagram;
         construct_voronoi(points.begin(), points.end(), &diagram);
 
-        for(const Cell& it : diagram.cells()) {
+        for(const DiagramCell& it : diagram.cells()) {
             auto edge = it.incident_edge();
             CoordinateType x = 0;
             CoordinateType y = 0;

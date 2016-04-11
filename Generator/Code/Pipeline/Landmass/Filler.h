@@ -8,14 +8,15 @@ namespace generator {
 namespace landmass {
 
 struct FillContext {
-    std::vector<Point> points;
+    std::vector<Point>& points;
     const I32 chunkX;
     const I32 chunkY;
     const U32 chunkSize;
 };
 
 /// Interface for voronoi diagram point fillers.
-/// This defines the base shape of the diagram on which metadata is laid out.
+/// This defines the base shape of the diagram on which metadata is laid out
+/// by laying out the center points of each voronoi cell.
 struct Filler {
     virtual void fill(FillContext& context) = 0;
 };
