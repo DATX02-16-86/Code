@@ -151,7 +151,7 @@ void Chunk::buildEdges(ChunkMatrix& matrix, Filler& filler) {
 
                 if(it->color() >= 2) {
                     // Add the edge index, subtract 1 since 1 was added to avoid 0
-                    vertexEdges[vertexIndex - 1].push({0, (U32)it->color() - 2 });
+                    vertexEdges[vertexIndex - 1].push(EdgeIndex {0, (U32)it->color() - 2 });
                     ++position;
                 }
             } while (it != incidentEdge);
@@ -175,7 +175,7 @@ void Chunk::buildEdges(ChunkMatrix& matrix, Filler& filler) {
 
                 if(it->color() >= 2) {
                     // Add the edge index, subtract 2 since 0 and 1 were special numbers
-                    cellEdges[cellIndex].push({0, (U32)it->color() - 2});
+                    cellEdges[cellIndex].push(EdgeIndex {0, (U32)it->color() - 2});
                 } else {
                     const auto& vert0 = *(it->vertex0());
                     Vertex point0 {vert0.x(), vert0.y()};

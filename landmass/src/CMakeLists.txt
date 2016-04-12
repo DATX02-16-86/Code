@@ -26,8 +26,9 @@ endif()
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../Bin/${BIN_DIR}")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.1")
 
-include_directories(../../boost/)
-include_directories(../../Tritium/Code/Core)
+include_directories(../../Libraries/)
+include_directories(../../Tritium/Code/Tritium/Core)
+include_directories(../../Tritium/Code/Tritium)
 
 
 set(SOURCE_FILES Generate.cpp Landmass.h Voronoi.h Generate.h Render.cpp Voronoi.cpp ../../noise/Simplex/simplex.h ../../noise/Simplex/simplex.cpp)

@@ -81,6 +81,12 @@ inline bool operator == (const Edge &lhs, const Edge &rhs) {
     return (lhs.a == rhs.a && lhs.b == rhs.b) || (lhs.a == rhs.b && lhs.b == rhs.a);
 }
 
+inline bool operator < (Vertex lhs, Vertex rhs) {
+    if(lhs.x < rhs.x) return true;
+    else if(lhs.x > rhs.x) return false;
+    else return lhs.y < rhs.y;
+}
+
 }} // namespace generator::landmass
 
 namespace boost { namespace polygon { namespace detail {

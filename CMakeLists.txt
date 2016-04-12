@@ -15,4 +15,4 @@ include_directories(../../Tritium/Code)
 
 add_subdirectory(Generator/Code)
 add_subdirectory(landmass/src)
-add_subdirectory(Tritium/Code)
+add_subdirectory(Tritium/Code/Tritium)
