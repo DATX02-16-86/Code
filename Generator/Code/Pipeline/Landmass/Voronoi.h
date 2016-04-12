@@ -21,7 +21,7 @@ using Tritium::Float2;
 using Tritium::Int2;
 typedef Float2 Vertex;
 
-static const U32 kMaxCellEdges = 8;
+static const U32 kMaxCellEdges = 9;
 static const U32 kMaxVertexEdges = 4;
 
 typedef F32 CoordinateType;

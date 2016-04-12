@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.3)
-project(Code)
+project(Generator)
 
 if(WIN32)
 set(BIN_DIR "Win32")

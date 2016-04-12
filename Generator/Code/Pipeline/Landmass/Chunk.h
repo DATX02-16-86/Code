@@ -48,10 +48,10 @@ struct Chunk {
     bool isRelevantBorderCell(F32 x, F32 y) {
         auto size = (F32)this->size;
         return
-            x >= ((F32)x - 0.15f) * size &&
-            x < ((F32)x + 1.15f) * size &&
-            y >= ((F32)y - 0.15f) * size &&
-            y < ((F32)y + 1.15f) * size;
+            x >= ((F32)this->x - 0.3f) * size &&
+            x < ((F32)this->x + 1.3f) * size &&
+            y >= ((F32)this->y - 0.3f) * size &&
+            y < ((F32)this->y + 1.3f) * size;
     }
 
     /// Checks if the provided vertex is inside this chunk.

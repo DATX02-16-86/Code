@@ -5,18 +5,18 @@
 namespace generator {
 namespace landmass {
 
-inline bool vertexIsInChunk(Int chunkX, Int chunkY, Vertex p, Size chunkSize) {
+inline bool vertexIsInChunk(Int chunkX, Int chunkY, Vertex p, I32 chunkSize) {
     return p.x >= chunkX * chunkSize &&
            p.x < (chunkX + 1) * chunkSize &&
            p.y >= chunkY * chunkSize &&
            p.y < (chunkY + 1) * chunkSize;
 }
 
-inline bool pointIsInChunk(Int chunkX, Int chunkY, Point p, Size chunkSize) {
+inline bool pointIsInChunk(Int chunkX, Int chunkY, Point p, I32 chunkSize) {
     return vertexIsInChunk(chunkX, chunkY, {p.x(), p.y()}, chunkSize);
 }
 
-inline U32 chunkSeed(I32 chunkX, I32 chunkY, I32 seed, Size chunkWidth) {
+inline U32 chunkSeed(I32 chunkX, I32 chunkY, I32 seed, I32 chunkWidth) {
     return (U32)(chunkX * 31 + chunkY * chunkWidth) * 31 * seed;
 }
 
@@ -36,8 +36,8 @@ static std::pair<Point, Point> getEdgePoints(const DiagramEdge& edge, std::vecto
             Point direction;
             CoordinateType coefficient = 1.0;
 
-            origin.x((p1.x() + p2.x()) * 0.5);
-            origin.y((p1.y() + p2.y()) * 0.5);
+            origin.x((p1.x() + p2.x()) * 0.5f);
+            origin.y((p1.y() + p2.y()) * 0.5f);
             direction.x(p1.y() - p2.y());
             direction.y(p2.x() - p1.x());
 

@@ -37,7 +37,7 @@ void Chunk::buildCenters(Filler& filler) {
     if(stage >= Points) return;
 
     // Generate the source points we will construct the diagram form.
-    FillContext context {cellCenters, x, y, size};
+    FillContext context {cellCenters, x, y, (I32)size};
     filler.fill(context);
 
     stage = Points;
@@ -162,13 +162,13 @@ void Chunk::buildEdges(ChunkMatrix& matrix, Filler& filler) {
     cellEdges.resize(cellCount);
     unconnectedCellEdges.resize(cellCount);
 
-    for(auto& cell : diagram->cells()) {
+    for(const DiagramCell& cell : diagram->cells()) {
         auto cellIndex = cell.source_index();
 
         // Cell is in this chunk
         if(cellIndex < cellCount) {
-            const auto* incidentEdge = cell.incident_edge();
-            const auto* it = incidentEdge;
+            const DiagramEdge* incidentEdge = cell.incident_edge();
+            const DiagramEdge* it = incidentEdge;
             U32 position = 0;
             do {
                 it = it->next();
@@ -189,7 +189,7 @@ void Chunk::buildEdges(ChunkMatrix& matrix, Filler& filler) {
                 }
 
                 ++position;
-            } while (it != incidentEdge);
+            } while(it != incidentEdge);
         }
     }
 

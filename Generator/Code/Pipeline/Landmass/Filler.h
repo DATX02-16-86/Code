@@ -11,7 +11,7 @@ struct FillContext {
     std::vector<Point>& points;
     const I32 chunkX;
     const I32 chunkY;
-    const U32 chunkSize;
+    const I32 chunkSize;
 };
 
 /// Interface for voronoi diagram point fillers.
@@ -44,7 +44,7 @@ struct RandomRelaxationFiller: RandomFiller {
 struct GridFiller: Filler {
     GridFiller(U32 spacing): spacing(spacing) {}
 
-    const U32 spacing;
+    const I32 spacing;
 
     virtual void fill(FillContext& context) override;
 };
@@ -53,7 +53,7 @@ struct GridFiller: Filler {
 struct HexFiller: Filler {
     HexFiller(U32 spacing): spacing(spacing) {}
 
-    const U32 spacing;
+    const I32 spacing;
 
     virtual void fill(FillContext& context) override;
 };
@@ -62,7 +62,7 @@ struct HexFiller: Filler {
 struct RandomHexFiller: Filler {
     RandomHexFiller(U32 delta, I32 seed): delta(delta), seed(seed) {}
 
-    const U32 delta;
+    const I32 delta;
     const I32 seed;
 
     virtual void fill(FillContext& context) override;
