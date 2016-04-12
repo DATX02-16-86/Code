@@ -13,7 +13,7 @@ endif(NOT OPENGL_FOUND)
 #########################################################
 
 if(WIN32)
-    
+
 elseif(APPLE)
 set(BIN_DIR "OSX")
 
@@ -27,8 +27,8 @@ endif()
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.1")
 
 include_directories(../../Libraries/)
-include_directories(../../Tritium/Code/Tritium/Core)
-include_directories(../../Tritium/Code/Tritium)
+include_directories(../../Libraries/Tritium/Code/Tritium/Core)
+include_directories(../../Libraries/Tritium/Code/Tritium)
 
 
 set(SOURCE_FILES Generate.cpp Landmass.h Voronoi.h Generate.h Render.cpp Voronoi.cpp ../../noise/Simplex/simplex.h ../../noise/Simplex/simplex.cpp)

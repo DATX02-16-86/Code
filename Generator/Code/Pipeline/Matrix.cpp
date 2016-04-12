@@ -114,7 +114,7 @@ IdMatrix& TiledMatrix::getTile(Int x, Int y) {
     auto tileX = tileIndex(x) - this->x;
     auto tileY = tileIndex(y) - this->y;
     if(tileX < 0 || tileY < 0 || width <= tileX || height <= tileY) {
-        resize(tileX, tileY);
+        resize(tileIndex(x), tileIndex(y));
 		tileX = tileIndex(x) - this->x;
 		tileY = tileIndex(y) - this->y;
     }

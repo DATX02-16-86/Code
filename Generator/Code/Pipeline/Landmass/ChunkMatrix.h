@@ -11,11 +11,11 @@ struct Chunk;
 struct ChunkMatrix {
     ChunkMatrix() = default;
     ChunkMatrix(const ChunkMatrix&) = delete;
-    ChunkMatrix(U32 detail, U8 tileSize) { create(detail, tileSize); }
+    ChunkMatrix(U32 detail, U32 tileSize) { create(detail, tileSize); }
 
     ~ChunkMatrix();
 
-    void create(U32 detail, U8 tileSize);
+    void create(U32 detail, U32 tileSize);
 
     /// Returns the tile that contains the provided global position.
     /// The tile may be created if it doesn't exist.
@@ -38,9 +38,9 @@ private:
     Chunk** tiles = nullptr;
     I32 x = 0;
     I32 y = 0;
+    U32 tileSize = 0;
     U16 width = 0;
     U16 height = 0;
-    U8 tileSize = 0;
     U8 baseDetail = 0;
 };
 

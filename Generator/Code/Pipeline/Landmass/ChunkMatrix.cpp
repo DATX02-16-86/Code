@@ -13,7 +13,7 @@ ChunkMatrix::~ChunkMatrix() {
     tiles = nullptr;
 }
 
-void ChunkMatrix::create(U32 detail, U8 tileSize) {
+void ChunkMatrix::create(U32 detail, U32 tileSize) {
     this->tileSize = tileSize;
     this->baseDetail = (U8)detail;
 }
@@ -74,15 +74,14 @@ Chunk& ChunkMatrix::getChunk(I32 x, I32 y) {
     auto tileX = tileIndex(x) - this->x;
     auto tileY = tileIndex(y) - this->y;
     if(tileX < 0 || tileY < 0 || width <= tileX || height <= tileY) {
-        resize(tileX, tileY);
+        resize(tileIndex(x), tileIndex(y));
         tileX = tileIndex(x) - this->x;
         tileY = tileIndex(y) - this->y;
     }
 
     auto& tile = tiles[width * tileY + tileX];
     if(!tile) {
-        auto size = U32(1) << tileSize;
-        tile = new Chunk {x, y, size};
+        tile = new Chunk {x, y, tileSize};
     }
     return *tile;
 }
