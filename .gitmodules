@@ -1,0 +1,3 @@
+[submodule "Libraries/Tritium"]
+	path = Libraries/Tritium
+	url = https://github.com/Le-Chiffre/Tritium
