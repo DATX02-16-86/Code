@@ -48,3 +48,5 @@ main
 
 # OS X
 *.DS_Store
+
+CMakeFiles

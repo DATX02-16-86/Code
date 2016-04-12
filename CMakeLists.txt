@@ -23,5 +23,6 @@ elseif(WIN32)
 endif()
 
 add_subdirectory(Generator/Code)
-add_subdirectory(landmass/src)
+#add_subdirectory(landmass/src)
 add_subdirectory(Libraries/Tritium/Code/Tritium)
+add_subdirectory(Demo)
