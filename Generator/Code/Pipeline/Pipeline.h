@@ -3,6 +3,7 @@
 #define GENERATOR_PIPELINE_H
 
 #include "Generator.h"
+#include "Landmass/Generator.h"
 
 namespace generator {
 
@@ -13,7 +14,7 @@ struct Chunk;
  * Manages sending the generated data through each stage to produce an end result.
  */
 struct Pipeline {
-    Pipeline(U8 tileSize = 10): data(tileSize) {}
+    Pipeline(landmass::Filler& landmassFiller, U8 tileSize = 10): data(tileSize), landmass(landmassFiller) {}
 
     /**
      * Fills a chunk of voxel data from this pipeline.
@@ -36,13 +37,12 @@ struct Pipeline {
     } data;
 
     // The stages a that are dynamically configurable.
-    Stage landmassStage;
+    landmass::LandmassStage landmass;
     Stage heightStage;
     Stage biomeStage;
     Stage structureStage;
 
     // Determines the level of detail each pipeline stage operates at.
-    U8 landmassDetail = 9;
     U8 heightDetail = 7;
     U8 biomeDetail = 5;
     U8 structureDetail = 5;

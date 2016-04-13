@@ -1,18 +1,18 @@
 
-#include "../Generator/Code/Pipeline/Landmass/Chunk.h"
+#include "../Generator/Code/World/World.h"
 
 using namespace generator;
 using namespace landmass;
 
 int main() {
-    landmass::RandomHexFiller filler(64, 1);
-    landmass::ChunkMatrix matrix(0, 4096);
+    World world;
 
-    for(int x = -10; x < 10; x++) {
-        for(int y = -10; y < 10; y++) {
-            matrix.getChunk(x, y).connectEdges(matrix, filler);
+    for(int x = 0; x < 20; x++) {
+        for(int y = 0; y < 20; y++) {
+            world.pipeline.landmass.generate(x, y);
         }
     }
 
+    exit(0);
     return 0;
 }

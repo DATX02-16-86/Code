@@ -30,13 +30,13 @@ struct LandmassStage {
     virtual void generate(I32 x, I32 y);
     LandmassStage& operator += (std::unique_ptr<Generator> generator);
 
+    Filler& filler;
+    ChunkMatrix matrix {0, 4096};
+
 private:
     std::vector<AttributeId> attributes;
     std::vector<Attribute*> attributeSources;
     std::vector<std::unique_ptr<Generator>> generators;
-
-    Filler& filler;
-    ChunkMatrix matrix;
 };
 
 }}

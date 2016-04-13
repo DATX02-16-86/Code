@@ -42,8 +42,6 @@ add_library(Generator
     Pipeline/Height/HeightStage.h
     Pipeline/Height/HeightStage.cpp
 
-    Pipeline/Landmass/LandmassStage.cpp
-    Pipeline/Landmass/LandmassStage.h
     Pipeline/Landmass/Voronoi.h
     Pipeline/Landmass/ChunkMatrix.h
     Pipeline/Landmass/ChunkMatrix.cpp
@@ -53,6 +51,8 @@ add_library(Generator
     Pipeline/Landmass/Chunk.h
     Pipeline/Landmass/Generator.h
     Pipeline/Landmass/Generator.cpp
+    Pipeline/Landmass/Generators.h
+    Pipeline/Landmass/Generators.cpp
     Pipeline/Landmass/Attribute.h
     Pipeline/Landmass/Attribute.cpp
 
