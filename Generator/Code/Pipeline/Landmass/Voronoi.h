@@ -30,25 +30,6 @@ typedef boost::polygon::voronoi_diagram<CoordinateType> Diagram;
 typedef boost::polygon::voronoi_edge<CoordinateType> DiagramEdge;
 typedef boost::polygon::voronoi_cell<CoordinateType> DiagramCell;
 
-enum class WaterType : U8 { land, sea, lake, river };
-enum class Biome : U8 { sea, lake, beach, land };
-
-struct VertexMeta {
-    F32 height;
-    F16 moisture;
-    WaterType wt;
-};
-
-struct CellMeta {
-    F32 averageheight;
-    F16 averageMoisture;
-    Biome biome;
-};
-
-struct EdgeMeta {
-    bool isRiver;
-};
-
 struct VertexIndex { U32 chunkIndex : 4; U32 index : 28; };
 struct EdgeIndex { U32 chunkIndex : 4; U32 index : 28; };
 

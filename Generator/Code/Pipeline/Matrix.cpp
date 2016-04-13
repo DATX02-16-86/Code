@@ -12,7 +12,7 @@ void IdMatrix::create(Size w, Size h, Size detail, Size itemBits) {
     itemsPerWord = (U8)1 << Tritium::Math::findLastBit(sizeof(Size) * 8 / itemBits);
     itemShift = Tritium::Math::findLastBit(sizeof(Size) * 8 / itemBits);
 
-    wordsPerRow = (U32)(h >> itemShift);
+    wordsPerRow = (U32)(w >> itemShift);
     items = (Size*)malloc(sizeof(Size) * wordsPerRow * h);
 }
 
