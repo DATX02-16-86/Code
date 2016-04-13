@@ -215,8 +215,8 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
     for(int i = 0; i < vertexEdges.size(); ++i) {
         for(auto e : unconnectedVertexEdges[i]) {
             auto position = pivot + unpack(e.connectToChunk);
-            const auto& chunk = matrix.getChunk(position.x, position.y);
-            EdgeIndex index {e.connectToChunk, (U32)findEdgeIndexCand(matrix, e.a, e.b)};
+            auto& chunk = matrix.getChunk(position.x, position.y);
+            EdgeIndex index {e.connectToChunk, (U32)chunk.findEdgeIndexCand(matrix, e.a, e.b)};
             vertexEdges[i].insert(e.position, index);
         }
     }
@@ -224,14 +224,14 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
     for(int i = 0; i < cellEdges.size(); ++i) {
         for(auto e : unconnectedCellEdges[i]) {
             auto position = pivot + unpack(e.connectToChunk);
-            const auto& chunk = matrix.getChunk(position.x, position.y);
-            EdgeIndex index {e.connectToChunk, (U32)findEdgeIndex(matrix, e.a, e.b)};
+            auto& chunk = matrix.getChunk(position.x, position.y);
+            EdgeIndex index {e.connectToChunk, (U32)chunk.findEdgeIndex(matrix, e.a, e.b)};
             cellEdges[i].insert(e.position, index);
         }
     }
 
-    edgeConnectCandidates.clear();
-    edgeConnectCandidates.shrink_to_fit();
+    unconnectedCellEdges.destroy();
+    unconnectedVertexEdges.destroy();
     stage = Connections;
 }
 

@@ -13,7 +13,7 @@ struct ChunkMatrix;
 struct Chunk {
     /// Each chunk is built in multiple stages to prevent recursive dependencies between them.
     /// This defines the stages a chunk can be in.
-    enum Stage {
+    enum Stage: U8 {
         None,
         Points,
         Vertices,
@@ -48,10 +48,10 @@ struct Chunk {
     bool isRelevantBorderCell(F32 x, F32 y) {
         auto size = (F32)this->size;
         return
-            x >= ((F32)this->x - 0.3f) * size &&
-            x < ((F32)this->x + 1.3f) * size &&
-            y >= ((F32)this->y - 0.3f) * size &&
-            y < ((F32)this->y + 1.3f) * size;
+            x >= ((F32)this->x - 0.1f) * size &&
+            x < ((F32)this->x + 1.1f) * size &&
+            y >= ((F32)this->y - 0.1f) * size &&
+            y < ((F32)this->y + 1.1f) * size;
     }
 
     /// Checks if the provided vertex is inside this chunk.
@@ -87,11 +87,10 @@ struct Chunk {
 
     std::vector<Point> cellCenters;
     Array<ArrayF<EdgeIndex, kMaxCellEdges>> cellEdges;
-    Array<ArrayF<UnconnectedEdge, kMaxCellEdges>> unconnectedCellEdges;
     Array<Vertex> vertices;
     Array<ArrayF<EdgeIndex, kMaxVertexEdges>> vertexEdges;
-    Array<ArrayF<UnconnectedEdge, kMaxVertexEdges>> unconnectedVertexEdges;
     Array<Edge> edges;
+    std::vector<U32> edgeConnectCandidates;
     Array<VertexMeta> vertexMeta;
     Array<CellMeta> cellMeta;
     Array<EdgeMeta> edgeMeta;
@@ -100,12 +99,14 @@ struct Chunk {
     std::vector<Point> cellCentersWithBorder;
     Uninitialized<Diagram> diagram;
 
-    // This is used in the Connections stage; after that it is destroyed.
-    std::vector<U32> edgeConnectCandidates;
+    // These are used in the Connections stage; after that they are destroyed.
+    Array<ArrayF<UnconnectedEdge, kMaxCellEdges>> unconnectedCellEdges;
+    Array<ArrayF<UnconnectedEdge, kMaxVertexEdges>> unconnectedVertexEdges;
 
     I32 x;
     I32 y;
     U32 size;
+    U16 generatorStage = 0;
     Stage stage = None;
 };
 
