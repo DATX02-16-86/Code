@@ -235,6 +235,10 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
     stage = Connections;
 }
 
+void Chunk::build(ChunkMatrix& matrix, Filler& filler) {
+    
+}
+
 Int2 Chunk::neighbourPosition(U8 offset) {
     auto position = unpack(offset);
     return Int2 {x, y} + position;

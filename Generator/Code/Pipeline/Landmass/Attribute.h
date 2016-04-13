@@ -6,10 +6,17 @@
 namespace generator {
 namespace landmass {
 
+struct Chunk;
+
 enum class AttributeType {
     Cell,
     Edge,
     Vertex
+};
+
+struct Attribute {
+    const U8 itemBits;
+    const AttributeType type;
 };
 
 struct AttributeId {

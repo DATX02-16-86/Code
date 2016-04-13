@@ -4,7 +4,7 @@
 #include "Voronoi.h"
 #include "Filler.h"
 #include "ChunkMatrix.h"
-#include "Generator.h"
+#include "Attribute.h"
 
 namespace generator {
 namespace landmass {
@@ -39,8 +39,11 @@ struct Chunk {
     void buildEdges(ChunkMatrix& matrix, Filler& filler);
 
     /// Connects the border edges in this chunk to its neighbours.
-    /// This is the last stage.
+    /// This is the last stage before attribute generation.
     void connectEdges(ChunkMatrix& matrix, Filler& filler);
+
+    /// Fully builds this chunk including its attributes.
+    void build(ChunkMatrix& matrix, Filler& filler);
 
     template<class F>
     void mapNeighbours(ChunkMatrix& matrix, F&& f);

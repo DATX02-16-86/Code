@@ -1,6 +1,6 @@
 #include <Math/Math.h>
 #include <Mem/Memory.h>
-#include "Generator.h"
+#include "Attribute.h"
 
 namespace generator {
 namespace landmass {
