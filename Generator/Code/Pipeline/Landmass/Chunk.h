@@ -11,6 +11,8 @@ namespace landmass {
 
 struct ChunkMatrix;
 
+extern const Int2 neighbourOffsets[8];
+
 struct Chunk {
     /// Each chunk is built in multiple stages to prevent recursive dependencies between them.
     /// This defines the stages a chunk can be in.
@@ -42,11 +44,17 @@ struct Chunk {
     /// This is the last stage before attribute generation.
     void connectEdges(ChunkMatrix& matrix, Filler& filler);
 
-    /// Fully builds this chunk including its attributes.
-    void build(ChunkMatrix& matrix, Filler& filler);
+    /// Fully builds this chunk, then creates the attribute structures.
+    void build(ChunkMatrix& matrix, Filler& filler, AttributeId* attributes, Size attributeCount);
 
     template<class F>
-    void mapNeighbours(ChunkMatrix& matrix, F&& f);
+    void mapNeighbours(ChunkMatrix& matrix, F&& f) {
+        auto pivot = Int2 {x, y};
+        for(auto offset: neighbourOffsets) {
+            auto position = pivot + offset;
+            f(matrix.getChunk(position.x, position.y));
+        }
+    }
 
     /// Checks if the provided point is close to the border of this chunk.
     bool isRelevantBorderCell(F32 x, F32 y) {
@@ -95,9 +103,6 @@ struct Chunk {
     Array<ArrayF<EdgeIndex, kMaxVertexEdges>> vertexEdges;
     Array<Edge> edges;
     std::vector<U32> edgeConnectCandidates;
-    Array<VertexMeta> vertexMeta;
-    Array<CellMeta> cellMeta;
-    Array<EdgeMeta> edgeMeta;
 
     // These are used in the Vertices and Edges stages; after that they are destroyed.
     std::vector<Point> cellCentersWithBorder;

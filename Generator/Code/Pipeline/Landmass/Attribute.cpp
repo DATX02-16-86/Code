@@ -10,7 +10,7 @@ AttributeId::AttributeId(U16 id, U8 itemBits, AttributeType type):
     itemShift((U8)Tritium::Math::findLastBit(sizeof(U32) * 8 / itemBits)),
     itemsPerWord((U8)1 << Tritium::Math::findLastBit(sizeof(U32) * 8 / itemBits)) {}
 
-AttributeMap::AttributeMap(AttributeId* attributes, U32 attributeCount, U32 cellCount, U32 edgeCount, U32 vertexCount) {
+AttributeMap::AttributeMap(AttributeId* attributes, Size attributeCount, Size cellCount, Size edgeCount, Size vertexCount) {
     create(attributes, attributeCount, cellCount, edgeCount, vertexCount);
 }
 
@@ -18,12 +18,12 @@ AttributeMap::~AttributeMap() {
     Tritium::hFree(offsets);
 }
 
-void AttributeMap::create(AttributeId* attributes, U32 attributeCount, U32 cellCount, U32 edgeCount, U32 vertexCount) {
+void AttributeMap::create(AttributeId* attributes, Size attributeCount, Size cellCount, Size edgeCount, Size vertexCount) {
     U32 totalSize = sizeof(void*) * attributeCount;
 
     // First we calculate the total allocation size needed.
-    for(U32 i = 0; i < attributeCount; i++) {
-        U32 count;
+    for(Size i = 0; i < attributeCount; i++) {
+        Size count;
         if(attributes[i].type == AttributeType::Cell) count = cellCount;
         else if(attributes[i].type == AttributeType::Edge) count = edgeCount;
         else count = vertexCount;
@@ -41,8 +41,8 @@ void AttributeMap::create(AttributeId* attributes, U32 attributeCount, U32 cellC
 
     // Then, we calculate the offset for each attribute.
     U32 offset = 0;
-    for(U32 i = 0; i < attributeCount; i++) {
-        U32 count;
+    for(Size i = 0; i < attributeCount; i++) {
+        Size count;
         if(attributes[i].type == AttributeType::Cell) count = cellCount;
         else if(attributes[i].type == AttributeType::Edge) count = edgeCount;
         else count = vertexCount;

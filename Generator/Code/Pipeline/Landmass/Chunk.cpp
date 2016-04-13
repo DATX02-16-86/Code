@@ -5,7 +5,7 @@
 namespace generator {
 namespace landmass {
 
-const Int2 neighbourOffsets[] = {{-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}};
+const Int2 neighbourOffsets[8] = {{-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}};
 
 inline U8 pack(Int2 relativePos) {
     return (U8)((relativePos.x & 0b11) | (relativePos.y & 0b11 << 2));
@@ -22,15 +22,6 @@ inline U32 findVertexIndex(const Chunk& chunk, Vertex v) {
 
     debugError("Vertex wasn't in the chunk");
     return 0;
-}
-
-template<class F>
-void Chunk::mapNeighbours(ChunkMatrix& matrix, F&& f) {
-    auto pivot = Int2 {x, y};
-    for(auto offset: neighbourOffsets) {
-        auto position = pivot + offset;
-        f(matrix.getChunk(position.x, position.y));
-    }
 }
 
 void Chunk::buildCenters(Filler& filler) {
@@ -235,8 +226,9 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
     stage = Connections;
 }
 
-void Chunk::build(ChunkMatrix& matrix, Filler& filler) {
-    
+void Chunk::build(ChunkMatrix& matrix, Filler& filler, AttributeId* attributes, Size attributeCount) {
+    connectEdges(matrix, filler);
+    this->attributes.create(attributes, attributeCount, cellCenters.size(), cellEdges.size(), vertexEdges.size());
 }
 
 Int2 Chunk::neighbourPosition(U8 offset) {

@@ -31,10 +31,10 @@ struct AttributeId {
 
 struct AttributeMap {
     AttributeMap() {}
-    AttributeMap(AttributeId* attributes, U32 attributeCount, U32 cellCount, U32 edgeCount, U32 vertexCount);
+    AttributeMap(AttributeId* attributes, Size attributeCount, Size cellCount, Size edgeCount, Size vertexCount);
     ~AttributeMap();
 
-    void create(AttributeId* attributes, U32 attributeCount, U32 cellCount, U32 edgeCount, U32 vertexCount);
+    void create(AttributeId* attributes, Size attributeCount, Size cellCount, Size edgeCount, Size vertexCount);
 
     U32 get(AttributeId id, U32 index);
     void set(AttributeId id, U32 index, U32 value);
