@@ -51,8 +51,6 @@ add_library(Generator
     Pipeline/Landmass/Chunk.h
     Pipeline/Landmass/Generator.h
     Pipeline/Landmass/Generator.cpp
-    Pipeline/Landmass/Generators.h
-    Pipeline/Landmass/Generators.cpp
     Pipeline/Landmass/Attribute.h
     Pipeline/Landmass/Attribute.cpp
 

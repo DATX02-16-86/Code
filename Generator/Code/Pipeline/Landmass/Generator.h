@@ -13,7 +13,7 @@ namespace landmass {
 
 struct Generator {
     Generator(std::vector<Attribute*>&& attributes = std::vector<Attribute*>{}): usedAttributes(::move(attributes)) {}
-    virtual void generate(Chunk& chunk) = 0;
+    virtual void generate(Chunk& chunk, I32 seed) = 0;
 
     AttributeId attribute(U32 index) {return attributes[index];}
 
@@ -26,8 +26,8 @@ private:
 struct LandmassStage {
     LandmassStage(Filler& filler): filler(filler) {}
 
-    void generate(Chunk& chunk, Size stage);
-    virtual void generate(I32 x, I32 y);
+    void generate(Chunk& chunk, Size stage, I32 seed);
+    virtual void generate(I32 x, I32 y, I32 seed);
     LandmassStage& operator += (std::unique_ptr<Generator> generator);
 
     Filler& filler;

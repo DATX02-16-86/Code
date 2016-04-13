@@ -14,7 +14,8 @@ struct Chunk;
  * Manages sending the generated data through each stage to produce an end result.
  */
 struct Pipeline {
-    Pipeline(landmass::Filler& landmassFiller, U8 tileSize = 10): data(tileSize), landmass(landmassFiller) {}
+    Pipeline(landmass::Filler& landmassFiller, I32 seed, U8 tileSize = 10):
+        data(tileSize), seed(seed), landmass(landmassFiller) {}
 
     /**
      * Fills a chunk of voxel data from this pipeline.
@@ -41,6 +42,9 @@ struct Pipeline {
     Stage heightStage;
     Stage biomeStage;
     Stage structureStage;
+
+    // The generator seed to use.
+    I32 seed;
 
     // Determines the level of detail each pipeline stage operates at.
     U8 heightDetail = 7;

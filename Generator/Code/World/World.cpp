@@ -4,8 +4,11 @@
 
 namespace generator {
 
-World::World(Size drawDistance, Size regionSize, Size chunkSize, Size chunkHeight):
-    manager(regionSize, chunkSize, chunkHeight), drawDistance((U8)drawDistance), pipeline(filler) {}
+World::World(I32 seed, Size drawDistance, Size regionSize, Size chunkSize, Size chunkHeight):
+    filler(64, seed),
+    manager(regionSize, chunkSize, chunkHeight),
+    drawDistance((U8)drawDistance),
+    pipeline(filler, seed) {}
 
 void World::update(WorldPosition* positions, Size count) {
     // TODO: Update blocks and stuff.

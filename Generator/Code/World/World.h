@@ -12,7 +12,7 @@ struct ViewCallback {
 };
 
 struct World {
-    World(Size drawDistance = 6, Size regionSize = 7, Size chunkSize = 5, Size chunkHeight = 7);
+    World(I32 seed, Size drawDistance = 6, Size regionSize = 7, Size chunkSize = 5, Size chunkHeight = 7);
 
     /// Updates the generated world.
     /// @param positions A list of world locations that are currently active.
@@ -27,7 +27,7 @@ private:
     Chunk& fetchChunk(Int x, Int y);
 
     /// The default landmass filler.
-    landmass::RandomHexFiller filler {64, 1};
+    landmass::RandomHexFiller filler;
 
     /// Stores regions and their chunks.
     WorldManager manager;

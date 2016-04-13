@@ -4,29 +4,29 @@
 namespace generator {
 namespace landmass {
 
-void LandmassStage::generate(Chunk& chunk, Size stage) {
+void LandmassStage::generate(Chunk& chunk, Size stage, I32 seed) {
     chunk.build(matrix, filler, attributes.data(), attributes.size());
 
     // Make sure all neighbours have generated any data this stage may depend on.
     if(stage > 1) {
         chunk.mapNeighbours(matrix, [=](Chunk &n) {
-            generate(n, stage - 1);
+            generate(n, stage - 1, seed);
         });
     }
 
     // Generate up to the requested stage.
     Size i = chunk.generatorStage;
     while(i < stage) {
-        generators[stage]->generate(chunk);
+        generators[stage]->generate(chunk, seed);
         i++;
     }
 
     chunk.generatorStage = (U16)stage;
 }
 
-void LandmassStage::generate(I32 x, I32 y) {
+void LandmassStage::generate(I32 x, I32 y, I32 seed) {
     auto& chunk = matrix.getChunk(x, y);
-    generate(chunk, generators.size());
+    generate(chunk, generators.size(), seed);
 }
 
 LandmassStage& LandmassStage::operator += (std::unique_ptr<Generator> generator) {
