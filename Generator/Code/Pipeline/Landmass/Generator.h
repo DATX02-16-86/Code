@@ -23,14 +23,17 @@ struct AttributeId {
 };
 
 struct AttributeMap {
+    AttributeMap() {}
     AttributeMap(AttributeId* attributes, U32 attributeCount, U32 cellCount, U32 edgeCount, U32 vertexCount);
     ~AttributeMap();
+
+    void create(AttributeId* attributes, U32 attributeCount, U32 cellCount, U32 edgeCount, U32 vertexCount);
 
     U32 get(AttributeId id, U32 index);
     void set(AttributeId id, U32 index, U32 value);
 
-    U32* offsets;
-    U32* data;
+    U32* offsets = nullptr;
+    U32* data = nullptr;
 };
 
 }}

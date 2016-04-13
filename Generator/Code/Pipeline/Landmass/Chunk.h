@@ -4,6 +4,7 @@
 #include "Voronoi.h"
 #include "Filler.h"
 #include "ChunkMatrix.h"
+#include "Generator.h"
 
 namespace generator {
 namespace landmass {
@@ -102,6 +103,8 @@ struct Chunk {
     // These are used in the Connections stage; after that they are destroyed.
     Array<ArrayF<UnconnectedEdge, kMaxCellEdges>> unconnectedCellEdges;
     Array<ArrayF<UnconnectedEdge, kMaxVertexEdges>> unconnectedVertexEdges;
+
+    AttributeMap attributes;
 
     I32 x;
     I32 y;
