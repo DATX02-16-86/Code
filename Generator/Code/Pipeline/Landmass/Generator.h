@@ -13,7 +13,7 @@ namespace landmass {
 
 struct Generator {
     Generator(std::vector<Attribute*>&& attributes = std::vector<Attribute*>{}): usedAttributes(::move(attributes)) {}
-    virtual void generate(Chunk& chunk, I32 seed) = 0;
+    virtual void generate(Chunk& chunk, ChunkMatrix& matrix, I32 seed) = 0;
 
     AttributeId attribute(U32 index) {return attributes[index];}
 

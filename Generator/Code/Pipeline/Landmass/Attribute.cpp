@@ -61,7 +61,7 @@ U32 AttributeMap::get(AttributeId id, U32 index) {
     return (data + offsets[id.id])[offset] >> (maskOffset * id.itemBits) & mask;
 }
 
-void AttributeMap::set(AttributeId id, U32 index, U32 value) {
+void AttributeMap::setRaw(AttributeId id, U32 index, U32 value) {
     auto offset = index >> id.itemShift;
     auto maskOffset = offset & (id.itemsPerWord - 1);
     auto totalShift = maskOffset * id.itemBits;
