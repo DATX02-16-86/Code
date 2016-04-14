@@ -1,6 +1,6 @@
 
 figure
-f = csvread('C:\Users\Admin\Documents\Code\noise\Noisy\points3D.txt');
+f = csvread('D:\projektarbete\code\noise\points3D.txt');
 
 s = size(f);
 n = s(2);
