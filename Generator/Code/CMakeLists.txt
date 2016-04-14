@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.3)
-project(Code)
+project(Generator)
 
 if(WIN32)
 set(BIN_DIR "Win32")
@@ -13,11 +13,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../Bin/${BIN_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../Bin/${BIN_DIR}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.1")
 
-include_directories(../../Tritium/Code/Core)
-include_directories(../../Tritium/Code)
+include_directories(../../Libraries/Tritium/Code/Tritium/Core)
+include_directories(../../Libraries/Tritium/Code/Tritium)
 include_directories(../../Libraries)
 
-link_directories(../../Tritium/Bin/Release)
+link_directories(../../Libraries/Tritium/Bin/Release)
 
 add_library(Generator
     Geometry/Geometry.cpp
@@ -42,8 +42,17 @@ add_library(Generator
     Pipeline/Height/HeightStage.h
     Pipeline/Height/HeightStage.cpp
 
-    Pipeline/Landmass/LandmassStage.cpp
-    Pipeline/Landmass/LandmassStage.h
+    Pipeline/Landmass/Voronoi.h
+    Pipeline/Landmass/ChunkMatrix.h
+    Pipeline/Landmass/ChunkMatrix.cpp
+    Pipeline/Landmass/Filler.cpp
+    Pipeline/Landmass/Filler.h
+    Pipeline/Landmass/Chunk.cpp
+    Pipeline/Landmass/Chunk.h
+    Pipeline/Landmass/Generator.h
+    Pipeline/Landmass/Generator.cpp
+    Pipeline/Landmass/Attribute.h
+    Pipeline/Landmass/Attribute.cpp
 
     World/World.h
     World/World.cpp
@@ -51,4 +60,4 @@ add_library(Generator
     World/WorldManager.cpp)
 
 add_executable(GeneratorTest Tests/Pipeline.cpp Tests/Matrix.cpp)
-target_link_libraries(GeneratorTest Generator TritiumCore)
+target_link_libraries(GeneratorTest Generator TritiumCore ${OTHER_LIBS})

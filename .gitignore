@@ -48,3 +48,8 @@ main
 
 # OS X
 *.DS_Store
+
+CMakeFiles
+
+# Xcode
+TreeLSystem/TreeLSystemRenderer/

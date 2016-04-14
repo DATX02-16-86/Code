@@ -3,7 +3,6 @@
 #include "../Pipeline/Pipeline.h"
 #include "../Pipeline/Voxel.h"
 #include "../Pipeline/Height/HeightStage.h"
-#include "../Pipeline/Landmass/LandmassStage.h"
 #include "../Pipeline/Biome/BiomeStage.h"
 #include "../Pipeline/Block.h"
 #include <catch.hpp>

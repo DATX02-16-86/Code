@@ -37,7 +37,6 @@ void Pipeline::fillChunk(Chunk& chunk) {
     segment.height += chunk.area.height * 2;
 
     // Generate base data around the chunk location.
-    landmassStage.generate(segment, *this);
     heightStage.generate(segment, *this);
     biomeStage.generate(segment, *this);
 
