@@ -53,7 +53,7 @@ void AttributeMap::create(AttributeId* attributes, Size attributeCount, Size cel
     }
 }
 
-U32 AttributeMap::get(AttributeId id, U32 index) {
+U32 AttributeMap::getRaw(AttributeId id, U32 index) {
     auto mask = (Size(1) << id.itemBits) - 1;
     auto offset = index >> id.itemShift;
     auto maskOffset = index & (id.itemsPerWord - 1);
