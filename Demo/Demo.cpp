@@ -99,12 +99,12 @@ struct HeightGenerator: landmass::Generator {
 };
 
 struct BiomeGenerator: landmass::Generator {
-    enum {Biome, Height, VertexHeight, VertexWater};
+    enum {BiomeType, Height, VertexHeight, VertexWater};
 
     BiomeGenerator(): Generator({&biome, &cellHeight, &height, &waterType}) {}
 
     virtual void generate(landmass::Chunk& chunk, ChunkMatrix& matrix, I32 seed) override {
-        auto biomeAttribute = attribute(Biome);
+        auto biomeAttribute = attribute(BiomeType);
         auto heightAttribute = attribute(Height);
         auto vertexHeightAttribute = attribute(VertexHeight);
         auto vertexWaterAttribute = attribute(VertexWater);
@@ -141,7 +141,7 @@ struct BiomeGenerator: landmass::Generator {
                 ++count;
             }
 
-            ::Biome biome;
+            Biome biome;
             if(sea == count) {
                 biome = Biome::sea;
             } else if(lake == count) {
