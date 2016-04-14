@@ -97,7 +97,7 @@ struct Chunk {
 
     /// Calculates the position of the provided point relative to this one.
     Int2 relativeChunkPosition(Vertex p) {
-        return {(I32)Tritium::Math::floor(p.x) - x, (I32)Tritium::Math::floor(p.y) - y};
+        return {(I32)Tritium::Math::floor(p.x / size) - x, (I32)Tritium::Math::floor(p.y / size) - y};
     }
 
     /// Returns the absolute position of the neighbour at this offset.
