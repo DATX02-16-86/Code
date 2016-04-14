@@ -17,6 +17,12 @@ public:
 
 	void generate3D(bool* allValues, int height);
 
+	void Generate3DCustom(bool* allValues, int height, int octaves, float persistance, int heightMult);
+
+	void GenerateMountains(bool* allValues, int height);
+
+	void GeneratePlains(bool* allValues, int height);
+
 	void generate2DTunnels(float** zValues);
 
 	void generate3DTunnels(bool* density, int height);

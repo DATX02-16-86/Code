@@ -59,7 +59,8 @@ void Terrain::generateHeights()
 	{
 		for (int y = 0; y < chunks; y++)
 		{
-			chunkHeights[x][y] = (int)((Simplex::octave_noise(4, 0.02f, 0.5, x, y, nc) + 1) * 5);
+			//chunkHeights[x][y] = (int)((Simplex::octave_noise(4, 0.02f, 0.5f, x, y, nc) + 1) * 5);
+			chunkHeights[x][y] = 7;
 		}
 	}
 }
@@ -120,6 +121,58 @@ void Terrain::generate3D(bool* density, int height)
 			}
 		}
 	}
+}
+
+
+void Terrain::Generate3DCustom(bool* density, int height, int octaves, float persistance, int heightMult)
+{
+	int baseHeight = height / 2;
+	float densityThreshold = 0.3f;
+
+	for (int chY = 1; chY < chunks - 1; chY++) {
+		for (int chX = 1; chX < chunks - 1; chX++) {
+			for (int y = 0; y < chunkSize; ++y) {
+				int true_y = y + (chunkSize * chY);
+				for (int x = 0; x < chunkSize; ++x) {
+					int true_x = x + (chunkSize * chX);
+					for (int z = 0; z < height; ++z)
+					{
+						//calculate density with simplex noise
+						float d = Simplex::octave_noise(octaves, 0.007f, persistance, true_x, true_y, z, nc);
+
+						float fz = (float)z;
+						// Create base layer
+						if (z <= baseHeight / 2)
+							d -= (2 * (fz - baseHeight / 2) / baseHeight);
+
+						// Scale off
+						float hm = ((fz - (baseHeight / 2)) / height);
+						if (z >= (baseHeight / 2))
+						{
+							for (int i = 0; i < heightMult; ++i)
+							{
+								hm *= hm;
+							}
+						}
+						d -= hm;
+
+						//determine whether its solid or air
+						density[true_y*chunkSize*chunks*height + true_x*height + z] = d > densityThreshold;
+					}
+				}
+			}
+		}
+	}
+}
+
+void Terrain::GenerateMountains(bool* density, int height)
+{
+	Generate3DCustom(density, height, 6, 0.5f, 1);
+}
+
+void Terrain::GeneratePlains(bool* density, int height)
+{
+	Generate3DCustom(density, height, 4, 0.3f, 0);
 }
 
 void Terrain::generate2DTunnels(float** zValues)
