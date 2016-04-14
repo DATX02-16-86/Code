@@ -12,10 +12,7 @@ struct ViewCallback {
 };
 
 struct World {
-    World(Size drawDistance = 6, Size regionSize = 7, Size chunkSize = 5, Size chunkHeight = 7);
-
-    /// The pipeline used to generate this world.
-    Pipeline pipeline;
+    World(I32 seed, Size drawDistance = 6, Size regionSize = 7, Size chunkSize = 5, Size chunkHeight = 7);
 
     /// Updates the generated world.
     /// @param positions A list of world locations that are currently active.
@@ -29,8 +26,15 @@ private:
     void fillArea(Int x, Int y, ViewCallback& callback);
     Chunk& fetchChunk(Int x, Int y);
 
+    /// The default landmass filler.
+    landmass::RandomHexFiller filler;
+
     /// Stores regions and their chunks.
     WorldManager manager;
+
+public:
+    /// The pipeline used to generate this world.
+    Pipeline pipeline;
 
     /// The draw distance from each viewport, as a number of chunks.
     const U8 drawDistance;

@@ -45,3 +45,8 @@ main
 *.VC.opendb
 
 *.log
+
+# OS X
+*.DS_Store
+
+CMakeFiles

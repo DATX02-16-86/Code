@@ -52,7 +52,7 @@ struct Segment {
 
 /// The common interface for generators inside a stage.
 struct Generator {
-    Generator(std::vector<StreamId>&& auxiliaryStreams = std::vector<StreamId>{}): auxiliaryStreams(move(auxiliaryStreams)) {}
+    Generator(std::vector<StreamId>&& auxiliaryStreams = std::vector<StreamId>{}): auxiliaryStreams(::move(auxiliaryStreams)) {}
     virtual void generate(const Segment& segment, TiledMatrix** auxiliaries, Pipeline& pipeline) = 0;
 
     const std::vector<StreamId> auxiliaryStreams;
@@ -68,7 +68,7 @@ struct Stage {
     }
 
     Stage& operator += (std::unique_ptr<Generator> generator) {
-        generators.push_back(move(generator));
+        generators.push_back(::move(generator));
         return *this;
     }
 

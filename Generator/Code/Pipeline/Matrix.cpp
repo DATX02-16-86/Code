@@ -12,7 +12,7 @@ void IdMatrix::create(Size w, Size h, Size detail, Size itemBits) {
     itemsPerWord = (U8)1 << Tritium::Math::findLastBit(sizeof(Size) * 8 / itemBits);
     itemShift = Tritium::Math::findLastBit(sizeof(Size) * 8 / itemBits);
 
-    wordsPerRow = (U32)(h >> itemShift);
+    wordsPerRow = (U32)(w >> itemShift);
     items = (Size*)malloc(sizeof(Size) * wordsPerRow * h);
 }
 
@@ -114,7 +114,7 @@ IdMatrix& TiledMatrix::getTile(Int x, Int y) {
     auto tileX = tileIndex(x) - this->x;
     auto tileY = tileIndex(y) - this->y;
     if(tileX < 0 || tileY < 0 || width <= tileX || height <= tileY) {
-        resize(tileX, tileY);
+        resize(tileIndex(x), tileIndex(y));
 		tileX = tileIndex(x) - this->x;
 		tileY = tileIndex(y) - this->y;
     }
