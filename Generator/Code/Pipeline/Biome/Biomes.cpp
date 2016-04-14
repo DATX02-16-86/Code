@@ -112,7 +112,6 @@ namespace generator {
 				alpha = 0;
 			}
 
-
 			for(Size row = 0; row < height; row++) {
 				for(Size column = 0; column < width; column++) {
 
@@ -121,16 +120,17 @@ namespace generator {
 
 					Voxel& voxel = chunk.at(column, row, zi);
 					voxel = Voxel {blockType};
-
 				}
 			}
 		}
     }
 
-
     float NoiseLerp(NoiseFunc funcA, NoiseFunc funcB, float alpha, float x, float y, float z, int lowerBound, int upperBound)
     {
-        return funcA(x, y, z, lowerBound, upperBound) * alpha + funcB(x, y, z, lowerBound, upperBound) * (1 - alpha);
+		if(alpha == 0){
+			return funcA(x,y,z,lowerBound,upperBound);
+		}
+        return funcA(x, y, z, lowerBound, upperBound) * (1-alpha) + funcB(x, y, z, lowerBound, upperBound) * alpha;
     }
 
 }
@@ -147,16 +147,26 @@ namespace biomeFunctions{
 
     float plains(float x, float y, float z, int lowerBound, int upperBound) {
 
-        float height = lowerBound + Simplex::octave_noise(8, 0.0005f, 0.5f, x, y) * 5;
+        float height = lowerBound + 10 + Simplex::octave_noise(8, 0.0005f, 0.5f, x, y) * 5;
 
         if (z < height)
             return 1;
         else
             return 0;
-}
+	}
 
     float caves(float x, float y, float z, int lowerBound, int upperBound) {
-        return 1;
+		float d = 0;
+
+		float middle = (upperBound-lowerBound)/2.f;
+
+		float f = 0.009f;
+		float dz = -(z - middle) * (z - middle) / middle + middle + 0.1f;
+
+		d = Simplex::octave_noise(5, f, 0.5f, true_x, true_y, dz, nc) * 0.7f;
+		d += Simplex::octave_noise(5, f, 0.5f, true_x, true_y, z, nc) * 0.3f;
+
+		return d +0.3f;
     }
 
     float weirdLand(float x, float y, float z, int lowerBound, int upperBound) {
