@@ -6,6 +6,10 @@
 
 namespace generator {
 
+	const static int Layer1 = 3;
+	const static int Layer2Offset = -10;
+	const static int Layer3Offset = 20;
+
 	const BiomeId WeirdBiome::id = registerBiome(WeirdBiome::fillChunk);
 
 	void WeirdBiome::fillChunk(Chunk& chunk, Pipeline& pipeline) {
@@ -56,14 +60,14 @@ namespace generator {
 		std::vector<int> bounds;
 
 		// Z coordinate of end of layer
-		bounds.add(3); 					// Bedrock
-		bounds.add(baseHeight * 3/4); 	// Caves
-		bounds.add(height * 3/4);		// Ground, Rest air
-		bounds.add(height);
+		bounds.add(Layer1); 						// Bedrock from bottom to 3
+		bounds.add((int)(baseHeight + layer2)); 	// Caves from 3 to third of bheight
+		bounds.add((int)(chunkHeight + Layer3));	// Ground from third of bheight to 90% of total height
+		bounds.add(height);							// Air from 90% of top to the top (top 10%)
 
 		funcs.add(biomeFunctions::bedRock);
 		funcs.add(biomeFunctions::caves);
-		funcs.add(biomeFunctions::plains());
+		funcs.add(biomeFunctions::plains);
 		funcs.add(biomeFunctions::air);
 
 		fillChunkLayered(funcs, bounds, 5, chunk);
