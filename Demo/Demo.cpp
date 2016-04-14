@@ -164,6 +164,9 @@ int main() {
     I32 seed = 1;
     World world(seed);
 
+    world.pipeline.landmass += std::make_unique<HeightGenerator>();
+    world.pipeline.landmass += std::make_unique<BiomeGenerator>();
+
     for(int x = 0; x < 20; x++) {
         for(int y = 0; y < 20; y++) {
             world.pipeline.landmass.generate(x, y, seed);
