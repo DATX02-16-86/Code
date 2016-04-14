@@ -58,18 +58,18 @@ namespace generator {
 		std::vector<int> bounds;
 
         // TODO: This doesn't work, but I can't compile my stuff otherwise.
-        auto height = 0;
+        auto height = 10;
 
 		// Z coordinate of end of layer
-		bounds.add(Layer1); 						// Bedrock from bottom to 3
-		bounds.add((int)(baseHeight + layer2)); 	// Caves from 3 to third of bheight
-		bounds.add((int)(chunkHeight + Layer3));	// Ground from third of bheight to 90% of total height
-		bounds.add(height);							// Air from 90% of top to the top (top 10%)
+		bounds.push_back(Layer1); 						// Bedrock from bottom to 3
+		bounds.push_back((int)(height + Layer2Offset)); 	// Caves from 3 to third of bheight
+		bounds.push_back((int)(height + Layer3Offset));	// Ground from third of bheight to 90% of total height
+		bounds.push_back(20);							// Air from 90% of top to the top (top 10%)
 
-		funcs.add(biomeFunctions::bedRock);
-		funcs.add(biomeFunctions::caves);
-		funcs.add(biomeFunctions::plains);
-		funcs.add(biomeFunctions::air);
+		funcs.push_back(biomeFunctions::bedRock);
+		funcs.push_back(biomeFunctions::caves);
+		funcs.push_back(biomeFunctions::plains);
+		funcs.push_back(biomeFunctions::air);
 
 		fillChunkLayered(funcs, bounds, 5, chunk);
 	}
@@ -168,8 +168,8 @@ namespace biomeFunctions{
 		float f = 0.009f;
 		float dz = -(z - middle) * (z - middle) / middle + middle + 0.1f;
 
-		d = Simplex::octave_noise(5, f, 0.5f, true_x, true_y, dz, nc) * 0.7f;
-		d += Simplex::octave_noise(5, f, 0.5f, true_x, true_y, z, nc) * 0.3f;
+		d = Simplex::octave_noise(5, f, 0.5f, x, y, dz) * 0.7f;
+		d += Simplex::octave_noise(5, f, 0.5f, x, y, z) * 0.3f;
 
 		return d +0.3f;
     }
