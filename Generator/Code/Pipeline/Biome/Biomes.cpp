@@ -1,10 +1,13 @@
-
 #include "Biomes.h"
 #include "../noise/simplex/simplex.h"
 #include "../Pipeline.h"
 #include "../Height/HeightStage.h"
 
 namespace generator {
+
+	const static int Layer1 = 3;
+	const static int Layer2Offset = -10;
+	const static int Layer3Offset = 20;
 
 	const BiomeId WeirdBiome::id = registerBiome(WeirdBiome::fillChunk);
 
@@ -55,13 +58,13 @@ namespace generator {
 		std::vector<int> bounds;
 
         // TODO: This doesn't work, but I can't compile my stuff otherwise.
-        auto height = 0;
+        auto height = 10;
 
 		// Z coordinate of end of layer
-		bounds.push_back(3); 					// Bedrock
-		bounds.push_back(height * 3/4); 	// Caves
-		bounds.push_back(height * 3/4);		// Ground, Rest air
-		bounds.push_back(height);
+		bounds.push_back(Layer1); 						// Bedrock from bottom to 3
+		bounds.push_back((int)(height + Layer2Offset)); 	// Caves from 3 to third of bheight
+		bounds.push_back((int)(height + Layer3Offset));	// Ground from third of bheight to 90% of total height
+		bounds.push_back(20);							// Air from 90% of top to the top (top 10%)
 
 		funcs.push_back(biomeFunctions::bedRock);
 		funcs.push_back(biomeFunctions::caves);
@@ -127,10 +130,12 @@ namespace generator {
 		}
     }
 
-
     float NoiseLerp(NoiseFunc funcA, NoiseFunc funcB, float alpha, float x, float y, float z, int lowerBound, int upperBound)
     {
-        return funcA(x, y, z, lowerBound, upperBound) * alpha + funcB(x, y, z, lowerBound, upperBound) * (1 - alpha);
+		if(alpha == 0){
+			return funcA(x,y,z,lowerBound,upperBound);
+		}
+        return funcA(x, y, z, lowerBound, upperBound) * (1-alpha) + funcB(x, y, z, lowerBound, upperBound) * alpha;
     }
 
 }
@@ -146,16 +151,27 @@ namespace biomeFunctions{
     }
 
     float plains(float x, float y, float z, int lowerBound, int upperBound) {
-        float height = lowerBound + Simplex::octave_noise(8, 0.0005f, 0.5f, x, y) * 5;
+
+        float height = lowerBound + 10 + Simplex::octave_noise(8, 0.0005f, 0.5f, x, y) * 5;
 
         if(z < height)
             return 1;
         else
             return 0;
-}
+	}
 
     float caves(float x, float y, float z, int lowerBound, int upperBound) {
-        return 1;
+		float d = 0;
+
+		float middle = (upperBound-lowerBound)/2.f;
+
+		float f = 0.009f;
+		float dz = -(z - middle) * (z - middle) / middle + middle + 0.1f;
+
+		d = Simplex::octave_noise(5, f, 0.5f, x, y, dz) * 0.7f;
+		d += Simplex::octave_noise(5, f, 0.5f, x, y, z) * 0.3f;
+
+		return d +0.3f;
     }
 
     float weirdLand(float x, float y, float z, int lowerBound, int upperBound) {

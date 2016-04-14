@@ -50,3 +50,6 @@ main
 *.DS_Store
 
 CMakeFiles
+
+# Xcode
+TreeLSystem/TreeLSystemRenderer/
