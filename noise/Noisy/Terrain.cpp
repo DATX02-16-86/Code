@@ -3,10 +3,11 @@
 #include "..\Simplex\simplex.h"
 #include <stdlib.h>
 #include <iostream>
+#include <algorithm>
 
 //Init constants
 const float Terrain::PLAINS_PERSISTANCE = 0.3f;
-const float Terrain::MOUNTAINS_PERSISTANCE = 0.5f;
+const float Terrain::MOUNTAINS_PERSISTANCE = 0.55f;
 
 Terrain::Terrain(int chunks, int chunkSize, int seed)
 {
@@ -23,12 +24,15 @@ Terrain::~Terrain()
 	delete[] chunkHeights;
 }
 
-int Terrain::interpolate(float aP, float bP, int a, int b) {
-	return (int)((float)a + (float)b + 0.5f);
+int Terrain::interpolate(float aP, int a, int b) {
+	return (int)(((float)a*aP) + ((float)b*(1.0f  - aP)) + 0.5f);
 }
 
-float Terrain::interpolate(float aP, float bP, float a, float b) {
-	return a / b;
+float Terrain::interpolate(float aP, float a, float b) {
+	//float tAP = std::max(aP, 1.0f);
+	float val = a*aP + b*(1 - aP);
+	//printf("%g\n", val);
+	return val;
 }
 
 float Terrain::calculate_height(int x, int y, int chunkX, int chunkY)
@@ -242,8 +246,12 @@ void Terrain::generateMountainsPlainsInterpolated(bool* density, int height)
 							int true_x = x + (chunkSize * chX);
 							for (int z = 0; z < height; ++z)
 							{
+								float p = 1.0f - ((float)y / (float)(chunkSize-1.0f));
+								int octaves = interpolate(p, MOUNTAINS_OCTAVES, PLAINS_OCTAVES);
+								float persistance = interpolate(p, MOUNTAINS_PERSISTANCE, PLAINS_PERSISTANCE);
+								int hm = interpolate(p, MOUNTAINS_HM, PLAINS_HM);
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, octaves, persistance, MOUNTAINS_HM);
 							}
 						}
 					}

@@ -6,8 +6,8 @@ class Terrain
 
 private: 
 
-	int interpolate(float aP, float bP, int a, int b);
-	float interpolate(float aP, float bP, float a, float b);
+	int interpolate(float aP, int a, int b);
+	float interpolate(float aP, float a, float b);
 
 public:
 
@@ -17,7 +17,7 @@ public:
 
 	static const int MOUNTAINS_OCTAVES = 6;
 	static const float MOUNTAINS_PERSISTANCE;
-	static const int MOUNTAINS_HM = 1;
+	static const int MOUNTAINS_HM = 0;
 
 	Terrain(int chunks, int chunkSize, int seed);
 	~Terrain();
