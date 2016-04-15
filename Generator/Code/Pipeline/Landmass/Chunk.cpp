@@ -7,14 +7,6 @@ namespace landmass {
 
 const Int2 neighbourOffsets[8] = {{-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}};
 
-inline U8 pack(Int2 relativePos) {
-    return (U8)((relativePos.x & 0b11) | (relativePos.y & 0b11 << 2));
-}
-
-inline Int2 unpack(U8 relativePos) {
-    return Int2 {relativePos & 0b11, (relativePos >> 2) & 0b11};
-}
-
 inline U32 findVertexIndex(const Chunk& chunk, Vertex v) {
     for (U32 i = 0; i < chunk.vertices.size(); ++i) {
         if(almostEqual(chunk.vertices[i], v)) return i;
@@ -117,7 +109,7 @@ void Chunk::buildEdges(ChunkMatrix& matrix, Filler& filler) {
                         if(decidingIndex.x | decidingIndex.y) {
                             it->color(1);
                             it->twin()->color(1);
-                            UnconnectedEdge edge {point0, point1, position++, pack(decidingIndex)};
+                            UnconnectedEdge edge {point0, point1, position++, packRelative(decidingIndex)};
                             unconnectedVertexEdges[vertexIndex - 1].push(edge);
                             continue;
                         }
@@ -137,7 +129,7 @@ void Chunk::buildEdges(ChunkMatrix& matrix, Filler& filler) {
                     it->color(edges.size() + 2);
                     it->twin()->color(edges.size() + 2);
 
-                    edges.push(Edge {{pack(chunkIndex0), vertIndex0 - 1}, {pack(chunkIndex1), vertIndex1 - 1}});
+                    edges.push(Edge {{packRelative(chunkIndex0), vertIndex0 - 1}, {packRelative(chunkIndex1), vertIndex1 - 1}});
                 }
 
                 if(it->color() >= 2) {
@@ -175,7 +167,7 @@ void Chunk::buildEdges(ChunkMatrix& matrix, Filler& filler) {
 
                     auto decidingVertex = point0 < point1 ? point0 : point1;
                     auto decidingIndex = relativeChunkPosition(decidingVertex);
-                    UnconnectedEdge edge {point0, point1, position, pack(decidingIndex)};
+                    UnconnectedEdge edge {point0, point1, position, packRelative(decidingIndex)};
                     unconnectedCellEdges[cellIndex].push(edge);
                 }
 
@@ -205,7 +197,7 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
     auto pivot = Int2 {x, y};
     for(int i = 0; i < vertexEdges.size(); ++i) {
         for(auto e : unconnectedVertexEdges[i]) {
-            auto position = pivot + unpack(e.connectToChunk);
+            auto position = pivot + unpackRelative(e.connectToChunk);
             auto& chunk = matrix.getChunk(position.x, position.y);
             EdgeIndex index {e.connectToChunk, (U32)chunk.findEdgeIndexCand(matrix, e.a, e.b)};
             vertexEdges[i].insert(e.position, index);
@@ -214,7 +206,7 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
 
     for(int i = 0; i < cellEdges.size(); ++i) {
         for(auto e : unconnectedCellEdges[i]) {
-            auto position = pivot + unpack(e.connectToChunk);
+            auto position = pivot + unpackRelative(e.connectToChunk);
             auto& chunk = matrix.getChunk(position.x, position.y);
             EdgeIndex index {e.connectToChunk, (U32)chunk.findEdgeIndex(matrix, e.a, e.b)};
             cellEdges[i].insert(e.position, index);
@@ -232,7 +224,7 @@ void Chunk::build(ChunkMatrix& matrix, Filler& filler, AttributeId* attributes, 
 }
 
 Int2 Chunk::neighbourPosition(U8 offset) {
-    auto position = unpack(offset);
+    auto position = unpackRelative(offset);
     return Int2 {x, y} + position;
 }
 

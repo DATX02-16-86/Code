@@ -9,8 +9,13 @@ void LandmassStage::generate(Chunk& chunk, Size stage, I32 seed) {
 
     // Make sure all neighbours have generated any data this stage may depend on.
     if(stage > 1) {
-        chunk.mapNeighbours(matrix, [=](Chunk &n) {
+        chunk.mapNeighbours(matrix, [=](Chunk& n) {
             generate(n, stage - 1, seed);
+        });
+    } else {
+        // Make sure each neighbour is at the last preparation stage.
+        chunk.mapNeighbours(matrix, [&](Chunk& n) {
+            n.build(matrix, filler, attributes.data(), attributes.size());
         });
     }
 
@@ -30,7 +35,6 @@ void LandmassStage::generate(I32 x, I32 y, I32 seed) {
 }
 
 LandmassStage& LandmassStage::operator += (std::unique_ptr<Generator> generator) {
-    generators.push_back(::move(generator));
     for(Attribute* a: generator->usedAttributes) {
         U32 i = 0;
         auto max = attributeSources.size();
@@ -45,6 +49,8 @@ LandmassStage& LandmassStage::operator += (std::unique_ptr<Generator> generator)
             generator->attributes.push_back(attributes[max]);
         }
     }
+	
+	generators.push_back(::move(generator));
     return *this;
 }
 

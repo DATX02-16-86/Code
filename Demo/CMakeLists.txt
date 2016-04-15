@@ -19,5 +19,5 @@ include_directories(../Generator/Code)
 
 link_directories(../Libraries/Tritium/Bin/Release)
 
-add_executable(Demo Demo.cpp)
+add_executable(Demo ../noise/Simplex/simplex.h ../noise/Simplex/simplex.cpp Demo.cpp)
 target_link_libraries(Demo Generator TritiumCore ${OTHER_LIBS})

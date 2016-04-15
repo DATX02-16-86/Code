@@ -36,13 +36,19 @@ struct AttributeMap {
 
     void create(AttributeId* attributes, Size attributeCount, Size cellCount, Size edgeCount, Size vertexCount);
 
-    U32 get(AttributeId id, U32 index);
+    U32 getRaw(AttributeId id, U32 index);
     void setRaw(AttributeId id, U32 index, U32 value);
 
     template<class T> void set(AttributeId id, U32 index, T value) {
         union { U32 i; T v; } convert;
         convert.v = value;
         setRaw(id, index, convert.i);
+    }
+
+    template<class T> T get(AttributeId id, U32 index) {
+        union { U32 i; T v; } convert;
+        convert.i = getRaw(id, index);
+        return convert.v;
     }
 
     U32* offsets = nullptr;

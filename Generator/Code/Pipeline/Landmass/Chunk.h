@@ -13,6 +13,21 @@ struct ChunkMatrix;
 
 extern const Int2 neighbourOffsets[8];
 
+inline U8 packRelative(Int2 relativePos) {
+    return (U8)((relativePos.x & 0b11) | (relativePos.y & 0b11 << 2));
+}
+
+inline Int2 unpackRelative(U8 relativePos) {
+    return Int2 {relativePos & 0b11, (relativePos >> 2) & 0b11};
+}
+
+inline VertexIndex nextVertexIndex(VertexIndex current, Edge next) {
+    if(current == next.b) {
+        return next.a;
+    }
+    return next.b;
+}
+
 struct Chunk {
     /// Each chunk is built in multiple stages to prevent recursive dependencies between them.
     /// This defines the stages a chunk can be in.
@@ -82,7 +97,7 @@ struct Chunk {
 
     /// Calculates the position of the provided point relative to this one.
     Int2 relativeChunkPosition(Vertex p) {
-        return {(I32)Tritium::Math::floor(p.x) - x, (I32)Tritium::Math::floor(p.y) - y};
+        return {(I32)Tritium::Math::floor(p.x / size) - x, (I32)Tritium::Math::floor(p.y / size) - y};
     }
 
     /// Returns the absolute position of the neighbour at this offset.

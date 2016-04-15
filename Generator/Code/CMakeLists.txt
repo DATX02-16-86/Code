@@ -59,5 +59,5 @@ add_library(Generator
     World/WorldManager.h
     World/WorldManager.cpp)
 
-add_executable(GeneratorTest Tests/Pipeline.cpp Tests/Matrix.cpp)
+add_executable(GeneratorTest Tests/Matrix.cpp)
 target_link_libraries(GeneratorTest Generator TritiumCore ${OTHER_LIBS})

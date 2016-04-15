@@ -62,13 +62,18 @@ string TreeLSystem::produce(int iterations) {
   return result;
 }
 
+double randRange(double low, double high) {
+  return (double)rand()/RAND_MAX*(high-low)+low;
+}
+
 void addBranch(double lengthRatio, double diameterRatio, Vector *position, Matrix rotation, Mesh* mesh) {
+  auto noisedLengthRatio = randRange(lengthRatio*0.9, lengthRatio*1.1);
   Vector points[VERTEX_COUNT];
   auto _pos = (*position);
   
   Vector dir = PerformRotation(rotation, {0.0, 1.0, 0.0});
   for (int i = 0; i < 3; i++) {
-    (*position)[i] += dir[i]*lengthRatio;
+    (*position)[i] += dir[i]*noisedLengthRatio;
   }
   for (int i = 0; i < BRANCH_RADIAL_COUNT; i++) {
     points[i] = {
@@ -80,13 +85,13 @@ void addBranch(double lengthRatio, double diameterRatio, Vector *position, Matri
   for (int i = BRANCH_RADIAL_COUNT; i < BRANCH_RADIAL_COUNT*2; i++) {
     points[i] = {
       cos(2*M_PI/BRANCH_RADIAL_COUNT*i)/10*diameterRatio,
-      lengthRatio,
+      noisedLengthRatio,
       sin(2*M_PI/BRANCH_RADIAL_COUNT*i)/10*diameterRatio
     };
   }
 #ifdef DEBUG_TREELSYSTEM
   points[VERTEX_COUNT-2] = {0, 0, 0};
-  points[VERTEX_COUNT-1] = {0, lengthRatio, 0};
+  points[VERTEX_COUNT-1] = {0, noisedLengthRatio, 0};
 #endif
   for (int i = 0; i < VERTEX_COUNT; i++) {
     // Rotate point in the direction of the turtle.
@@ -98,10 +103,10 @@ void addBranch(double lengthRatio, double diameterRatio, Vector *position, Matri
   }
   
   // Push the points and its indices to the mesh.
-  auto verticesCount = (int)mesh->vertices.size();
   for (Vector vector: points) {
     mesh->vertices.push_back(vector);
   }
+  auto verticesCount = (int)mesh->vertices.size();
   for (int i = 0; i < BRANCH_RADIAL_COUNT; i++) {
     mesh->indices.push_back(verticesCount+i);
     mesh->indices.push_back(verticesCount+BRANCH_RADIAL_COUNT+i);
@@ -123,25 +128,26 @@ Mesh TreeLSystem::generateMesh(int iterations) {
   };
   stack<Vector> positionStack;
   stack<Matrix> rotationStack;
-  for (char elem: produce(iterations)) {
+  auto generation = produce(iterations);
+  for (char elem: generation) {
     switch (elem) {
       case TurnLeft:
-        currentRotation = PerformRotation(currentRotation, RZ(phyllotacticAngle));
+        currentRotation = PerformRotation(currentRotation, RY(randRange(phyllotacticAngle*0.9, phyllotacticAngle*1.1)));
         break;
       case TurnRight:
-        currentRotation = PerformRotation(currentRotation, RZ(-phyllotacticAngle));
+        currentRotation = PerformRotation(currentRotation, RY(randRange(-phyllotacticAngle*1.1, -phyllotacticAngle*0.9)));
         break;
       case RollLeft:
-        currentRotation = PerformRotation(currentRotation, RY(-branchingAngle));
+        currentRotation = PerformRotation(currentRotation, RZ(randRange(branchingAngle*0.9, branchingAngle*1.1)));
         break;
       case RollRight:
-        currentRotation = PerformRotation(currentRotation, RY(branchingAngle));
+        currentRotation = PerformRotation(currentRotation, RZ(randRange(-branchingAngle*1.1, -branchingAngle*0.9)));
         break;
       case PitchDown:
-        currentRotation = PerformRotation(currentRotation, RX(-branchingAngle));
+        currentRotation = PerformRotation(currentRotation, RX(randRange(-branchingAngle*1.1, -branchingAngle*0.9)));
         break;
       case PitchUp:
-        currentRotation = PerformRotation(currentRotation, RX(branchingAngle));
+        currentRotation = PerformRotation(currentRotation, RX(randRange(branchingAngle*0.9, branchingAngle*1.1)));
         break;
       case Push:
         positionStack.push(currentPosition);
@@ -156,13 +162,11 @@ Mesh TreeLSystem::generateMesh(int iterations) {
         break;
       }
       default:
-        auto lengthRatio = 1;
-        auto diameterRatio = 1;
-        for (int i = 0; i < positionStack.size(); i++) {
-          lengthRatio *= this->lengthRatio;
-          diameterRatio *= this->diameterRatio;
-        }
-        addBranch(lengthRatio, diameterRatio, &currentPosition, currentRotation, &mesh);
+        addBranch(pow(this->lengthRatio, positionStack.size()),
+                  pow(this->diameterRatio, positionStack.size()),
+                  &currentPosition,
+                  currentRotation,
+                  &mesh);
         break;
     }
   }
