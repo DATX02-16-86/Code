@@ -4,6 +4,11 @@
 class Terrain
 {
 
+private: 
+
+	int interpolate(float aP, float bP, int a, int b);
+	float interpolate(float aP, float bP, float a, float b);
+
 public:
 
 	static const int PLAINS_OCTAVES = 4;
