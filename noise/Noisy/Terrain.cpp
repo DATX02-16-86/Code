@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <iostream>
 
+//Init constants
+const float Terrain::PLAINS_PERSISTANCE = 0.3f;
+const float Terrain::MOUNTAINS_PERSISTANCE = 0.5f;
 
 Terrain::Terrain(int chunks, int chunkSize, int seed)
 {
@@ -127,7 +130,6 @@ void Terrain::generate3D(bool* density, int height)
 void Terrain::Generate3DCustom(bool* density, int height, int octaves, float persistance, int heightMult)
 {
 	int baseHeight = height / 2;
-	float densityThreshold = 0.3f;
 
 	for (int chY = 1; chY < chunks - 1; chY++) {
 		for (int chX = 1; chX < chunks - 1; chX++) {
@@ -137,27 +139,8 @@ void Terrain::Generate3DCustom(bool* density, int height, int octaves, float per
 					int true_x = x + (chunkSize * chX);
 					for (int z = 0; z < height; ++z)
 					{
-						//calculate density with simplex noise
-						float d = Simplex::octave_noise(octaves, 0.007f, persistance, true_x, true_y, z, nc);
-
-						float fz = (float)z;
-						// Create base layer
-						if (z <= baseHeight / 2)
-							d -= (2 * (fz - baseHeight / 2) / baseHeight);
-
-						// Scale off
-						float hm = ((fz - (baseHeight / 2)) / height);
-						if (z >= (baseHeight / 2))
-						{
-							for (int i = 0; i < heightMult; ++i)
-							{
-								hm *= hm;
-							}
-						}
-						d -= hm;
-
 						//determine whether its solid or air
-						density[true_y*chunkSize*chunks*height + true_x*height + z] = d > densityThreshold;
+						density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, octaves, persistance, heightMult);
 					}
 				}
 			}
@@ -165,14 +148,112 @@ void Terrain::Generate3DCustom(bool* density, int height, int octaves, float per
 	}
 }
 
+bool Terrain::fillVoxel(int baseHeight, int x, int y, int z, int height, int octaves, float persistance, int heightMult) 
+{
+	float d = Simplex::octave_noise(octaves, 0.007f, persistance, x, y, z, nc);
+
+	float fz = (float)z;
+	// Create base layer
+	if (z <= baseHeight / 2)
+		d -= (2 * (fz - baseHeight / 2) / baseHeight);
+
+	// Scale off
+	float hm = ((fz - (baseHeight / 2)) / height);
+	if (z >= (baseHeight / 2))
+	{
+		for (int i = 0; i < heightMult; ++i)
+		{
+			hm *= hm;
+		}
+	}
+	d -= hm;
+
+	return d > 0.3f;
+}
+
 void Terrain::GenerateMountains(bool* density, int height)
 {
-	Generate3DCustom(density, height, 6, 0.5f, 1);
+	Generate3DCustom(density, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM);
 }
 
 void Terrain::GeneratePlains(bool* density, int height)
 {
-	Generate3DCustom(density, height, 4, 0.3f, 0);
+	Generate3DCustom(density, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM);
+}
+
+void Terrain::generateMountainsPlains(bool* density, int height)
+{
+	int baseHeight = height / 2;
+	for (int chY = 1; chY < chunks - 1; chY++) {
+		for (int chX = 1; chX < chunks - 1; chX++) {
+			if (chY <= (chunks-1)/2) 
+			{
+				for (int y = 0; y < chunkSize; ++y) {
+					int true_y = y + (chunkSize * chY);
+					for (int x = 0; x < chunkSize; ++x) {
+						int true_x = x + (chunkSize * chX);
+						for (int z = 0; z < height; ++z)
+						{
+							//determine whether its solid or air
+							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM);
+						}
+					}
+				}
+			}
+			else 
+			{
+				for (int y = 0; y < chunkSize; ++y) {
+					int true_y = y + (chunkSize * chY);
+					for (int x = 0; x < chunkSize; ++x) {
+						int true_x = x + (chunkSize * chX);
+						for (int z = 0; z < height; ++z)
+						{
+							//determine whether its solid or air
+							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+
+void Terrain::generateMountainsPlainsInterpolated(bool* density, int height)
+{
+	int baseHeight = height / 2;
+	for (int chY = 1; chY < chunks - 1; chY++) {
+		for (int chX = 1; chX < chunks - 1; chX++) {
+			if (chY <= (chunks - 1) / 2)
+			{
+				for (int y = 0; y < chunkSize; ++y) {
+					int true_y = y + (chunkSize * chY);
+					for (int x = 0; x < chunkSize; ++x) {
+						int true_x = x + (chunkSize * chX);
+						for (int z = 0; z < height; ++z)
+						{
+							//determine whether its solid or air
+							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM);
+						}
+					}
+				}
+			}
+			else
+			{
+				for (int y = 0; y < chunkSize; ++y) {
+					int true_y = y + (chunkSize * chY);
+					for (int x = 0; x < chunkSize; ++x) {
+						int true_x = x + (chunkSize * chX);
+						for (int z = 0; z < height; ++z)
+						{
+							//determine whether its solid or air
+							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void Terrain::generate2DTunnels(float** zValues)

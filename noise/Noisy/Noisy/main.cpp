@@ -177,7 +177,7 @@ void generateAndWrite3DInterpolation(int seed, int chunkSize, int chunks, int he
 	// Init and generate terrain
 	Terrain t = Terrain(chunks, chunkSize, seed);
 	t.generateHeights();
-	t.GeneratePlains(point_z_values, height);
+	t.generateMountainsPlains(point_z_values, height);
 
 	writePointsToFile3D(chunkSize, chunks, height, point_z_values);
 }
