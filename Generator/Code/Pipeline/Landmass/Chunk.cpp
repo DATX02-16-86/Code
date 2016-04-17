@@ -197,8 +197,7 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
     auto pivot = Int2 {x, y};
     for(int i = 0; i < vertexEdges.size(); ++i) {
         for(auto e : unconnectedVertexEdges[i]) {
-            auto position = pivot + unpackRelative(e.connectToChunk);
-            auto& chunk = matrix.getChunk(position.x, position.y);
+            auto& chunk = neighbour(matrix, e.connectToChunk);
             EdgeIndex index {e.connectToChunk, (U32)chunk.findEdgeIndexCand(matrix, e.a, e.b)};
             vertexEdges[i].insert(e.position, index);
         }
@@ -206,9 +205,9 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
 
     for(int i = 0; i < cellEdges.size(); ++i) {
         for(auto e : unconnectedCellEdges[i]) {
-            auto position = pivot + unpackRelative(e.connectToChunk);
-            auto& chunk = matrix.getChunk(position.x, position.y);
-            EdgeIndex index {e.connectToChunk, (U32)chunk.findEdgeIndex(matrix, e.a, e.b)};
+            auto& chunk = neighbour(matrix, e.connectToChunk);
+            auto edgeIndex = chunk.findEdgeIndex(matrix, e.a, e.b);
+            EdgeIndex index {e.connectToChunk, edgeIndex};
             cellEdges[i].insert(e.position, index);
         }
     }

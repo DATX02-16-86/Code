@@ -18,7 +18,9 @@ inline U8 packRelative(Int2 relativePos) {
 }
 
 inline Int2 unpackRelative(U8 relativePos) {
-    return Int2 {relativePos & 0b11, (relativePos >> 2) & 0b11};
+    I32 x = (relativePos & 0b11) << 30 >> 30;
+    I32 y = ((relativePos >> 2) & 0b11) << 30 >> 30;
+    return Int2 {x, y};
 }
 
 inline VertexIndex nextVertexIndex(VertexIndex current, Edge next) {
