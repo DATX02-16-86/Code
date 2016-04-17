@@ -24,14 +24,14 @@ private:
 };
 
 struct LandmassStage {
-    LandmassStage(Filler& filler): filler(filler) {}
+    LandmassStage(Filler& filler, U32 gridSize, U32 gridSpread): filler(filler), matrix(0, 13, gridSize, gridSpread) {}
 
     void generate(Chunk& chunk, Size stage, I32 seed);
     virtual void generate(I32 x, I32 y, I32 seed);
     LandmassStage& operator += (std::unique_ptr<Generator> generator);
 
     Filler& filler;
-    ChunkMatrix matrix {0, 4096};
+    ChunkMatrix matrix;
 
 private:
     std::vector<AttributeId> attributes;

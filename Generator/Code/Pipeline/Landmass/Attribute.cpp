@@ -6,7 +6,7 @@ namespace generator {
 namespace landmass {
 
 AttributeId::AttributeId(U16 id, U8 itemBits, AttributeType type):
-    id(id), itemBits(itemBits), type(type),
+    id(id), itemBits(itemBits), type((U8)type),
     itemShift((U8)Tritium::Math::findLastBit(sizeof(U32) * 8 / itemBits)),
     itemsPerWord((U8)1 << Tritium::Math::findLastBit(sizeof(U32) * 8 / itemBits)) {}
 
@@ -24,8 +24,8 @@ void AttributeMap::create(AttributeId* attributes, Size attributeCount, Size cel
     // First we calculate the total allocation size needed.
     for(Size i = 0; i < attributeCount; i++) {
         Size count;
-        if(attributes[i].type == AttributeType::Cell) count = cellCount;
-        else if(attributes[i].type == AttributeType::Edge) count = edgeCount;
+        if(attributes[i].type == (U8)AttributeType::Cell) count = cellCount;
+        else if(attributes[i].type == (U8)AttributeType::Edge) count = edgeCount;
         else count = vertexCount;
 
         auto words = (U32)(count >> attributes[i].itemShift);
@@ -43,8 +43,8 @@ void AttributeMap::create(AttributeId* attributes, Size attributeCount, Size cel
     U32 offset = 0;
     for(Size i = 0; i < attributeCount; i++) {
         Size count;
-        if(attributes[i].type == AttributeType::Cell) count = cellCount;
-        else if(attributes[i].type == AttributeType::Edge) count = edgeCount;
+        if(attributes[i].type == (U8)AttributeType::Cell) count = cellCount;
+        else if(attributes[i].type == (U8)AttributeType::Edge) count = edgeCount;
         else count = vertexCount;
 
         auto words = (U32)(count >> attributes[i].itemShift);

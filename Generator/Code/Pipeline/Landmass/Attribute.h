@@ -26,7 +26,7 @@ struct AttributeId {
     const U8 itemsPerWord: 4;
     const U8 itemShift: 4;
     const U8 itemBits: 6;
-    const AttributeType type: 2;
+    const U8 type: 2;
 };
 
 struct AttributeMap {

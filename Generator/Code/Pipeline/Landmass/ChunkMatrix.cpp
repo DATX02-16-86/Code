@@ -13,9 +13,10 @@ ChunkMatrix::~ChunkMatrix() {
     tiles = nullptr;
 }
 
-void ChunkMatrix::create(U32 detail, U32 tileSize) {
-    this->tileSize = tileSize;
-    this->baseDetail = (U8)detail;
+void ChunkMatrix::create(U32 detail, U32 tileSize, U32 gridSize, U32 gridSpread) {
+    this->tileSize = (U8)tileSize;
+    this->gridSize = (U16)gridSize;
+    this->gridSpread = (U8)gridSpread;
 }
 
 void ChunkMatrix::resize(I32 x, I32 y) {
@@ -81,7 +82,7 @@ Chunk& ChunkMatrix::getChunk(I32 x, I32 y) {
 
     auto& tile = tiles[width * tileY + tileX];
     if(!tile) {
-        tile = new Chunk {x, y, tileSize};
+        tile = new Chunk {tileX, tileY, 1u << tileSize, gridSize, gridSpread};
     }
     return *tile;
 }

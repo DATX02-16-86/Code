@@ -14,8 +14,8 @@ struct Chunk;
  * Manages sending the generated data through each stage to produce an end result.
  */
 struct Pipeline {
-    Pipeline(landmass::Filler& landmassFiller, I32 seed, U8 tileSize = 10):
-        data(tileSize), seed(seed), landmass(landmassFiller) {}
+    Pipeline(landmass::Filler& landmassFiller, I32 seed, U32 gridSize, U32 gridSpread, U8 tileSize = 10):
+        data(tileSize), seed(seed), landmass(landmassFiller, gridSize, gridSpread) {}
 
     /**
      * Fills a chunk of voxel data from this pipeline.

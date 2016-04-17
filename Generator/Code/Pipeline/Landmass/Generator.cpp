@@ -26,7 +26,7 @@ void LandmassStage::generate(Chunk& chunk, Size stage, I32 seed) {
         i++;
     }
 
-    chunk.generatorStage = (U16)stage;
+    chunk.generatorStage = (U8)stage;
 }
 
 void LandmassStage::generate(I32 x, I32 y, I32 seed) {
@@ -49,7 +49,7 @@ LandmassStage& LandmassStage::operator += (std::unique_ptr<Generator> generator)
             generator->attributes.push_back(attributes[max]);
         }
     }
-	
+
 	generators.push_back(::move(generator));
     return *this;
 }

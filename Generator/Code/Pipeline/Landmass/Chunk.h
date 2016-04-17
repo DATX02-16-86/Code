@@ -41,7 +41,9 @@ struct Chunk {
         Connections
     };
 
-    Chunk(I32 x, I32 y, U32 size): x(x), y(y), size(size) {}
+    Chunk(I32 x, I32 y, U32 size, U32 gridSize, U32 gridSpread):
+        x(x), y(y), size((U16)size), gridSize((U16)gridSize), gridSpread((U8)gridSpread) {}
+    ~Chunk() {Tritium::hFree(gridVertices);}
 
     /// Builds the cell centers of this chunk.
     /// The stage is set to Points.
@@ -120,6 +122,7 @@ struct Chunk {
     Array<ArrayF<EdgeIndex, kMaxVertexEdges>> vertexEdges;
     Array<Edge> edges;
     std::vector<U32> edgeConnectCandidates;
+    U16* gridVertices = nullptr;
 
     // These are used in the Vertices and Edges stages; after that they are destroyed.
     std::vector<Point> cellCentersWithBorder;
@@ -133,8 +136,10 @@ struct Chunk {
 
     I32 x;
     I32 y;
-    U32 size;
-    U16 generatorStage = 0;
+    U16 size;
+    U16 gridSize;
+    U8 generatorStage = 0;
+    U8 gridSpread;
     Stage stage = None;
 };
 

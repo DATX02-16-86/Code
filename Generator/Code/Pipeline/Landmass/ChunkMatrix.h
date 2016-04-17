@@ -11,11 +11,13 @@ struct Chunk;
 struct ChunkMatrix {
     ChunkMatrix() = default;
     ChunkMatrix(const ChunkMatrix&) = delete;
-    ChunkMatrix(U32 detail, U32 tileSize) { create(detail, tileSize); }
+    ChunkMatrix(U32 detail, U32 tileSize, U32 gridSize, U32 gridSpread) {
+        create(detail, tileSize, gridSize, gridSpread);
+    }
 
     ~ChunkMatrix();
 
-    void create(U32 detail, U32 tileSize);
+    void create(U32 detail, U32 tileSize, U32 gridSize, U32 gridSpread);
 
     /// Returns the tile that contains the provided global position.
     /// The tile may be created if it doesn't exist.
@@ -38,10 +40,11 @@ private:
     Chunk** tiles = nullptr;
     I32 x = 0;
     I32 y = 0;
-    U32 tileSize = 0;
     U16 width = 0;
     U16 height = 0;
-    U8 baseDetail = 0;
+    U16 gridSize;
+    U8 gridSpread;
+    U8 tileSize;
 };
 
 }} // namespace generator::landmass

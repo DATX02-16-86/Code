@@ -53,14 +53,44 @@ void Chunk::buildVertices(ChunkMatrix& matrix, Filler& filler) {
     diagram.init();
     construct_voronoi(cellCentersWithBorder.begin(), cellCentersWithBorder.end(), &diagram);
 
+    auto gridCount = size / gridSize;
+    gridVertices = (U16*)Tritium::hAlloc(sizeof(U16) * gridCount * gridCount);
+    Tritium::set(gridVertices, gridCount * gridCount, 0);
+
     // Add the generated cell vertices that belong to this chunk.
     // We assign each vertex a vertex index, starting at 1 because 0 is the default color.
     U32 vertexIndex = 1;
     for(const auto& vertex : diagram->vertices()) {
+        auto index = vertexIndex++;
+
+        // Add this vertex to the vertex list.
         Vertex point{vertex.x(), vertex.y()};
         if(isVertexInChunk(*this, point)) {
             vertices.push(point);
-            vertex.color(vertexIndex++);
+            vertex.color(index);
+
+            // Add this vertex to the vertex grid, which is used to voxelize the diagram later.
+            auto x = ((I32)vertex.x() - (this->x * size)) / gridSize;
+            auto y = ((I32)vertex.y() - (this->y * size)) / gridSize;
+            auto stride = size / gridSize;
+            auto left = Tritium::Math::max(0, x - gridSpread);
+            auto right = Tritium::Math::min(stride, x + gridSpread);
+            auto top = Tritium::Math::max(0, y - gridSpread);
+            auto bottom = Tritium::Math::min(stride, y + gridSpread);
+            auto center = Vertex {left * gridSize + this->x * this->size + (gridSize / 2), top * gridSize + this->y * this->size + (gridSize / 2)};
+
+            // Add this vertex to each affected grid tile if it is closer to the tile than the previous vertex.
+            for(auto column = left; column < right; column++) {
+                for(auto row = top; row < bottom; row++) {
+                    auto offset = stride * row + column;
+                    auto existing = vertices[gridVertices[offset]];
+                    if((point - center).sqLength() < (existing - center).sqLength()) {
+                        gridVertices[offset] = (U16)(index - 1);
+                    }
+                    center.y += gridSize;
+                }
+                center.x += gridSize;
+            }
         }
     }
 
