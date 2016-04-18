@@ -39,8 +39,6 @@ struct Pipeline {
 
     // The stages a that are dynamically configurable.
     landmass::LandmassStage landmass;
-    Stage heightStage;
-    Stage biomeStage;
     Stage structureStage;
 
     // The generator seed to use.

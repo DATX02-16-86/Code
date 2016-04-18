@@ -29,16 +29,10 @@ void Pipeline::Data::resize(Size count) {
 }
 
 void Pipeline::fillChunk(Chunk& chunk) {
-    // Create a segment larger than the chunk size, which allows biomes to loop up metadata outside of the chunk area.
-    auto segment = toSegment(chunk.area);
-    segment.x -= chunk.area.width;
-    segment.y -= chunk.area.height;
-    segment.width += chunk.area.width * 2;
-    segment.height += chunk.area.height * 2;
+    auto& land = landmass.generate(chunk.area.x, chunk.area.y, seed);
 
-    // Generate base data around the chunk location.
-    heightStage.generate(segment, *this);
-    biomeStage.generate(segment, *this);
+    // Get the closest vertex and its direct neighbours, then calculate biome strengths for each voxel pillar.
+
 
     // Generate the terrain for this chunk.
     if(auto biomes = data.get(Biomes)) {

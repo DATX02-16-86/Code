@@ -29,9 +29,10 @@ void LandmassStage::generate(Chunk& chunk, Size stage, I32 seed) {
     chunk.generatorStage = (U8)stage;
 }
 
-void LandmassStage::generate(I32 x, I32 y, I32 seed) {
+Chunk& LandmassStage::generate(I32 x, I32 y, I32 seed) {
     auto& chunk = matrix.getChunk(x, y);
     generate(chunk, generators.size(), seed);
+    return chunk;
 }
 
 LandmassStage& LandmassStage::operator += (std::unique_ptr<Generator> generator) {

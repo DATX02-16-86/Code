@@ -77,7 +77,7 @@ void Chunk::buildVertices(ChunkMatrix& matrix, Filler& filler) {
             auto right = Tritium::Math::min(stride, x + gridSpread);
             auto top = Tritium::Math::max(0, y - gridSpread);
             auto bottom = Tritium::Math::min(stride, y + gridSpread);
-            auto center = Vertex {left * gridSize + this->x * this->size + (gridSize / 2), top * gridSize + this->y * this->size + (gridSize / 2)};
+            auto center = Vertex(left * gridSize + this->x * this->size + (gridSize / 2), top * gridSize + this->y * this->size + (gridSize / 2));
 
             // Add this vertex to each affected grid tile if it is closer to the tile than the previous vertex.
             for(auto column = left; column < right; column++) {
