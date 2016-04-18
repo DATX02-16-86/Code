@@ -71,7 +71,8 @@ struct Chunk {
         auto pivot = Int2 {x, y};
         for(auto offset: neighbourOffsets) {
             auto position = pivot + offset;
-            f(matrix.getChunk(position.x, position.y));
+            auto& chunk = matrix.getChunk(position.x, position.y);
+            f(chunk);
         }
     }
 
@@ -111,6 +112,16 @@ struct Chunk {
     Chunk& neighbour(ChunkMatrix& matrix, U8 offset) {
         auto p = neighbourPosition(offset);
         return matrix.getChunk(p.x, p.y);
+    }
+
+    /// Returns the closest vertex to the provided position.
+    U32 getClosestVertex(I32 x, I32 y) {
+        auto xi = (x - (this->x * size)) / gridSize;
+        auto yi = (y - (this->y * size)) / gridSize;
+        auto stride = size / gridSize;
+        assertTrue(gridVertices);
+
+        return gridVertices[stride * yi + xi];
     }
 
     U32 findEdgeIndexCand(ChunkMatrix& matrix, Vertex a, Vertex b);

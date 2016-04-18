@@ -153,7 +153,7 @@ void Chunk::buildEdges(ChunkMatrix& matrix, Filler& filler) {
                             vertIndex1 = findVertexIndex(matrix.getChunk(p.x, p.y), point1) + 1;
                         }
                     }
-
+					
                     // 0 and 1 are reserved numbers
                     it->color(edges.size() + 2);
                     it->twin()->color(edges.size() + 2);
@@ -223,7 +223,6 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
         chunk.buildEdges(matrix, filler);
     });
 
-    auto pivot = Int2 {x, y};
     for(int i = 0; i < vertexEdges.size(); ++i) {
         for(auto e : unconnectedVertexEdges[i]) {
             auto& chunk = neighbour(matrix, e.connectToChunk);

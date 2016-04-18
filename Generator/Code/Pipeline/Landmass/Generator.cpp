@@ -22,7 +22,7 @@ void LandmassStage::generate(Chunk& chunk, Size stage, I32 seed) {
     // Generate up to the requested stage.
     Size i = chunk.generatorStage;
     while(i < stage) {
-        generators[stage]->generate(chunk, matrix, seed);
+        generators[i]->generate(chunk, matrix, seed);
         i++;
     }
 
