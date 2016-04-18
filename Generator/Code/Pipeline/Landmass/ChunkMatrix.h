@@ -25,6 +25,10 @@ struct ChunkMatrix {
 
     bool isEmpty() const { return (width | height) == 0; }
 
+    U32 getTileSize() {return 1u << this->tileSize;}
+    U32 getGridSize() {return this->gridSize;}
+    U32 getGridSpread() {return 1u << this->gridSpread;}
+
 private:
     /// Resizes the matrix to include the provided position.
     void resize(I32 x, I32 y);
