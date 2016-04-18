@@ -256,6 +256,8 @@ Int2 Chunk::neighbourPosition(U8 offset) {
 }
 
 U32 Chunk::findEdgeIndexCand(ChunkMatrix& matrix, Vertex a, Vertex b) {
+  // This needs to check the candidates of the chunks a and b are in, not in just the current chunk
+  /*
     for(auto i : edgeConnectCandidates) {
         auto e = edges[i];
         auto ea = neighbour(matrix, e.a.chunkIndex).vertices[e.a.index];
@@ -268,9 +270,10 @@ U32 Chunk::findEdgeIndexCand(ChunkMatrix& matrix, Vertex a, Vertex b) {
             if(eb == a) return i;
         }
     }
-
-    debugError("Edge wasn't in the chunk");
-    return 0;
+    */
+    return findEdgeIndex(matrix, a, b);;
+    //debugError("Edge wasn't in the chunk");
+    //return 0;
 }
 
 U32 Chunk::findEdgeIndex(ChunkMatrix& matrix, Vertex a, Vertex b) {
