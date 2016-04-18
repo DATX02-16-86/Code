@@ -1,4 +1,3 @@
-
 #include "Chunk.h"
 #include "ChunkMatrix.h"
 
@@ -61,11 +60,11 @@ void Chunk::buildVertices(ChunkMatrix& matrix, Filler& filler) {
     // We assign each vertex a vertex index, starting at 1 because 0 is the default color.
     U32 vertexIndex = 1;
     for(const auto& vertex : diagram->vertices()) {
-        auto index = vertexIndex++;
-
         // Add this vertex to the vertex list.
         Vertex point{vertex.x(), vertex.y()};
         if(isVertexInChunk(*this, point)) {
+            auto index = vertexIndex++;
+
             vertices.push(point);
             vertex.color(index);
 

@@ -72,17 +72,17 @@ void ChunkMatrix::resize(I32 x, I32 y) {
 }
 
 Chunk& ChunkMatrix::getChunk(I32 x, I32 y) {
-    auto tileX = tileIndex(x) - this->x;
-    auto tileY = tileIndex(y) - this->y;
+    auto tileX = x - this->x;
+    auto tileY = y - this->y;
     if(tileX < 0 || tileY < 0 || width <= tileX || height <= tileY) {
-        resize(tileIndex(x), tileIndex(y));
-        tileX = tileIndex(x) - this->x;
-        tileY = tileIndex(y) - this->y;
+        resize(x, y);
+        tileX = x - this->x;
+        tileY = y - this->y;
     }
 
     auto& tile = tiles[width * tileY + tileX];
     if(!tile) {
-        tile = new Chunk {tileX, tileY, 1u << tileSize, gridSize, gridSpread};
+        tile = new Chunk {x, y, 1u << tileSize, gridSize, gridSpread};
     }
     return *tile;
 }

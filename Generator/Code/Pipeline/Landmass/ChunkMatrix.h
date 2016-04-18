@@ -29,14 +29,6 @@ private:
     /// Resizes the matrix to include the provided position.
     void resize(I32 x, I32 y);
 
-    I32 tileIndex(I32 position) const {
-        return position >> tileSize;
-    }
-
-    U32 indexInTile(I32 position) const {
-        return position & ((I32(1) << tileSize) - 1);
-    }
-
     Chunk** tiles = nullptr;
     I32 x = 0;
     I32 y = 0;
