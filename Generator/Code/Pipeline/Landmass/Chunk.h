@@ -14,7 +14,7 @@ struct ChunkMatrix;
 extern const Int2 neighbourOffsets[8];
 
 inline U8 packRelative(Int2 relativePos) {
-    return (U8)((relativePos.x & 0b11) | (relativePos.y & 0b11 << 2));
+    return (U8)((relativePos.x & 0b11) | ((relativePos.y & 0b11) << 2));
 }
 
 inline Int2 unpackRelative(U8 relativePos) {
