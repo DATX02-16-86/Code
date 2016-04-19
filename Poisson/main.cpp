@@ -19,11 +19,12 @@
 #include <iostream>
 #include <fstream>
 #include <memory.h>
+#include <time.h>
+#include <stdio.h>
 
-#include "poissonDisc.h"
+#include "poisson.h"
 
-const int   NumPoints   = 3000;	// minimal number of points to generate
-const int   ImageSize   = 512;	// generate RGB image [ImageSize x ImageSize]
+const int   ImageSize   = 2048;	// generate RGB image [ImageSize x ImageSize]
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -145,39 +146,79 @@ void PrintBanner()
     std::cout << std::endl;
 }
 
+void addEntity(
+        std::vector<std::vector<Poisson::EntityTemplate>>& groups,
+        int radius,
+        float selfSpawn,
+        int group,
+        std::string value,
+        int count){
+    Poisson::EntityTemplate t((float)radius / ImageSize, selfSpawn, group, value, count);
+    groups[group].push_back(t);
+}
+
+void addRule(int group1, int group2, int distance){
+    Poisson::AddDistanceRule(group1, group2, (float) distance  / ImageSize);
+}
+
 int main( int argc, char** argv )
 {
     PrintBanner();
 
-//	if ( argc > 1 )
-//	{
-//		LoadDensityMap( argv[1] );
-//	}
 
-    LoadDensityMap("noise.bmp");
+    std::string s = "noise" + std::to_string(ImageSize) + ".bmp";
+    LoadDensityMap(s.c_str());
 
-    int seed = 1234;
-    Poisson::DefaultPRNG PRNG(seed);
+    int seed = 1284;
+    Poisson::PRNG generator(seed);
 
-    int radii[] = {10, 2};
-    int versionCount = 2;
+    const unsigned int groupCount = 3;
 
-    const auto Points = Poisson::GenerateMultiPoissonPoints(
-            radii,
-            versionCount,
-            NumPoints,
-            PRNG,
+    std::vector<std::vector<Poisson::EntityTemplate>> groups(groupCount);
+
+
+    int giantCrownSize = 100;
+    //addRule(0, 0, giantCrownSize * 3);
+
+    int treeCrownSize = 15;
+    //addRule(1, 0, giantCrownSize / 2);
+    addRule(1, 1, treeCrownSize);
+
+    //addRule(2, 0, 0);
+    addRule(2, 1, 0);
+    addRule(2, 2, 0);
+
+
+    int group0 = 0;
+    //addEntity(groups, 80, 0.0f, 0, "GiantMaple", 1);
+
+    int group1 = 3;
+    addEntity(groups, 10, 0.95f, 1, "Maple", 100);
+    addEntity(groups, 8 , 0.95f, 1, "Birch", 100);
+    addEntity(groups, 6,  0.01f, 1, "Bush" , 40);
+
+    int group2 = 5;
+    addEntity(groups, 2, 0.0f, 2, "RareFlower", 1);
+    addEntity(groups, 2, 0.3f, 2, "YellowFlower", 550);
+    addEntity(groups, 2, 0.3f, 2, "OrangeFlower", 550);
+    addEntity(groups, 2, 0.3f, 2, "WhiteFlower", 550);
+    addEntity(groups, 2, 0.8f, 2, "Grass", 9500);
+
+    int entitiesPerGroup[groupCount] = {group0, group1, group2};
+
+    const clock_t begin_time = clock();
+
+    const auto Entities = Poisson::GeneratePoisson(
+            groups,
+            3,
+            entitiesPerGroup,
+            generator,
             g_DensityMap,
-            ImageSize
+            ImageSize,
+            false
     );
 
-//	const auto Points = PoissonGenerator::GeneratePoissonPoints(
-//			2,
-//			NumPoints,
-//			PRNG,
-//			g_DensityMap,
-//			ImageSize
-//	);
+    std::cout << "Elapsed time: " << float( clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
 
     // prepare BGR image
     size_t DataSize = 3 * ImageSize * ImageSize;
@@ -186,24 +227,132 @@ int main( int argc, char** argv )
 
     memset( Img, 0, DataSize );
 
-    for ( auto i = Points.begin(); i != Points.end(); i++ )
+    for ( auto i = Entities.begin(); i != Entities.end(); i++ )
     {
         int x = int( i->x * ImageSize );
         int y = int( i->y * ImageSize );
 
-        float r = i->radius;
+        unsigned char R = 0;
+        unsigned char G = 0;
+        unsigned char B = 0;
+
+        float r = i->radius * ImageSize;
+
+        if (i->val == "GiantMaple") {
+            // Draw tree crown
+            for (float q = 0; q < 2 * 3.141592653589f; q += 0.01f) {
+
+                float rCrown = r + giantCrownSize;
+                int u = x + (int) (rCrown * 0.9f * cosf(q));
+                int v = y + (int) (rCrown * 0.9f * sinf(q));
+
+                int Z = 3 * (u + v * ImageSize);
+
+                if ( Z > 0 && Z < 3 * ImageSize * ImageSize && Img[Z + 0] == 0) {
+                    Img[Z + 2] = 0;
+                    Img[Z + 1] = 255;
+                    Img[Z + 0] = 0;
+                }
+            }
+
+            R = 139;
+            G =  69;
+            B =  19;
+        }
+
+        if (i->val == "Maple") {
+            // Draw tree crown
+            for (float q = 0; q < 2 * 3.141592653589f; q += 0.02f) {
+
+                float rCrown = r + treeCrownSize;
+                int u = x + (int) (rCrown * 0.9f * cosf(q));
+                int v = y + (int) (rCrown * 0.9f * sinf(q));
+
+                int Z = 3 * (u + v * ImageSize);
+
+                if ( Z > 0 && Z < 3 * ImageSize * ImageSize && Img[Z + 0] == 0) {
+                    Img[Z + 2] = 100;
+                    Img[Z + 1] = 255;
+                    Img[Z + 0] = 80;
+                }
+            }
+            R = 139;
+            G = 69;
+            B = 19;
+        }
+
+        if (i->val == "Birch") {
+            // Draw tree crown
+            for (float q = 0; q < 2 * 3.141592653589f; q += 0.03f) {
+
+                float rCrown = r + treeCrownSize;
+                int u = x + (int) ((rCrown) * 0.9f * cosf(q));
+                int v = y + (int) ((rCrown) * 0.9f * sinf(q));
+
+                int Z = 3 * (u + v * ImageSize);
+
+                if ( Z > 0 && Z < 3 * ImageSize * ImageSize && Img[Z + 0] == 0) {
+                    Img[Z + 2] = 0;
+                    Img[Z + 1] = 200;
+                    Img[Z + 0] = 0;
+                }
+            }
+            R = 255;
+            G = 255;
+            B = 255;
+        }
+
+        if (i->val == "Bush") {
+            R = 120;
+            G = 160;
+            B = 90;
+        }
+
+        if (i->val == "OrangeFlower") {
+            R = 255;
+            G = 128;
+            B = 45;
+        }
+
+        if (i->val == "YellowFlower") {
+            R = 255;
+            G = 255;
+            B = 0;
+        }
+
+        if (i->val == "WhiteFlower") {
+            R = 255;
+            G = 255;
+            B = 255;
+        }
+
+        if (i->val == "RareFlower") {
+            R = 255;
+            G = 0;
+            B = 255;
+        }
+
+        if (i->val == "Grass") {
+            R =20;
+            G =100;
+            B =20;
+        }
 
         for (float q = 0; q < 2 * 3.141592653589f; q += 0.1f) {
 
-            int u = x + (int) ((r * ImageSize * 0.9f) * cosf(q));
-            int v = y + (int) ((r * ImageSize * 0.9f) * sinf(q));
+            int u = x + (int) (r * 0.9f * cosf(q));
+            int v = y + (int) (r * 0.9f * sinf(q));
 
-            int B = 3 * (u + v * ImageSize);
+            int Z = 3 * (u + v * ImageSize);
 
-            if ( B > 0 && B < 3 * ImageSize * ImageSize){
-                Img[B + 0] = 120;
-                Img[B + 1] = 255;
-                Img[B + 2] = 120;
+            if ( Z > 0 && Z < 3 * ImageSize * ImageSize
+                 && Img[Z + 0] == 0
+                 && Img[Z + 1] == 0
+                 && Img[Z + 2] == 0) {
+
+                Img[Z + 2] = R;
+                Img[Z + 1] = G;
+                Img[Z + 0] = B;
             }
         }
     }
@@ -215,9 +364,9 @@ int main( int argc, char** argv )
     // dump points to a text file
     std::ofstream File( "Poisson.txt", std::ios::out );
 
-    File << "NumPoints = " << Points.size() << std::endl;
+    File << "NumPoints = " << Entities.size() << std::endl;
 
-    for ( const auto& p : Points )
+    for ( const auto& p : Entities )
     {
         File << "X = " << p.x << "; Y = " << p.y << std::endl;
     }
