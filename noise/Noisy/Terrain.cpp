@@ -173,7 +173,7 @@ bool Terrain::worldBiomeFunction(int x, int y, int z, float baseHeight, BiomeRep
 // 		float asd = 0;
 // 	}
 
-	float trueHeight = baseHeight + plainHeightOffset(x, y) *biome.plainness +mountainHeightOffset(x, y)*biome.mountainness + ridgeHeightOffset(x, y)*biome.ridgyness;
+	float trueHeight = baseHeight + plainHeightOffset(x, y) *biome.plainness + mountainHeightOffset(x, y)*biome.mountainness + ridgeHeightOffset(x, y)*biome.ridgyness;
 	return z < trueHeight;
 }
 
