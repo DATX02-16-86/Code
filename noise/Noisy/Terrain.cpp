@@ -152,7 +152,7 @@ void Terrain::Generate3DCustom(bool* density, int height, int octaves, float per
 					for (int z = 0; z < height; ++z)
 					{
 						//determine whether its solid or air
-						density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, octaves, persistance, heightMult);
+						density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, octaves, persistance, heightMult, 0.0f);
 					}
 				}
 			}
@@ -160,14 +160,26 @@ void Terrain::Generate3DCustom(bool* density, int height, int octaves, float per
 	}
 }
 
-bool Terrain::fillVoxel(int baseHeight, int x, int y, int z, int height, int octaves, float persistance, int heightMult) 
+bool Terrain::fillVoxel(int baseHeight, int x, int y, int z, int height, int octaves, float persistance, int heightMult, int baseMult) 
+{
+	return getVoxelDensity(baseHeight, x, y, z, height, octaves, persistance, heightMult, baseMult) > 0.3f;
+}
+
+float Terrain::getVoxelDensity(int baseHeight, int x, int y, int z, int height, int octaves, float persistance, int heightMult, int baseMult)
 {
 	float d = Simplex::octave_noise(octaves, 0.007f, persistance, x, y, z, nc);
 
 	float fz = (float)z;
 	// Create base layer
+	float bm = (2 * (fz - baseHeight / 2) / baseHeight);
 	if (z <= baseHeight / 2)
-		d -= (2 * (fz - baseHeight / 2) / baseHeight);
+	{
+		for (int i = 0; i < heightMult; ++i)
+		{
+			bm *= bm;
+		}
+	}
+	d -= bm;
 
 	// Scale off
 	float hm = ((fz - (baseHeight / 2)) / height);
@@ -180,7 +192,7 @@ bool Terrain::fillVoxel(int baseHeight, int x, int y, int z, int height, int oct
 	}
 	d -= hm;
 
-	return d > 0.3f;
+	return d;
 }
 
 void Terrain::GenerateMountains(bool* density, int height)
@@ -207,7 +219,7 @@ void Terrain::generateMountainsPlains(bool* density, int height)
 						for (int z = 0; z < height; ++z)
 						{
 							//determine whether its solid or air
-							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM);
+							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
 						}
 					}
 				}
@@ -221,7 +233,7 @@ void Terrain::generateMountainsPlains(bool* density, int height)
 						for (int z = 0; z < height; ++z)
 						{
 							//determine whether its solid or air
-							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM);
+							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
 						}
 					}
 				}
@@ -229,7 +241,6 @@ void Terrain::generateMountainsPlains(bool* density, int height)
 		}
 	}
 }
-
 
 void Terrain::generateMountainsPlainsInterpolated(bool* density, int height)
 {
@@ -251,7 +262,7 @@ void Terrain::generateMountainsPlainsInterpolated(bool* density, int height)
 								float persistance = interpolate(p, MOUNTAINS_PERSISTANCE, PLAINS_PERSISTANCE);
 								int hm = interpolate(p, MOUNTAINS_HM, PLAINS_HM);
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, octaves, persistance, MOUNTAINS_HM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, octaves, persistance, hm, MOUNTAINS_BM);
 							}
 						}
 					}
@@ -265,7 +276,7 @@ void Terrain::generateMountainsPlainsInterpolated(bool* density, int height)
 							for (int z = 0; z < height; ++z)
 							{
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
 							}
 						}
 					}
@@ -283,7 +294,7 @@ void Terrain::generateMountainsPlainsInterpolated(bool* density, int height)
 							for (int z = 0; z < height; ++z)
 							{
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
 							}
 						}
 					}
@@ -297,7 +308,82 @@ void Terrain::generateMountainsPlainsInterpolated(bool* density, int height)
 							for (int z = 0; z < height; ++z)
 							{
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void Terrain::generateMountainsPlainsInterpolatedD(bool* density, int height)
+{
+	int baseHeight = height / 2;
+	for (int chY = 1; chY < chunks - 1; chY++) {
+		for (int chX = 1; chX < chunks - 1; chX++) {
+			if (chY <= (chunks - 1) / 2)
+			{
+				if (chY == (chunks - 1) / 2)
+				{
+					for (int y = 0; y < chunkSize; ++y) {
+						int true_y = y + (chunkSize * chY);
+						for (int x = 0; x < chunkSize; ++x) {
+							int true_x = x + (chunkSize * chX);
+							for (int z = 0; z < height; ++z)
+							{
+								float p = 1.0f - ((float)y / (float)(chunkSize - 1.0f));
+								float mountainD = getVoxelDensity(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
+								float plainsD = getVoxelDensity(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
+								float intD = interpolate(p, mountainD, plainsD);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = intD > 0.3f;
+							}
+						}
+					}
+				}
+				else
+				{
+					for (int y = 0; y < chunkSize; ++y) {
+						int true_y = y + (chunkSize * chY);
+						for (int x = 0; x < chunkSize; ++x) {
+							int true_x = x + (chunkSize * chX);
+							for (int z = 0; z < height; ++z)
+							{
+								//determine whether its solid or air
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+
+				if (chY == ((chunks / 1) / 2) + 1)
+				{
+					for (int y = 0; y < chunkSize; ++y) {
+						int true_y = y + (chunkSize * chY);
+						for (int x = 0; x < chunkSize; ++x) {
+							int true_x = x + (chunkSize * chX);
+							for (int z = 0; z < height; ++z)
+							{
+								//determine whether its solid or air
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
+							}
+						}
+					}
+				}
+				else
+				{
+					for (int y = 0; y < chunkSize; ++y) {
+						int true_y = y + (chunkSize * chY);
+						for (int x = 0; x < chunkSize; ++x) {
+							int true_x = x + (chunkSize * chX);
+							for (int z = 0; z < height; ++z)
+							{
+								//determine whether its solid or air
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
 							}
 						}
 					}
