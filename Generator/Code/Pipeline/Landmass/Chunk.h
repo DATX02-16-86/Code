@@ -38,7 +38,8 @@ struct Chunk {
         Points,
         Vertices,
         Edges,
-        Connections
+        Connections,
+		Attributes
     };
 
     Chunk(I32 x, I32 y, U32 size, U32 gridSize, U32 gridSpread):
