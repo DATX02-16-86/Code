@@ -22,7 +22,7 @@ using Tritium::Int2;
 typedef Float2 Vertex;
 
 static const U32 kMaxCellEdges = 9;
-static const U32 kMaxVertexEdges = 4;
+static const U32 kMaxVertexEdges = 5;
 
 typedef F32 CoordinateType;
 typedef boost::polygon::point_data<CoordinateType> Point;

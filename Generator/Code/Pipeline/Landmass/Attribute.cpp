@@ -29,7 +29,7 @@ void AttributeMap::create(AttributeId* attributes, Size attributeCount, Size cel
         else count = vertexCount;
 
         auto words = (U32)(count >> attributes[i].itemShift);
-        totalSize += words;
+        totalSize += (words * sizeof(U32));
     }
 
     Tritium::hFree(offsets);
