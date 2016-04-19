@@ -22,16 +22,17 @@ void LandmassStage::generate(Chunk& chunk, Size stage, I32 seed) {
     // Generate up to the requested stage.
     Size i = chunk.generatorStage;
     while(i < stage) {
-        generators[stage]->generate(chunk, matrix, seed);
+        generators[i]->generate(chunk, matrix, seed);
         i++;
     }
 
-    chunk.generatorStage = (U16)stage;
+    chunk.generatorStage = (U8)stage;
 }
 
-void LandmassStage::generate(I32 x, I32 y, I32 seed) {
+Chunk& LandmassStage::generate(I32 x, I32 y, I32 seed) {
     auto& chunk = matrix.getChunk(x, y);
     generate(chunk, generators.size(), seed);
+    return chunk;
 }
 
 LandmassStage& LandmassStage::operator += (std::unique_ptr<Generator> generator) {
@@ -41,17 +42,28 @@ LandmassStage& LandmassStage::operator += (std::unique_ptr<Generator> generator)
         for(; i < max; i++) {
             if(a == attributeSources[i]) {
                 generator->attributes.push_back(attributes[i]);
+                break;
             }
         }
 
         if(i >= max) {
             attributes.push_back(AttributeId((U16)attributes.size(), a->itemBits, a->type));
+            attributeSources.push_back(a);
             generator->attributes.push_back(attributes[max]);
         }
     }
-	
+
 	generators.push_back(::move(generator));
     return *this;
+}
+
+Maybe<AttributeId> LandmassStage::attribute(Attribute* a) {
+    for(U32 i = 0; i < attributeSources.size(); i++) {
+        if(attributeSources[i] == a) {
+            return Just(attributes[i]);
+        }
+    }
+    return Nothing();
 }
 
 }}

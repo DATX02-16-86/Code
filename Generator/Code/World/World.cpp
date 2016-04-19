@@ -5,10 +5,10 @@
 namespace generator {
 
 World::World(I32 seed, Size drawDistance, Size regionSize, Size chunkSize, Size chunkHeight):
-    filler(64, seed),
+    filler(128, seed),
     manager(regionSize, chunkSize, chunkHeight),
     drawDistance((U8)drawDistance),
-    pipeline(filler, seed) {}
+    pipeline(filler, seed, 1u << chunkSize, 1u << (7 - chunkSize)) {}
 
 void World::update(WorldPosition* positions, Size count) {
     // TODO: Update blocks and stuff.

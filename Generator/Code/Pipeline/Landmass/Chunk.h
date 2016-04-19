@@ -14,11 +14,13 @@ struct ChunkMatrix;
 extern const Int2 neighbourOffsets[8];
 
 inline U8 packRelative(Int2 relativePos) {
-    return (U8)((relativePos.x & 0b11) | (relativePos.y & 0b11 << 2));
+    return (U8)((relativePos.x & 0b11) | ((relativePos.y & 0b11) << 2));
 }
 
 inline Int2 unpackRelative(U8 relativePos) {
-    return Int2 {relativePos & 0b11, (relativePos >> 2) & 0b11};
+    I32 x = (relativePos & 0b11) << 30 >> 30;
+    I32 y = ((relativePos >> 2) & 0b11) << 30 >> 30;
+    return Int2 {x, y};
 }
 
 inline VertexIndex nextVertexIndex(VertexIndex current, Edge next) {
@@ -39,7 +41,9 @@ struct Chunk {
         Connections
     };
 
-    Chunk(I32 x, I32 y, U32 size): x(x), y(y), size(size) {}
+    Chunk(I32 x, I32 y, U32 size, U32 gridSize, U32 gridSpread):
+        x(x), y(y), size((U16)size), gridSize((U16)gridSize), gridSpread((U8)gridSpread) {}
+    ~Chunk() {Tritium::hFree(gridVertices);}
 
     /// Builds the cell centers of this chunk.
     /// The stage is set to Points.
@@ -67,7 +71,8 @@ struct Chunk {
         auto pivot = Int2 {x, y};
         for(auto offset: neighbourOffsets) {
             auto position = pivot + offset;
-            f(matrix.getChunk(position.x, position.y));
+            auto& chunk = matrix.getChunk(position.x, position.y);
+            f(chunk);
         }
     }
 
@@ -109,6 +114,16 @@ struct Chunk {
         return matrix.getChunk(p.x, p.y);
     }
 
+    /// Returns the closest vertex to the provided position.
+    U32 getClosestVertex(I32 x, I32 y) {
+        auto xi = (x - (this->x * size)) / gridSize;
+        auto yi = (y - (this->y * size)) / gridSize;
+        auto stride = size / gridSize;
+        assertTrue(gridVertices);
+
+        return gridVertices[stride * yi + xi];
+    }
+
     U32 findEdgeIndexCand(ChunkMatrix& matrix, Vertex a, Vertex b);
     U32 findEdgeIndex(ChunkMatrix& matrix, Vertex a, Vertex b);
 
@@ -118,6 +133,7 @@ struct Chunk {
     Array<ArrayF<EdgeIndex, kMaxVertexEdges>> vertexEdges;
     Array<Edge> edges;
     std::vector<U32> edgeConnectCandidates;
+    U16* gridVertices = nullptr;
 
     // These are used in the Vertices and Edges stages; after that they are destroyed.
     std::vector<Point> cellCentersWithBorder;
@@ -131,8 +147,10 @@ struct Chunk {
 
     I32 x;
     I32 y;
-    U32 size;
-    U16 generatorStage = 0;
+    U16 size;
+    U16 gridSize;
+    U8 generatorStage = 0;
+    U8 gridSpread;
     Stage stage = None;
 };
 

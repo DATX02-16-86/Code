@@ -22,7 +22,7 @@ using Tritium::Int2;
 typedef Float2 Vertex;
 
 static const U32 kMaxCellEdges = 9;
-static const U32 kMaxVertexEdges = 4;
+static const U32 kMaxVertexEdges = 5;
 
 typedef F32 CoordinateType;
 typedef boost::polygon::point_data<CoordinateType> Point;
@@ -50,15 +50,15 @@ inline bool almostEqual(T answer, T value, T epsilon) {
     return value >= answer - epsilon && value <= answer + epsilon;
 }
 
-inline bool almostEqual(const Vertex &lhs, const Vertex &rhs) {
+inline bool almostEqual(const Vertex& lhs, const Vertex& rhs) {
     return almostEqual(lhs.x, rhs.x, 0.00001f) && almostEqual(lhs.y, rhs.y, 0.00001f);
 }
 
-inline bool operator == (const VertexIndex &lhs, const VertexIndex &rhs) {
+inline bool operator == (const VertexIndex& lhs, const VertexIndex& rhs) {
     return lhs.chunkIndex == rhs.chunkIndex && lhs.index == rhs.index;
 }
 
-inline bool operator == (const Edge &lhs, const Edge &rhs) {
+inline bool operator == (const Edge& lhs, const Edge& rhs) {
     return (lhs.a == rhs.a && lhs.b == rhs.b) || (lhs.a == rhs.b && lhs.b == rhs.a);
 }
 

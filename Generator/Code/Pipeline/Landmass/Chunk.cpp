@@ -1,4 +1,3 @@
-
 #include "Chunk.h"
 #include "ChunkMatrix.h"
 
@@ -53,14 +52,44 @@ void Chunk::buildVertices(ChunkMatrix& matrix, Filler& filler) {
     diagram.init();
     construct_voronoi(cellCentersWithBorder.begin(), cellCentersWithBorder.end(), &diagram);
 
+    auto gridCount = size / gridSize;
+    gridVertices = (U16*)Tritium::hAlloc(sizeof(U16) * gridCount * gridCount);
+    Tritium::set(gridVertices, gridCount * gridCount, 0);
+
     // Add the generated cell vertices that belong to this chunk.
     // We assign each vertex a vertex index, starting at 1 because 0 is the default color.
     U32 vertexIndex = 1;
     for(const auto& vertex : diagram->vertices()) {
+        // Add this vertex to the vertex list.
         Vertex point{vertex.x(), vertex.y()};
         if(isVertexInChunk(*this, point)) {
+            auto index = vertexIndex++;
+
             vertices.push(point);
-            vertex.color(vertexIndex++);
+            vertex.color(index);
+
+            // Add this vertex to the vertex grid, which is used to voxelize the diagram later.
+            auto x = ((I32)vertex.x() - (this->x * size)) / gridSize;
+            auto y = ((I32)vertex.y() - (this->y * size)) / gridSize;
+            auto stride = size / gridSize;
+            auto left = Tritium::Math::max(0, x - gridSpread);
+            auto right = Tritium::Math::min(stride, x + gridSpread);
+            auto top = Tritium::Math::max(0, y - gridSpread);
+            auto bottom = Tritium::Math::min(stride, y + gridSpread);
+            auto center = Vertex(left * gridSize + this->x * this->size + (gridSize / 2), top * gridSize + this->y * this->size + (gridSize / 2));
+
+            // Add this vertex to each affected grid tile if it is closer to the tile than the previous vertex.
+            for(auto column = left; column < right; column++) {
+                for(auto row = top; row < bottom; row++) {
+                    auto offset = stride * row + column;
+                    auto existing = vertices[gridVertices[offset]];
+                    if((point - center).sqLength() < (existing - center).sqLength()) {
+                        gridVertices[offset] = (U16)(index - 1);
+                    }
+                    center.y += gridSize;
+                }
+                center.x += gridSize;
+            }
         }
     }
 
@@ -124,7 +153,7 @@ void Chunk::buildEdges(ChunkMatrix& matrix, Filler& filler) {
                             vertIndex1 = findVertexIndex(matrix.getChunk(p.x, p.y), point1) + 1;
                         }
                     }
-
+					
                     // 0 and 1 are reserved numbers
                     it->color(edges.size() + 2);
                     it->twin()->color(edges.size() + 2);
@@ -194,11 +223,9 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
         chunk.buildEdges(matrix, filler);
     });
 
-    auto pivot = Int2 {x, y};
     for(int i = 0; i < vertexEdges.size(); ++i) {
         for(auto e : unconnectedVertexEdges[i]) {
-            auto position = pivot + unpackRelative(e.connectToChunk);
-            auto& chunk = matrix.getChunk(position.x, position.y);
+            auto& chunk = neighbour(matrix, e.connectToChunk);
             EdgeIndex index {e.connectToChunk, (U32)chunk.findEdgeIndexCand(matrix, e.a, e.b)};
             vertexEdges[i].insert(e.position, index);
         }
@@ -206,9 +233,9 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
 
     for(int i = 0; i < cellEdges.size(); ++i) {
         for(auto e : unconnectedCellEdges[i]) {
-            auto position = pivot + unpackRelative(e.connectToChunk);
-            auto& chunk = matrix.getChunk(position.x, position.y);
-            EdgeIndex index {e.connectToChunk, (U32)chunk.findEdgeIndex(matrix, e.a, e.b)};
+            auto& chunk = neighbour(matrix, e.connectToChunk);
+            auto edgeIndex = chunk.findEdgeIndex(matrix, e.a, e.b);
+            EdgeIndex index {e.connectToChunk, edgeIndex};
             cellEdges[i].insert(e.position, index);
         }
     }
@@ -220,7 +247,7 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
 
 void Chunk::build(ChunkMatrix& matrix, Filler& filler, AttributeId* attributes, Size attributeCount) {
     connectEdges(matrix, filler);
-    this->attributes.create(attributes, attributeCount, cellCenters.size(), cellEdges.size(), vertexEdges.size());
+    this->attributes.create(attributes, attributeCount, cellCenters.size(), edges.size(), vertices.size());
 }
 
 Int2 Chunk::neighbourPosition(U8 offset) {
@@ -229,6 +256,7 @@ Int2 Chunk::neighbourPosition(U8 offset) {
 }
 
 U32 Chunk::findEdgeIndexCand(ChunkMatrix& matrix, Vertex a, Vertex b) {
+    // This needs to check the candidates of the chunks a and b are in, not in just the current chunk
     for(auto i : edgeConnectCandidates) {
         auto e = edges[i];
         auto ea = neighbour(matrix, e.a.chunkIndex).vertices[e.a.index];
@@ -241,7 +269,7 @@ U32 Chunk::findEdgeIndexCand(ChunkMatrix& matrix, Vertex a, Vertex b) {
             if(eb == a) return i;
         }
     }
-
+    
     debugError("Edge wasn't in the chunk");
     return 0;
 }

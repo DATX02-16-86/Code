@@ -24,14 +24,22 @@ private:
 };
 
 struct LandmassStage {
-    LandmassStage(Filler& filler): filler(filler) {}
+    LandmassStage(Filler& filler, U32 gridSize, U32 gridSpread): filler(filler), matrix(0, 13, gridSize, gridSpread) {}
 
+    /// Generates attributes up to the provided stage into this voronoi chunk
     void generate(Chunk& chunk, Size stage, I32 seed);
-    virtual void generate(I32 x, I32 y, I32 seed);
+
+    /// Generates a chunk of voronoi data at the provided position.
+    virtual Chunk& generate(I32 x, I32 y, I32 seed);
+
+    /// Adds an attribute generator to be applied to generated voronoi chunks.
     LandmassStage& operator += (std::unique_ptr<Generator> generator);
 
+    /// Returns the attribute id for this attribute if it was generated.
+    Maybe<AttributeId> attribute(Attribute*);
+
     Filler& filler;
-    ChunkMatrix matrix {0, 4096};
+    ChunkMatrix matrix;
 
 private:
     std::vector<AttributeId> attributes;

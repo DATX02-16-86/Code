@@ -150,6 +150,7 @@ void HexFiller::fill(FillContext& context) {
     auto cy = context.chunkY;
     auto& points = context.points;
     auto stepsNeeded = chunkSize / spacing;
+    points.reserve((U32)stepsNeeded * stepsNeeded);
 
     for(Size i = 0; i < stepsNeeded; ++i) {
         for(Size j = 0; j < stepsNeeded; ++j) {
@@ -173,6 +174,7 @@ void RandomHexFiller::fill(FillContext& context) {
     F32 halfMaxDistance = delta / 8.f;
     std::uniform_int_distribution<> dis(0, int(halfMaxDistance));
     std::bernoulli_distribution bdis(0.5);
+    points.reserve((U32)stepsNeeded * stepsNeeded);
 
     for(int i = 0; i < stepsNeeded; ++i) {
         for(int j = 0; j < stepsNeeded; ++j) {

@@ -27,7 +27,8 @@ struct HeightGenerator: landmass::Generator {
 
     virtual void generate(landmass::Chunk& chunk, ChunkMatrix& matrix, I32 seed) override {
         NoiseContext noise(120);
-        std::vector<bool> checkForLake(chunk.vertices.size());
+        std::vector<bool> checkForLake;
+        checkForLake.reserve(chunk.vertices.size());
 
         auto heightAttribute = attribute(Height);
         auto moistureAttribute = attribute(Moisture);
