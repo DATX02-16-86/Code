@@ -16,12 +16,24 @@ Terrain::Terrain(int chunks, int chunkSize, int seed)
 	this->chunkSize = chunkSize;
 }
 
+Terrain::Terrain(int chunks, int chunkSize, int chunkSizeZ, int seed)
+{
+	this->nc = NoiseContext(seed);
+	this->chunks = chunks;
+	this->chunkSize = chunkSize;
+	this->chunkSizeZ = chunkSizeZ;
+}
+
 Terrain::~Terrain()
 {
 	for (int i = 0; i < chunks; ++i) {
 		delete[] chunkHeights[i];
 	}
 	delete[] chunkHeights;
+	for (int i = 0; i < chunks; ++i) {
+		delete[] biomes[i];
+	}
+	delete[] biomes;
 }
 
 int Terrain::interpolate(float aP, int a, int b) {
@@ -35,7 +47,24 @@ float Terrain::interpolate(float aP, float a, float b) {
 	return val;
 }
 
-float Terrain::calculate_height(int x, int y, int chunkX, int chunkY)
+void Terrain::generateHeights()
+{
+	chunkHeights = new int*[chunks];
+	for (int i = 0; i < chunks; i++)
+	{
+		chunkHeights[i] = new int[chunks];
+	}
+	for (int x = 0; x < chunks; x++)
+	{
+		for (int y = 0; y < chunks; y++)
+		{
+			chunkHeights[x][y] = chunkSizeZ/2 + (int)(Simplex::octave_noise(4, 1.f, 0.5f, x, y, nc) * 5);
+			//chunkHeights[x][y] = chunkSizeZ/2;
+		}
+	}
+}
+
+float Terrain::calculateHeight(int x, int y, int chunkX, int chunkY)
 {
 	float interpX = x + 0.5f; // shift x value to middle of voxel
 	float interpY = y + 0.5f; // shift y value to middle of voxel
@@ -63,22 +92,128 @@ float Terrain::calculate_height(int x, int y, int chunkX, int chunkY)
 	return Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationHeights);
 }
 
-void Terrain::generateHeights()
+//Universal biome test
+
+void Terrain::generateBiomes() 
 {
-	chunkHeights = new int*[chunks];
+	biomes = new BiomeRepresentation*[chunks];
 	for (int i = 0; i < chunks; i++)
 	{
-		chunkHeights[i] = new int[chunks];
+		biomes[i] = new BiomeRepresentation[chunks];
 	}
 	for (int x = 0; x < chunks; x++)
 	{
 		for (int y = 0; y < chunks; y++)
 		{
-			//chunkHeights[x][y] = (int)((Simplex::octave_noise(4, 0.02f, 0.5f, x, y, nc) + 1) * 5);
-			chunkHeights[x][y] = 7;
+
+			int val = (Simplex::octave_noise(4, 1.f, 0.5f, x, y, nc) + 1) * 2;
+			if (val < 1.5f) {
+				biomes[x][y] = plainBiome;
+			}
+			else if (val < 3) {
+				biomes[x][y] = mountainBiome;
+			}
+			else {
+				biomes[x][y] = ridgyPlainsBiome;
+			}
+				
+				// 			if (x < chunks / 3) {
+// 				biomes[x][y] = ridgyPlainsBiome;
+// 			} else if (x < 2 * chunks / 3) {
+// 				biomes[x][y] = plainBiome;
+// 			} else {
+// 				biomes[x][y] = mountainBiome;
+// 			}
 		}
 	}
 }
+
+BiomeRepresentation Terrain::calculateBiome(int x, int y, int chunkX, int chunkY)
+{
+	float interpX = x + 0.5f; // shift x value to middle of voxel
+	float interpY = y + 0.5f; // shift y value to middle of voxel
+	float halfChunk = chunkSize / 2.0;
+
+	if (x < halfChunk) //left
+	{
+		interpX += halfChunk; // increase x coordinate by half a chunk
+		chunkX -= 1; // shift chunk coordinate to the left
+	}
+	else {
+		interpX -= halfChunk;
+	}
+	if (y < halfChunk) // top
+	{
+		interpY += halfChunk; // increase y coordinate by half a chunk
+		chunkY -= 1; // shift chunk coordinate to the top
+	}
+	else
+	{
+		interpY -= halfChunk;
+	}
+
+	float interpolationMountainness[4] = { biomes[chunkY][chunkX].mountainness, biomes[chunkY + 1][chunkX].mountainness, biomes[chunkY + 1][chunkX + 1].mountainness, biomes[chunkY][chunkX + 1].mountainness };
+
+	float interpolationPlainness[4] = { biomes[chunkY][chunkX].plainness, biomes[chunkY + 1][chunkX].plainness, biomes[chunkY + 1][chunkX + 1].plainness, biomes[chunkY][chunkX + 1].plainness };
+
+	float interpolationRidgyness[4] = { biomes[chunkY][chunkX].ridgyness, biomes[chunkY + 1][chunkX].ridgyness, biomes[chunkY + 1][chunkX + 1].ridgyness, biomes[chunkY][chunkX + 1].ridgyness };
+
+	float mountains = Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationMountainness);
+	float plains = Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationPlainness);
+	float ridges = Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationRidgyness);
+
+
+	return BiomeRepresentation(mountains, plains, ridges);
+}
+
+bool Terrain::worldBiomeFunction(int x, int y, int z, float baseHeight, BiomeRepresentation biome)
+{
+
+// 	if (biome.plainness < 0.5f) {
+// 		float asd = 0;
+// 	}
+
+	float trueHeight = baseHeight + plainHeightOffset(x, y) *biome.plainness +mountainHeightOffset(x, y)*biome.mountainness + ridgeHeightOffset(x, y)*biome.ridgyness;
+	return z < trueHeight;
+}
+
+float Terrain::plainHeightOffset(int x, int y)
+{
+	return Simplex::octave_noise(2, 0.01f, 0.5f, x, y, nc) * 5;
+}
+
+float Terrain::mountainHeightOffset(int x, int y)
+{
+	return Simplex::octave_noise(4, 0.008f, 0.4f, x, y, nc) * 60;
+}
+
+float Terrain::ridgeHeightOffset(int x, int y)
+{
+	return Simplex::turbulence(2, 0.01f, 0.5f, x, y, nc)*30;
+}
+
+void Terrain::generateFromBiomes(bool* allVoxels)
+{
+	for (int chY = 1; chY < chunks - 1; chY++) {
+		for (int chX = 1; chX < chunks - 1; chX++) {
+			for (int y = 0; y < chunkSize; ++y) {
+				int true_y = y + (chunkSize * chY);
+				for (int x = 0; x < chunkSize; ++x) {
+					int true_x = x + (chunkSize * chX);
+					for (int z = 0; z < chunkSizeZ; ++z)
+					{
+						//determine whether its solid or air
+						BiomeRepresentation biome = calculateBiome(x, y, chX, chY);
+						float baseHeight = calculateHeight(x, y, chX, chY);
+						allVoxels[true_y*chunkSize*chunks*chunkSizeZ + true_x*chunkSizeZ + z] = worldBiomeFunction(true_x, true_y, z, baseHeight, biome);
+					}
+				}
+			}
+		}
+	}
+}
+
+//End of universal biome test
 
 void Terrain::generate2D(float** zValues)
 {
@@ -137,7 +272,6 @@ void Terrain::generate3D(bool* density, int height)
 		}
 	}
 }
-
 
 void Terrain::Generate3DCustom(bool* density, int height, int octaves, float persistance, int heightMult)
 {
@@ -627,3 +761,4 @@ void Terrain::generate3DSomething(bool* density, int height)
 		}
 	}
 }
+
