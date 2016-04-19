@@ -42,17 +42,28 @@ LandmassStage& LandmassStage::operator += (std::unique_ptr<Generator> generator)
         for(; i < max; i++) {
             if(a == attributeSources[i]) {
                 generator->attributes.push_back(attributes[i]);
+                break;
             }
         }
 
         if(i >= max) {
             attributes.push_back(AttributeId((U16)attributes.size(), a->itemBits, a->type));
+            attributeSources.push_back(a);
             generator->attributes.push_back(attributes[max]);
         }
     }
 
 	generators.push_back(::move(generator));
     return *this;
+}
+
+Maybe<AttributeId> LandmassStage::attribute(Attribute* a) {
+    for(U32 i = 0; i < attributeSources.size(); i++) {
+        if(attributeSources[i] == a) {
+            return Just(attributes[i]);
+        }
+    }
+    return Nothing();
 }
 
 }}
