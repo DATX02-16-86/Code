@@ -238,7 +238,6 @@ int main() {
 	const int chunkSize = 64;
 	const int chunks = 7;
 	const int height = 64;
-
 	generateAndWrite3DWithBiomes(seed, chunkSize, chunks, height);
 
 	//std::cin.get();
