@@ -247,7 +247,7 @@ void Chunk::connectEdges(ChunkMatrix& matrix, Filler& filler) {
 
 void Chunk::build(ChunkMatrix& matrix, Filler& filler, AttributeId* attributes, Size attributeCount) {
     connectEdges(matrix, filler);
-    this->attributes.create(attributes, attributeCount, cellCenters.size(), cellEdges.size(), vertexEdges.size());
+    this->attributes.create(attributes, attributeCount, cellCenters.size(), edges.size(), vertices.size());
 }
 
 Int2 Chunk::neighbourPosition(U8 offset) {
