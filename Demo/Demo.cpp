@@ -2,8 +2,23 @@
 #include "../Generator/Code/World/World.h"
 #include "../noise/Simplex/simplex.h"
 
+// RENDER
+#ifdef _WIN32
+#include <GL/glut.h>
+#else
+#include <GLUT/glut.h>
+#endif
+
+#include <iostream>
+
+// #include "../Generator/Code/World/World.h"
+// !RENDER
+
+
 using namespace generator;
 using namespace landmass;
+
+void startGlut(int argc, char* argv[], World* world);
 
 enum class WaterType { land, sea, lake, river};
 enum class Biome { sea, lake, beach, land};
@@ -46,9 +61,9 @@ struct HeightGenerator: landmass::Generator {
 
             float persistenceB = (Simplex::octave_noise(1, groupFrequency, groupPersistence, v.x, v.y, 2000, noise) + 1.0f) * 0.15f + 0.5f;
 
-            float heightA = (Simplex::octave_noise(5, 0.003f, 0.5f, v.x, v.y, noise) + 0.5f);
-            float heightB = Simplex::octave_noise(3, 0.0025f, persistenceB, v.x, v.y, noise) + 0.25f;
-            float heightC = Simplex::octave_noise(3, 0.00002f, 0.5f, v.x, v.y, noise) + 0.5f;
+            float heightA = (Simplex::octave_noise(5, 0.0003f, 0.5f, v.x, v.y, noise) + 0.5f);
+            float heightB = Simplex::octave_noise(3, 0.00025f, persistenceB, v.x, v.y, noise) + 0.25f;
+            float heightC = Simplex::octave_noise(3, 0.000002f, 0.5f, v.x, v.y, noise) + 0.5f;
             float height = (heightA * groupA + heightB * groupB + heightC * groupC) * multiplier;
 
             WaterType water = WaterType::land;
@@ -161,19 +176,208 @@ struct BiomeGenerator: landmass::Generator {
     }
 };
 
-int main() {
+
+int main(int argc, char* argv[]) {
     I32 seed = 1;
     World world(seed);
 
     world.pipeline.landmass += std::make_unique<HeightGenerator>();
     world.pipeline.landmass += std::make_unique<BiomeGenerator>();
 
-    for(int x = 0; x < 20; x++) {
-        for(int y = 0; y < 20; y++) {
-            world.pipeline.landmass.generate(x, y, seed);
-        }
-    }
-
+    startGlut(argc, argv, &world);
     exit(0);
     return 0;
+}
+
+
+// RENDER
+
+
+void color(double clr) {
+  glColor3d(clr, clr, clr);
+}
+
+
+I32 seed = 1;
+World * world;
+
+F64 worldX = 0;
+F64 worldY = 0;
+F64 zoom = 1;
+
+
+generator::landmass::Chunk& getVertexChunk(generator::landmass::Chunk& chunk, const VertexIndex& vi) {
+  if (!vi.chunkIndex) {
+    return chunk;
+  }
+  return chunk.neighbour(world->pipeline.landmass.matrix, vi.chunkIndex);
+}
+
+void render() {
+  glClear(GL_COLOR_BUFFER_BIT);
+  I32 tileSize = world->pipeline.landmass.matrix.getTileSize();
+  I32 chunkX = Tritium::Math::floorInt(worldX / tileSize);
+  I32 chunkY = Tritium::Math::floorInt(worldY / tileSize);
+
+  auto width = glutGet(GLUT_WINDOW_WIDTH);
+  auto windowheight = glutGet(GLUT_WINDOW_HEIGHT);
+  auto top = worldY - (windowheight / 2);
+  auto left = worldX - (width / 2);
+
+  std::cout << "World " << worldX << ", " << worldY << ", " << tileSize << "\n";
+  std::cout << "In chunk " << chunkX << ", " << chunkY << "\n";
+
+  for (I32 x = chunkX - 2; x <= chunkX + 2; ++x) {
+    for (I32 y = chunkY - 2; y <= chunkY + 2; ++y) {
+      world->pipeline.landmass.generate(x, y, seed);
+    }
+  }
+
+  for (I32 x = chunkX - 1; x <= chunkX + 1; ++x) {
+    for (I32 y = chunkY - 1; y <= chunkY + 1; ++y) {
+      std::cout << "Render " << x << ", " << y << "\n";
+      world->pipeline.landmass.generate(x, y, seed);
+      auto& chunk = world->pipeline.landmass.matrix.getChunk(x, y);
+
+      // Unsafe get
+      auto& heightAttribute = *(world->pipeline.landmass.attribute(&height).get());
+      auto& moistureAttribute = *(world->pipeline.landmass.attribute(&moisture).get());
+      auto& vertexWaterAttribute = *(world->pipeline.landmass.attribute(&waterType).get());
+
+
+      auto& edges = chunk.edges;
+      for (size_t i = 0; i < edges.size(); ++i) {
+        glLineWidth(1);
+        //glColor3f(180.f / 255.f, 60.f / 255.f, 50.f / 255.f);
+        glBegin(GL_LINES);
+        auto edge = chunk.edges[i];
+        auto& aChunk = getVertexChunk(chunk, edge.a);
+        Vertex a = aChunk.vertices[edge.a.index];
+        float aHeight = aChunk.attributes.get<float>(heightAttribute, edge.a.index);
+        auto& bChunk = getVertexChunk(chunk, edge.b);
+        Vertex b = bChunk.vertices[edge.b.index];
+        float bHeight = bChunk.attributes.get<float>(heightAttribute, edge.b.index);
+        
+        color(aHeight);
+        glVertex2d(a.x - left, a.y - top);
+        color(bHeight);
+        glVertex2d(b.x - left, b.y - top);
+        glEnd();
+      }
+
+      std::cout << "render water points!\n";
+      glPointSize(5.0f);
+      glBegin(GL_POINTS);
+      color(1);
+
+
+      
+
+      int j = 0;
+
+      for (size_t i = 0; i < chunk.vertices.size(); ++i)
+      {
+        auto vertex = chunk.vertices[i];
+        if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::lake) {
+          ++j;
+        }
+        if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::river) {
+          ++j;
+        }
+        if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::sea) {
+          ++j;
+        }
+      }
+
+      if (j == 1 || j > 8000) {
+        j = 10;
+      }
+
+      j = 0;
+
+      for (size_t i = 0; i < chunk.vertices.size(); ++i)
+      {
+        auto vertex = chunk.vertices[i];
+        if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::lake) {
+          glColor3f(0.f / 255.f, 255.f / 255.f, 255.f / 255.f);
+          glVertex2d(vertex.x - left, vertex.y - top);
+          ++j;
+        }
+        if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::river) {
+          glColor3f(255.f / 255.f, 0.f / 255.f, 255.f / 255.f);
+          glVertex2d(vertex.x - left, vertex.y - top);
+          ++j;
+        }
+        if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::sea) {
+          glColor3f(255.f / 255.f, 255.f / 255.f, 0.f / 255.f);
+          glVertex2d(vertex.x - left, vertex.y - top);
+          ++j;
+        }
+      }
+      glEnd();
+      std::cout << chunk.vertices.size() << " water points done: " << j << "\n";
+    }
+  }
+  std::cout << "flush\n";
+  glFlush();
+}
+
+void handleKeyboard(unsigned char key, int x, int y) {
+  switch (key) {
+  case 'a':
+    worldX -= 10 / zoom;
+    break;
+  case 'd':
+    worldX += 10 / zoom;
+    break;
+  case 'w':
+    worldY -= 10 / zoom;
+    break;
+  case 's':
+    worldY += 10 / zoom;
+    break;
+  case '+':
+    zoom *= 2.0;
+    glScalef(2.0f, 2.0f, 1.0f);
+    break;
+  case '-':
+    zoom *= 0.5;
+    glScalef(0.5f, 0.5f, 1.0f);
+    break;
+  }
+  std::cout << key << ", " << worldX << ", " << worldY << ", " << zoom << "\n";
+
+  glutPostRedisplay();
+}
+
+void handleMotion(int x, int y) {
+  std::cout << x << ", " << y << "\n";
+  worldX = x;
+  worldY = y;
+  glutPostRedisplay();
+}
+
+void startGlut(int argc, char* argv[], World* world_) {
+  std::cout << "startglut\n";
+  world = world_;
+
+  int width = 1600, height = 800;
+  glutInit(&argc, argv);
+  glutInitDisplayMode(GLUT_SINGLE);
+  glutInitWindowSize(width, height);
+  glutInitWindowPosition(100, 100);
+  glutCreateWindow("Compelling Landscape");
+  glViewport(0, 0, width, height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(0, width, height, 0, 1, -1);
+  glMatrixMode(GL_MODELVIEW);
+  glEnable(GL_TEXTURE_2D);
+  glShadeModel(GL_SMOOTH);
+  glLoadIdentity();
+  glutDisplayFunc(render);
+  glutKeyboardFunc(handleKeyboard);
+  glutMotionFunc(handleMotion);
+  std::cout << "glutMainLoop!\n";
+  glutMainLoop();
 }
