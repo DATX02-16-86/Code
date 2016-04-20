@@ -24,7 +24,7 @@
 
 #include "poisson.h"
 
-const int   ImageSize   = 2048;	// generate RGB image [ImageSize x ImageSize]
+const int   ImageSize   = 1536;	// generate RGB image [ImageSize x ImageSize]
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -157,8 +157,8 @@ void addEntity(
     groups[group].push_back(t);
 }
 
-void addRule(int group1, int group2, int distance){
-    Poisson::AddDistanceRule(group1, group2, (float) distance  / ImageSize);
+void addRule(int group1, int group2, float distance){
+    Poisson::AddDistanceRule(group1, group2, distance  / ImageSize);
 }
 
 int main( int argc, char** argv )
@@ -167,9 +167,9 @@ int main( int argc, char** argv )
 
 
     std::string s = "noise" + std::to_string(ImageSize) + ".bmp";
-    LoadDensityMap(s.c_str());
+    //LoadDensityMap(s.c_str());
 
-    int seed = 1284;
+    unsigned int seed = 1284;
     Poisson::PRNG generator(seed);
 
     const unsigned int groupCount = 3;
@@ -178,24 +178,24 @@ int main( int argc, char** argv )
 
 
     int giantCrownSize = 100;
-    //addRule(0, 0, giantCrownSize * 3);
+    addRule(0, 0, giantCrownSize * 3);
 
     int treeCrownSize = 15;
-    //addRule(1, 0, giantCrownSize / 2);
-    addRule(1, 1, treeCrownSize);
+    addRule(1, 0, giantCrownSize / 2);
+    addRule(1, 1, treeCrownSize * 1.2f);
 
-    //addRule(2, 0, 0);
+    addRule(2, 0, 0);
     addRule(2, 1, 0);
     addRule(2, 2, 0);
 
 
-    int group0 = 0;
-    //addEntity(groups, 80, 0.0f, 0, "GiantMaple", 1);
+    int group0 = 1;
+    addEntity(groups, 80, 0.0f, 0, "GiantMaple", 1);
 
     int group1 = 3;
     addEntity(groups, 10, 0.95f, 1, "Maple", 100);
     addEntity(groups, 8 , 0.95f, 1, "Birch", 100);
-    addEntity(groups, 6,  0.01f, 1, "Bush" , 40);
+    addEntity(groups, 6,  0.01f, 1, "Bush" , 5);
 
     int group2 = 5;
     addEntity(groups, 2, 0.0f, 2, "RareFlower", 1);
@@ -212,10 +212,7 @@ int main( int argc, char** argv )
             groups,
             3,
             entitiesPerGroup,
-            generator,
-            g_DensityMap,
-            ImageSize,
-            false
+            generator
     );
 
     std::cout << "Elapsed time: " << float( clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
