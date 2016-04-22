@@ -24,7 +24,7 @@
 
 #include "poisson.h"
 
-const int   ImageSize   = 1536;	// generate RGB image [ImageSize x ImageSize]
+const int   ImageSize   = 1024;	// generate RGB image [ImageSize x ImageSize]
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -147,18 +147,14 @@ void PrintBanner()
 }
 
 void addEntity(
-        std::vector<std::vector<Poisson::EntityTemplate>>& groups,
+        Poisson::EntityCategorizer cat,
         int radius,
         float selfSpawn,
         int group,
-        std::string value,
+        int id,
         int count){
-    Poisson::EntityTemplate t((float)radius / ImageSize, selfSpawn, group, value, count);
-    groups[group].push_back(t);
-}
 
-void addRule(int group1, int group2, float distance){
-    Poisson::AddDistanceRule(group1, group2, distance  / ImageSize);
+    cat.AddEntityTemplate(group,(float)radius / ImageSize, selfSpawn, id, count);
 }
 
 int main( int argc, char** argv )
@@ -167,7 +163,7 @@ int main( int argc, char** argv )
 
 
     std::string s = "noise" + std::to_string(ImageSize) + ".bmp";
-    //LoadDensityMap(s.c_str());
+    LoadDensityMap(s.c_str());
 
     unsigned int seed = 1284;
     Poisson::PRNG generator(seed);
@@ -176,43 +172,45 @@ int main( int argc, char** argv )
 
     std::vector<std::vector<Poisson::EntityTemplate>> groups(groupCount);
 
+    Poisson::EntityCategorizer cat(groupCount);
+
+    int id = 0;
+
 
     int giantCrownSize = 100;
-    addRule(0, 0, giantCrownSize * 3);
+    int n_group0 = 0;
+    cat.AddGroupDistance(0, 0, giantCrownSize * 3);
+    addEntity(cat, 80, 0.0f, 0, id++,  1);
 
     int treeCrownSize = 15;
-    addRule(1, 0, giantCrownSize / 2);
-    addRule(1, 1, treeCrownSize * 1.2f);
+    int n_group1 =  2;
+    cat.AddGroupDistance(1, 0, giantCrownSize / 2);
+    cat.AddGroupDistance(1, 1, treeCrownSize);
+    addEntity(cat, 10, 0.95f, 1, id++, 100); // Maple
+    addEntity(cat, 8 , 0.95f, 1, id++, 100); // Birch
+    addEntity(cat, 6,  0.01f, 1, id++, 5);   // Bush
 
-    addRule(2, 0, 0);
-    addRule(2, 1, 0);
-    addRule(2, 2, 0);
+    int n_group2 = 5;
+    cat.AddGroupDistance(2, 0, 0);
+    cat.AddGroupDistance(2, 1, 0);
+    cat.AddGroupDistance(2, 2, 0);
+    addEntity(cat, 2, 0.0f, 2, id++, 1);    // Rare flower
+    addEntity(cat, 2, 0.3f, 2, id++, 550);  // Orange flower
+    addEntity(cat, 2, 0.3f, 2, id++, 550);  // Yellow flower
+    addEntity(cat, 2, 0.3f, 2, id++, 550);  // White flower
+    addEntity(cat, 2, 0.8f, 2, id++, 9500); // Grass
 
 
-    int group0 = 1;
-    addEntity(groups, 80, 0.0f, 0, "GiantMaple", 1);
-
-    int group1 = 3;
-    addEntity(groups, 10, 0.95f, 1, "Maple", 100);
-    addEntity(groups, 8 , 0.95f, 1, "Birch", 100);
-    addEntity(groups, 6,  0.01f, 1, "Bush" , 5);
-
-    int group2 = 5;
-    addEntity(groups, 2, 0.0f, 2, "RareFlower", 1);
-    addEntity(groups, 2, 0.3f, 2, "YellowFlower", 550);
-    addEntity(groups, 2, 0.3f, 2, "OrangeFlower", 550);
-    addEntity(groups, 2, 0.3f, 2, "WhiteFlower", 550);
-    addEntity(groups, 2, 0.8f, 2, "Grass", 9500);
-
-    int entitiesPerGroup[groupCount] = {group0, group1, group2};
+    int entitiesPerGroup[groupCount] = {n_group0, n_group1, n_group2};
 
     const clock_t begin_time = clock();
 
     const auto Entities = Poisson::GeneratePoisson(
-            groups,
-            3,
-            entitiesPerGroup,
-            generator
+            cat,
+            generator,
+            g_DensityMap,
+            ImageSize,
+            false
     );
 
     std::cout << "Elapsed time: " << float( clock() - begin_time) / CLOCKS_PER_SEC << std::endl;
@@ -235,7 +233,7 @@ int main( int argc, char** argv )
 
         float r = i->radius * ImageSize;
 
-        if (i->val == "GiantMaple") {
+        if (i->id == 0) {
             // Draw tree crown
             for (float q = 0; q < 2 * 3.141592653589f; q += 0.01f) {
 
@@ -257,7 +255,7 @@ int main( int argc, char** argv )
             B =  19;
         }
 
-        if (i->val == "Maple") {
+        if (i->id == 1) {
             // Draw tree crown
             for (float q = 0; q < 2 * 3.141592653589f; q += 0.02f) {
 
@@ -278,7 +276,7 @@ int main( int argc, char** argv )
             B = 19;
         }
 
-        if (i->val == "Birch") {
+        if (i->id ==  2) {
             // Draw tree crown
             for (float q = 0; q < 2 * 3.141592653589f; q += 0.03f) {
 
@@ -299,37 +297,39 @@ int main( int argc, char** argv )
             B = 255;
         }
 
-        if (i->val == "Bush") {
+        if (i->id ==  3) {
             R = 120;
             G = 160;
             B = 90;
         }
 
-        if (i->val == "OrangeFlower") {
-            R = 255;
-            G = 128;
-            B = 45;
-        }
-
-        if (i->val == "YellowFlower") {
-            R = 255;
-            G = 255;
-            B = 0;
-        }
-
-        if (i->val == "WhiteFlower") {
-            R = 255;
-            G = 255;
-            B = 255;
-        }
-
-        if (i->val == "RareFlower") {
+        if (i->id ==  4) {
             R = 255;
             G = 0;
             B = 255;
         }
 
-        if (i->val == "Grass") {
+        if (i->id ==  5) {
+            R = 255;
+            G = 128;
+            B = 45;
+        }
+
+        if (i->id ==  6) {
+            R = 255;
+            G = 255;
+            B = 0;
+        }
+
+        if (i->id ==  7) {
+            R = 255;
+            G = 255;
+            B = 255;
+        }
+
+
+
+        if (i->id ==  8) {
             R =20;
             G =100;
             B =20;
