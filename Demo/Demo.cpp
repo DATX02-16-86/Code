@@ -205,6 +205,9 @@ F64 worldX = 0;
 F64 worldY = 0;
 F64 zoom = 1;
 
+int lastMouseX = 0;
+int lastMouseY = 0;
+
 
 generator::landmass::Chunk& getVertexChunk(generator::landmass::Chunk& chunk, const VertexIndex& vi) {
   if (!vi.chunkIndex) {
@@ -279,37 +282,17 @@ void render() {
       {
         auto vertex = chunk.vertices[i];
         if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::lake) {
-          ++j;
-        }
-        if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::river) {
-          ++j;
-        }
-        if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::sea) {
-          ++j;
-        }
-      }
-
-      if (j == 1 || j > 8000) {
-        j = 10;
-      }
-
-      j = 0;
-
-      for (size_t i = 0; i < chunk.vertices.size(); ++i)
-      {
-        auto vertex = chunk.vertices[i];
-        if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::lake) {
-          glColor3f(0.f / 255.f, 255.f / 255.f, 255.f / 255.f);
+          glColor3f(0.f / 255.f, 255.f / 255.f, 255.f / 255.f);//Aqua
           glVertex2d(vertex.x - left, vertex.y - top);
           ++j;
         }
         if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::river) {
-          glColor3f(255.f / 255.f, 0.f / 255.f, 255.f / 255.f);
+          glColor3f(255.f / 255.f, 0.f / 255.f, 255.f / 255.f);//Lila
           glVertex2d(vertex.x - left, vertex.y - top);
           ++j;
         }
         if (chunk.attributes.get<WaterType>(vertexWaterAttribute, i) == WaterType::sea) {
-          glColor3f(255.f / 255.f, 255.f / 255.f, 0.f / 255.f);
+          glColor3f(255.f / 255.f, 255.f / 255.f, 0.f / 255.f);//Gul
           glVertex2d(vertex.x - left, vertex.y - top);
           ++j;
         }
@@ -350,10 +333,20 @@ void handleKeyboard(unsigned char key, int x, int y) {
   glutPostRedisplay();
 }
 
+void handleClick(int button, int state, int x, int y) {
+  if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+    lastMouseX = x;
+    lastMouseY = y;
+  }
+}
+
 void handleMotion(int x, int y) {
-  std::cout << x << ", " << y << "\n";
-  worldX = x;
-  worldY = y;
+  int deltaX = lastMouseX - x;
+  int deltaY = lastMouseY - y;
+  lastMouseX = x;
+  lastMouseY = y;
+  worldX += deltaX / zoom;
+  worldY += deltaY / zoom;
   glutPostRedisplay();
 }
 
@@ -378,6 +371,7 @@ void startGlut(int argc, char* argv[], World* world_) {
   glutDisplayFunc(render);
   glutKeyboardFunc(handleKeyboard);
   glutMotionFunc(handleMotion);
+  glutMouseFunc(handleClick);
   std::cout << "glutMainLoop!\n";
   glutMainLoop();
 }
