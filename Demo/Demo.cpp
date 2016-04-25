@@ -49,6 +49,8 @@ struct HeightGenerator: landmass::Generator {
         auto moistureAttribute = attribute(Moisture);
         auto waterAttribute = attribute(Water);
 
+        int waterCount = 0;
+
         // Calculate the height of each vertex.
         for(U32 i = 0; i < chunk.vertices.size(); i++) {
             auto v = chunk.vertices[i];
@@ -72,6 +74,7 @@ struct HeightGenerator: landmass::Generator {
             if(isWater) {
                 water = WaterType::sea;
                 moisture = 1.f;
+                waterCount++;
             }
             checkForLake.push_back(isWater);
 
@@ -79,6 +82,8 @@ struct HeightGenerator: landmass::Generator {
             chunk.attributes.set(moistureAttribute, i, moisture);
             chunk.attributes.set(waterAttribute, i, water);
         }
+
+        std::cout << "waterCount: " << waterCount;
 
         // Convert small seas to lakes
         for (size_t i = 0; i < checkForLake.size(); ++i) {
@@ -257,9 +262,15 @@ void render() {
         auto& aChunk = getVertexChunk(chunk, edge.a);
         Vertex a = aChunk.vertices[edge.a.index];
         float aHeight = aChunk.attributes.get<float>(heightAttribute, edge.a.index);
+        auto aWater = aChunk.attributes.get<WaterType>(vertexWaterAttribute, edge.a.index);
+        bool aIsWater = aWater == WaterType::lake || aWater == WaterType::sea;
+        assert(aHeight < 0.3 == aIsWater);
         auto& bChunk = getVertexChunk(chunk, edge.b);
         Vertex b = bChunk.vertices[edge.b.index];
         float bHeight = bChunk.attributes.get<float>(heightAttribute, edge.b.index);
+        auto bWater = bChunk.attributes.get<WaterType>(vertexWaterAttribute, edge.b.index);
+        bool bIsWater = bWater == WaterType::lake || bWater == WaterType::sea;
+        assert(bHeight < 0.3 == bIsWater);
         
         color(aHeight);
         glVertex2d(a.x - left, a.y - top);
