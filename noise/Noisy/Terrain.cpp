@@ -30,10 +30,10 @@ Terrain::~Terrain()
 		delete[] chunkHeights[i];
 	}
 	delete[] chunkHeights;
-	for (int i = 0; i < chunks; ++i) {
+	/*for (int i = 0; i < chunks; ++i) {
 		delete[] biomes[i];
 	}
-	delete[] biomes;
+	delete[] biomes;*/
 }
 
 int Terrain::interpolate(float aP, int a, int b) {
@@ -301,11 +301,11 @@ bool Terrain::fillVoxel(int baseHeight, int x, int y, int z, int height, int oct
 
 float Terrain::getVoxelDensity(int baseHeight, int x, int y, int z, int height, int octaves, float persistance, int heightMult, int baseMult)
 {
-	float d = Simplex::octave_noise(octaves, 0.007f, persistance, x, y, z, nc);
+	float d = Simplex::octave_noise(octaves, 0.002f, persistance, x, y, z, nc);
 
 	float fz = (float)z;
 	// Create base layer
-	float bm = (2 * (fz - baseHeight / 2) / baseHeight);
+	/*float bm = (2 * (fz - baseHeight / 2) / baseHeight);
 	if (z <= baseHeight / 2)
 	{
 		for (int i = 0; i < heightMult; ++i)
@@ -313,7 +313,9 @@ float Terrain::getVoxelDensity(int baseHeight, int x, int y, int z, int height, 
 			bm *= bm;
 		}
 	}
-	d -= bm;
+	d -= bm;*/
+	if (z <= baseHeight / 2)
+		d -= (2 * (fz - baseHeight / 2) / baseHeight);
 
 	// Scale off
 	float hm = ((fz - (baseHeight / 2)) / height);

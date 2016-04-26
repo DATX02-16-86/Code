@@ -169,19 +169,6 @@ void generateAndWrite3D(int seed, int chunkSize, int chunks, int height)
 	free(point_z_values);
 }
 
-void generateAndWrite3DInterpolation(int seed, int chunkSize, int chunks, int height)
-{
-	// Allocate memory for points
-	bool *point_z_values = (bool *)std::malloc(chunks * chunkSize * chunks * chunkSize * height * sizeof(bool *));
-
-	// Init and generate terrain
-	Terrain t = Terrain(chunks, chunkSize, seed);
-	t.generateHeights();
-	t.generateMountainsPlainsInterpolatedD(point_z_values, height);
-
-	writePointsToFile3D(chunkSize, chunks, height, point_z_values);
-}
-
 void generateAndWrite3DWithBiomes(int seed, int chunkSize, int chunks, int height)
 {
 	// Allocate memory for points
@@ -231,14 +218,27 @@ void generateAndWrite3DWithBiomes(int seed, int chunkSize, int chunks, int heigh
 	free(point_z_values);
 }
 
+void generateAndWrite3DInterpolation(int seed, int chunkSize, int chunks, int height)
+{
+	// Allocate memory for points
+	bool *point_z_values = (bool *)std::malloc(chunks * chunkSize * chunks * chunkSize * height * sizeof(bool *));
+
+	// Init and generate terrain
+	Terrain t = Terrain(chunks, chunkSize, seed);
+	t.generateHeights();
+	t.generateMountainsPlainsInterpolatedD(point_z_values, height);
+
+	writePointsToFile3D(chunkSize, chunks, height, point_z_values);
+}
+
 int main() {
 
 	//const int seed = 23195;
 	const int seed = 0;
 	const int chunkSize = 64;
-	const int chunks = 7;
+	const int chunks = 4;
 	const int height = 64;
-	generateAndWrite3DWithBiomes(seed, chunkSize, chunks, height);
+	generateAndWrite3DInterpolation(seed, chunkSize, chunks, height);
 
 	//std::cin.get();
 
