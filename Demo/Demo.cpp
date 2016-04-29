@@ -264,13 +264,13 @@ void render() {
         float aHeight = aChunk.attributes.get<float>(heightAttribute, edge.a.index);
         auto aWater = aChunk.attributes.get<WaterType>(vertexWaterAttribute, edge.a.index);
         bool aIsWater = aWater == WaterType::lake || aWater == WaterType::sea;
-        assert(aHeight < 0.3 == aIsWater);
+        assertTrue(aHeight < 0.3 == aIsWater);
         auto& bChunk = getVertexChunk(chunk, edge.b);
         Vertex b = bChunk.vertices[edge.b.index];
         float bHeight = bChunk.attributes.get<float>(heightAttribute, edge.b.index);
         auto bWater = bChunk.attributes.get<WaterType>(vertexWaterAttribute, edge.b.index);
         bool bIsWater = bWater == WaterType::lake || bWater == WaterType::sea;
-        assert(bHeight < 0.3 == bIsWater);
+        assertTrue(bHeight < 0.3 == bIsWater);
         
         color(aHeight);
         glVertex2d(a.x - left, a.y - top);

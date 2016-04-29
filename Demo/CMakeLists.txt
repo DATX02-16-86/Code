@@ -15,6 +15,11 @@ endif(NOT OPENGL_FOUND)
 
 if(WIN32)
 set(BIN_DIR "Win32")
+
+include_directories(${GLUT_SRC}/include)
+add_subdirectory(${GLUT_SRC} "${CMAKE_CURRENT_BINARY_DIR}/freeglut")
+set(GLUT_LIBRARIES freeglut)
+
 elseif(APPLE)
 set(BIN_DIR "OSX")
 find_package(GLUT REQUIRED)
@@ -34,10 +39,8 @@ include_directories(../Libraries/Tritium/Code/Tritium/Core)
 include_directories(../Libraries/Tritium/Code/Tritium)
 include_directories(../Libraries)
 include_directories(../Generator/Code)
-include_directories(${GLUT_SRC}/include)
-add_subdirectory(${GLUT_SRC} "${CMAKE_CURRENT_BINARY_DIR}/freeglut")
 
 link_directories(../Libraries/Tritium/Bin/Release)
 
 add_executable(Demo ../noise/Simplex/simplex.h ../noise/Simplex/simplex.cpp Demo.cpp)
-target_link_libraries(Demo Generator TritiumCore ${OTHER_LIBS} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} freeglut)
+target_link_libraries(Demo Generator TritiumCore ${OTHER_LIBS} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
