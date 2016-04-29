@@ -95,6 +95,8 @@ public:
 
 	void generate3DSomething(bool* density, int height);
 
+	void removeFloating(bool* density);
+
 private:
 	NoiseContext nc;
 	int chunks;

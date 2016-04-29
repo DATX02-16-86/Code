@@ -858,3 +858,8 @@ void Terrain::generate3DSomething(bool* density, int height)
 	}
 }
 
+void Terrain::removeFloating(bool* density)
+{
+
+}
+

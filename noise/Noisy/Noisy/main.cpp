@@ -235,7 +235,7 @@ int main()
 {
 
 	//const int seed = 23195;
-	const int seed = 0;
+	const int seed = 7;
 	const int chunkSize = 32;
 	const int chunks = 4;
 	const int height = 32;
