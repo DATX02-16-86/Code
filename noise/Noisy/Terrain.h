@@ -3,16 +3,22 @@
 
 struct BiomeRepresentation {
 	
-	BiomeRepresentation(float mountainRatio, float plainRatio, float ridgeRatio) : mountainness(mountainRatio), plainness(plainRatio), ridgyness(ridgeRatio) {};
+	BiomeRepresentation(float mountainRatio, float plainRatio, float ridgeRatio, float weirdRatio, float pillarRatio, float caveRatio) 
+		: mountainness(mountainRatio), plainness(plainRatio), ridgyness(ridgeRatio), weirdness(weirdRatio), pillarness(pillarRatio), caviness(caveRatio) {};
 	BiomeRepresentation() {};
 	float ridgyness;
 	float mountainness;
 	float plainness;
+	float weirdness;
+	float pillarness;
+	float caviness;
 };
 
-static const BiomeRepresentation plainBiome = BiomeRepresentation(0.f, 1.f, 0.f);
-static const BiomeRepresentation mountainBiome = BiomeRepresentation(1.f, 0.f, 0.f);
-static const BiomeRepresentation ridgyPlainsBiome = BiomeRepresentation(0.f, 1.f, 1.f);
+static const BiomeRepresentation mountainBiome = BiomeRepresentation(1.f, 0.f, 0.f, 0.f, 0.f,1.f);
+static const BiomeRepresentation plainBiome = BiomeRepresentation(0.f, 1.f, 0.f, 0.f, 0.f, 1.f);
+static const BiomeRepresentation ridgyPlainsBiome = BiomeRepresentation(0.f, 1.f, 1.f, 0.f, 0.f, 1.f);
+static const BiomeRepresentation weirdBiome = BiomeRepresentation(0.f, 0.f, 0.f, 1.f,0.f, 1.f);
+static const BiomeRepresentation pillarBiome = BiomeRepresentation(0.f, 0.f, 0.f, 0.f, 1.f, 1.f);
 
 class Terrain
 {
@@ -27,6 +33,9 @@ private:
 	float plainHeightOffset(int x, int y);
 	float mountainHeightOffset(int x, int y);
 	float ridgeHeightOffset(int x, int y);
+	float weirdDensity(int x, int y, int z, float baseHeight, float weirdnessHeight);
+	float pillarDensity(int x, int y, int z, float baseHeight, float pillarParameter);
+	float caveDensity(int x, int y, int z, float baseHeight, float caveParameter);
 	// End of universal biome
 public:
 
@@ -50,7 +59,7 @@ public:
 
 	void generateBiomes();
 	
-	void generateFromBiomes(bool* allValues);
+	void generateFromBiomes(bool* allValues, bool interpolate);
 
 	void generate2D(float** zvalues);
 

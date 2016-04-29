@@ -9,11 +9,10 @@ h = m/n;
  
 A = permute(reshape(f, n, h, n), [1 3 2]); 
  
- 
 clear f 
 maxInd = max(max(max(A))); 
 colors = ['r','g','b','k']; 
-
+A = A(:,:,1:20);
 for i = 1:maxInd 
     B = A==i; 
     if max(max(max(B))) > 0 

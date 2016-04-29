@@ -58,7 +58,7 @@ void Terrain::generateHeights()
 	{
 		for (int y = 0; y < chunks; y++)
 		{
-			chunkHeights[x][y] = chunkSizeZ/2 + (int)(Simplex::octave_noise(4, 1.f, 0.5f, x, y, nc) * 5);
+			chunkHeights[x][y] = 31 + (int)(Simplex::octave_noise(2, 1, 0.5f, x, y, nc) * 10);
 			//chunkHeights[x][y] = chunkSizeZ/2;
 		}
 	}
@@ -105,22 +105,31 @@ void Terrain::generateBiomes()
 	{
 		for (int y = 0; y < chunks; y++)
 		{
+			//one-line version
+// 			if(x < chunks / 2) {
+// 				biomes[x][y] = plainBiome;
+// 			}
+// 			else {
+// 				biomes[x][y] = pillarBiome;
+// 			}
 
-			int val = (Simplex::octave_noise(4, 1.f, 0.5f, x, y, nc) + 1) * 2;
-			if (val < 1.5f) {
+			//random version
+			float val = (Simplex::octave_noise(4, 0.5f, 0.5f, x, y, nc) + 1) * 2;
+			if (val < 1.4f) {
 				biomes[x][y] = plainBiome;
 			}
-			else if (val < 3) {
-				biomes[x][y] = mountainBiome;
-			}
+ 			else if (val < 2.f) {
+ 				biomes[x][y] = mountainBiome;
+ 			}
 			else {
-				biomes[x][y] = ridgyPlainsBiome;
+				biomes[x][y] = pillarBiome;
 			}
 				
-				// 			if (x < chunks / 3) {
-// 				biomes[x][y] = ridgyPlainsBiome;
-// 			} else if (x < 2 * chunks / 3) {
+			//one line 3-split version
+// 			if (x < chunks / 3) {
 // 				biomes[x][y] = plainBiome;
+// 			} else if (x < 2 * chunks / 3) {
+// 				biomes[x][y] = pillarBiome;
 // 			} else {
 // 				biomes[x][y] = mountainBiome;
 // 			}
@@ -158,12 +167,22 @@ BiomeRepresentation Terrain::calculateBiome(int x, int y, int chunkX, int chunkY
 
 	float interpolationRidgyness[4] = { biomes[chunkY][chunkX].ridgyness, biomes[chunkY + 1][chunkX].ridgyness, biomes[chunkY + 1][chunkX + 1].ridgyness, biomes[chunkY][chunkX + 1].ridgyness };
 
+	float interpolationWeirdness[4] = { biomes[chunkY][chunkX].weirdness, biomes[chunkY + 1][chunkX].weirdness, biomes[chunkY + 1][chunkX + 1].weirdness, biomes[chunkY][chunkX + 1].weirdness};
+
+	float interpolationPillarness[4] = { biomes[chunkY][chunkX].pillarness, biomes[chunkY + 1][chunkX].pillarness, biomes[chunkY + 1][chunkX + 1].pillarness, biomes[chunkY][chunkX + 1].pillarness };
+
+	float interpolationCaviness[4] = { biomes[chunkY][chunkX].caviness, biomes[chunkY + 1][chunkX].caviness, biomes[chunkY + 1][chunkX + 1].caviness, biomes[chunkY][chunkX + 1].caviness };
+
+
 	float mountains = Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationMountainness);
 	float plains = Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationPlainness);
 	float ridges = Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationRidgyness);
+	float weird = Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationWeirdness);
+	float pillars = Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationPillarness);
+	float caves = Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationCaviness);
 
 
-	return BiomeRepresentation(mountains, plains, ridges);
+	return BiomeRepresentation(mountains, plains, ridges, weird, pillars, caves);
 }
 
 bool Terrain::worldBiomeFunction(int x, int y, int z, float baseHeight, BiomeRepresentation biome)
@@ -173,8 +192,27 @@ bool Terrain::worldBiomeFunction(int x, int y, int z, float baseHeight, BiomeRep
 // 		float asd = 0;
 // 	}
 
-	float trueHeight = baseHeight + plainHeightOffset(x, y) *biome.plainness +mountainHeightOffset(x, y)*biome.mountainness + ridgeHeightOffset(x, y)*biome.ridgyness;
-	return z < trueHeight;
+	float trueHeight = baseHeight + plainHeightOffset(x, y) *biome.plainness +mountainHeightOffset(x, y)*biome.mountainness + ridgeHeightOffset(x, y)*std::pow(biome.ridgyness,10);
+	
+	trueHeight = trueHeight < 0 ? 0 : trueHeight;
+	//return z < trueHeight;
+
+//	Combine 2d with 3d noise
+	float density = 0.f;
+	if (biome.weirdness > 0) {
+		density += weirdDensity(x, y, z, trueHeight, 50)*biome.weirdness*biome.weirdness;
+	}
+	if (biome.pillarness > 0)
+	{
+		density += pillarDensity(x, y, z, trueHeight, biome.pillarness);
+	}
+	if (biome.caviness > 0 && z < trueHeight) {
+		density += caveDensity(x, y, z, std::min(trueHeight,baseHeight), biome.caviness);
+	}
+	
+	float density2D = Tools::clamp((trueHeight - z)/trueHeight+0.5f,0,1);
+
+	return density2D + density > 0.5f;
 }
 
 float Terrain::plainHeightOffset(int x, int y)
@@ -184,15 +222,65 @@ float Terrain::plainHeightOffset(int x, int y)
 
 float Terrain::mountainHeightOffset(int x, int y)
 {
-	return Simplex::octave_noise(4, 0.008f, 0.4f, x, y, nc) * 60;
+	float d = Simplex::octave_noise(4, 0.009f, 0.4f, x, y, nc);
+	return d > 0 ? d*30 : d*15;
 }
 
 float Terrain::ridgeHeightOffset(int x, int y)
 {
-	return Simplex::turbulence(2, 0.01f, 0.5f, x, y, nc)*30;
+	return Simplex::turbulence(2, 0.004f, 0.5f, x, y, nc)*50;
 }
 
-void Terrain::generateFromBiomes(bool* allVoxels)
+float Terrain::weirdDensity(int x, int y, int z, float baseHeight, float weirdnessHeight)
+{
+
+	//return Simplex::octave_noise(8, 0.007f, 0.5f, x, y, z, nc)*2;
+
+	float height = baseHeight + weirdnessHeight;
+	
+	//calculate density with simplex noise
+	float d = Simplex::octave_noise(8, 0.007f, 0.5f, x, y, z, nc);
+
+	float fz = (float)z;
+
+	// Scale off
+	if (z > height - 10)
+		d -= std::pow(((fz - height+10) / (10)),2);
+
+	return 3*d+0.2f;
+}
+
+float Terrain::pillarDensity(int x, int y, int z, float baseHeight, float pillarParameter)
+{
+	if (z < baseHeight)
+	{
+		return 0;
+	}
+	bool isPillar = std::abs(Simplex::octave_noise(1, 0.01, 0.5, x, y, nc))>0.5f;
+	if (isPillar) 
+	{
+		if (baseHeight < z && z < baseHeight+ 30 ) {
+			return pillarParameter*(0.7f - std::abs(Simplex::octave_noise(4,0.01,0.7,x,y,z,nc)));
+		}
+	}
+	return 0;
+}
+
+float Terrain::caveDensity(int x, int y, int z, float baseHeight, float caveParameter) 
+{
+	//Check if is tunnel
+	float tunnelFactor = Simplex::turbulence(2, 0.02f, 0.5f, x, y, nc);
+	if (tunnelFactor > 0.2f) {
+		//Check if is within tunnelheight
+		float heightDistanceFromCenter = std::abs(z-((Simplex::octave_noise(2, 0.005f, 0.5f, x, y, nc)+1) * (baseHeight / 2)));
+		if (heightDistanceFromCenter < 8) {
+			return -tunnelFactor*(8 - heightDistanceFromCenter) / 8 + Simplex::octave_noise(3, 0.05f, 0.5f, x, y, z, nc)*0.3f;
+		}
+	}
+	return 0;
+}
+
+void Terrain::generateFromBiomes(bool* allValues, bool interpolate)
 {
 	for (int chY = 1; chY < chunks - 1; chY++) {
 		for (int chX = 1; chX < chunks - 1; chX++) {
@@ -203,9 +291,15 @@ void Terrain::generateFromBiomes(bool* allVoxels)
 					for (int z = 0; z < chunkSizeZ; ++z)
 					{
 						//determine whether its solid or air
-						BiomeRepresentation biome = calculateBiome(x, y, chX, chY);
+						BiomeRepresentation biome;
+						if (interpolate) {
+							biome = calculateBiome(x, y, chX, chY);
+						}
+						else {
+							biome = biomes[chX][chY];
+						}
 						float baseHeight = calculateHeight(x, y, chX, chY);
-						allVoxels[true_y*chunkSize*chunks*chunkSizeZ + true_x*chunkSizeZ + z] = worldBiomeFunction(true_x, true_y, z, baseHeight, biome);
+						allValues[true_y*chunkSize*chunks*chunkSizeZ + true_x*chunkSizeZ + z] = worldBiomeFunction(true_x, true_y, z, baseHeight, biome);
 					}
 				}
 			}
