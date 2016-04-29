@@ -4,11 +4,11 @@
 
 namespace generator {
 namespace landmass {
-
-AttributeId::AttributeId(U16 id, U8 itemBits, AttributeType type):
+	
+AttributeId::AttributeId(U32 id, U8 itemBits, AttributeType type):
     id(id), itemBits(itemBits), type((U8)type),
-    itemShift((U8)Tritium::Math::findLastBit(sizeof(U32) * 8 / itemBits)),
-    itemsPerWord((U8)1 << Tritium::Math::findLastBit(sizeof(U32) * 8 / itemBits)) {}
+	itemsPerWord((U8)1 << Tritium::Math::findLastBit(sizeof(U32) * 8 / itemBits)),
+    itemShift((U8)Tritium::Math::findLastBit(sizeof(U32) * 8 / itemBits)) {}
 
 AttributeMap::AttributeMap(AttributeId* attributes, Size attributeCount, Size cellCount, Size edgeCount, Size vertexCount) {
     create(attributes, attributeCount, cellCount, edgeCount, vertexCount);
@@ -57,21 +57,24 @@ U32 AttributeMap::getRaw(AttributeId id, U32 index) {
     auto mask = (Size(1) << id.itemBits) - 1;
     auto offset = index >> id.itemShift;
     auto maskOffset = index & (id.itemsPerWord - 1);
+    auto base = (data + offsets[id.id])[offset];
 
-    return (data + offsets[id.id])[offset] >> (maskOffset * id.itemBits) & mask;
+    return (base >> (maskOffset * id.itemBits)) & mask;
 }
 
 void AttributeMap::setRaw(AttributeId id, U32 index, U32 value) {
     auto offset = index >> id.itemShift;
-    auto maskOffset = offset & (id.itemsPerWord - 1);
+    auto maskOffset = index & (id.itemsPerWord - 1);
     auto totalShift = maskOffset * id.itemBits;
-    auto mask = ((Size(1) << id.itemBits) - 1) << totalShift;
+    auto mask = ((U32(1) << id.itemBits) - 1) << totalShift;
 
     auto base = offsets[id.id];
     auto c = (data + base)[offset];
     c &= ~mask;
     c |= (value << totalShift);
     (data + base)[offset] = c;
+	
+    assertTrue(getRaw(id, index) == value);
 }
 
 }}
