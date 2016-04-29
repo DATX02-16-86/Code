@@ -395,7 +395,7 @@ bool Terrain::fillVoxel(int baseHeight, int x, int y, int z, int height, int oct
 
 float Terrain::getVoxelDensity(int baseHeight, int x, int y, int z, int height, int octaves, float persistance, int heightMult, int baseMult)
 {
-	float d = Simplex::octave_noise(octaves, 0.002f, persistance, x, y, z, nc);
+	float d = Simplex::octave_noise(octaves, 0.04f, persistance, x, y, z, nc);
 
 	float fz = (float)z;
 	// Create base layer
@@ -420,7 +420,7 @@ float Terrain::getVoxelDensity(int baseHeight, int x, int y, int z, int height, 
 			hm *= hm;
 		}
 	}
-	d -= hm;
+	//d -= hm;
 
 	return d;
 }

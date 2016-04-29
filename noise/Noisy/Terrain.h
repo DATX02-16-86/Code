@@ -46,7 +46,7 @@ public:
 
 	static const int MOUNTAINS_OCTAVES = 6;
 	static const float MOUNTAINS_PERSISTANCE;
-	static const int MOUNTAINS_HM = 3;
+	static const int MOUNTAINS_HM = 5;
 	static const int MOUNTAINS_BM = 0;
 
 	Terrain(int chunks, int chunkSize, int seed);

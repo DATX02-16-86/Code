@@ -181,7 +181,7 @@ void generateAndWrite3DWithBiomes(int seed, int chunkSize, int chunks, int heigh
 	Terrain t = Terrain(chunks, chunkSize, height, seed);
 	t.generateHeights();
 	t.generateBiomes();
-	t.generateFromBiomes(point_z_values);
+	t.generateFromBiomes(point_z_values, false);
 
 	// basic file operations
 	std::ofstream myfile;
@@ -236,9 +236,9 @@ int main()
 
 	//const int seed = 23195;
 	const int seed = 0;
-	const int chunkSize = 64;
+	const int chunkSize = 32;
 	const int chunks = 4;
-	const int height = 64;
+	const int height = 32;
 	generateAndWrite3DInterpolation(seed, chunkSize, chunks, height);
 
 	//std::cin.get();
