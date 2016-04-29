@@ -226,12 +226,13 @@ void generateAndWrite3DInterpolation(int seed, int chunkSize, int chunks, int he
 	// Init and generate terrain
 	Terrain t = Terrain(chunks, chunkSize, seed);
 	t.generateHeights();
-	t.generateMountainsPlainsInterpolatedD(point_z_values, height);
+	t.GenerateMountains(point_z_values, height);
 
 	writePointsToFile3D(chunkSize, chunks, height, point_z_values);
 }
 
-int main() {
+int main() 
+{
 
 	//const int seed = 23195;
 	const int seed = 0;
