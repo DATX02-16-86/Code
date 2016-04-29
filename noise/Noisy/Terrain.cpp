@@ -87,7 +87,7 @@ float Terrain::calculateHeight(int x, int y, int chunkX, int chunkY)
 	{
 		interpY -= halfChunk;
 	}
-	float interpolationHeights[4] = { chunkHeights[chunkY][chunkX], chunkHeights[chunkY + 1][chunkX], chunkHeights[chunkY + 1][chunkX + 1], chunkHeights[chunkY][chunkX + 1] };
+	float interpolationHeights[4] = { (float)chunkHeights[chunkY][chunkX], (float)chunkHeights[chunkY + 1][chunkX], (float)chunkHeights[chunkY + 1][chunkX + 1], (float)chunkHeights[chunkY][chunkX + 1] };
 
 	return Tools::bilinearInterpolation(interpX / chunkSize, interpY / chunkSize, interpolationHeights);
 }
