@@ -1,5 +1,6 @@
 #pragma once
 #include "..\Simplex\simplex.h"
+#include <vector>
 
 struct BiomeRepresentation {
 	
@@ -95,7 +96,9 @@ public:
 
 	void generate3DSomething(bool* density, int height);
 
-	void removeFloating(bool* density);
+	std::vector<std::vector<std::vector<bool>>> convertTo3DArray(bool* density, int chunks, int chunkSize, int height);
+
+	void removeFloating(std::vector <std::vector<std::vector<bool>>> density, int length);
 
 private:
 	NoiseContext nc;

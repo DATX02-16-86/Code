@@ -4,10 +4,11 @@
 #include <stdlib.h>
 #include <iostream>
 #include <algorithm>
+#include <vector>
 
 //Init constants
 const float Terrain::PLAINS_PERSISTANCE = 0.3f;
-const float Terrain::MOUNTAINS_PERSISTANCE = 0.55f;
+const float Terrain::MOUNTAINS_PERSISTANCE = 0.65f;
 
 Terrain::Terrain(int chunks, int chunkSize, int seed)
 {
@@ -395,7 +396,7 @@ bool Terrain::fillVoxel(int baseHeight, int x, int y, int z, int height, int oct
 
 float Terrain::getVoxelDensity(int baseHeight, int x, int y, int z, int height, int octaves, float persistance, int heightMult, int baseMult)
 {
-	float d = Simplex::octave_noise(octaves, 0.04f, persistance, x, y, z, nc);
+	float d = Simplex::octave_noise(octaves, 0.05f, persistance, x, y, z, nc);
 
 	float fz = (float)z;
 	// Create base layer
@@ -858,8 +859,34 @@ void Terrain::generate3DSomething(bool* density, int height)
 	}
 }
 
-void Terrain::removeFloating(bool* density)
+std::vector<std::vector<std::vector<bool>>> convertTo3DArray(bool* density, int chunks, int chunkSize, int height)
 {
+	std::vector<std::vector<std::vector<bool>>> vector3d (chunks*chunkSize, std::vector<std::vector<bool>>(chunks*chunkSize, std::vector<bool>(height)));
+	for (int chY = 1; chY < chunks - 1; chY++) {
+		for (int chX = 1; chX < chunks - 1; chX++) {
+			for (int y = 0; y < chunkSize; ++y) {
+				int true_y = y + (chunkSize * chY);
+				for (int x = 0; x < chunkSize; ++x) {
+					int true_x = x + (chunkSize * chX);
+					for (int z = 0; z < height; ++z)
+					{
+						vector3d[true_x][true_y][z] = density[true_y*chunkSize*chunks*height + true_x*height + z];
+					}
+				}
+			}
+		}
+	}
+}
+
+void Terrain::removeFloating(std::vector <std::vector<std::vector<bool>>> density, int length)
+{
+	std::vector<bool> checked(length);
+	std::vector<int> part(length);
+
+	for (int i = 0; i < part.size(); ++i)
+	{
+		part[i] = i;
+	}
 
 }
 
