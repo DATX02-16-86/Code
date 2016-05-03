@@ -859,34 +859,32 @@ void Terrain::generate3DSomething(bool* density, int height)
 	}
 }
 
-std::vector<std::vector<std::vector<bool>>> convertTo3DArray(bool* density, int chunks, int chunkSize, int height)
+void Terrain::generateMountains(std::vector<std::vector<std::vector<bool>>> allValues)
 {
-	std::vector<std::vector<std::vector<bool>>> vector3d (chunks*chunkSize, std::vector<std::vector<bool>>(chunks*chunkSize, std::vector<bool>(height)));
-	for (int chY = 1; chY < chunks - 1; chY++) {
-		for (int chX = 1; chX < chunks - 1; chX++) {
-			for (int y = 0; y < chunkSize; ++y) {
-				int true_y = y + (chunkSize * chY);
-				for (int x = 0; x < chunkSize; ++x) {
-					int true_x = x + (chunkSize * chX);
-					for (int z = 0; z < height; ++z)
-					{
-						vector3d[true_x][true_y][z] = density[true_y*chunkSize*chunks*height + true_x*height + z];
-					}
-				}
+	generate3d(allValues, MOUNTAINS_OCTAVES, 0.5f, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM);
+}
+
+void Terrain::generate3d(std::vector<std::vector<std::vector<bool>>> allValues, int octaves, float frequency, float persistance, int heightMultiplier)
+{
+	for (int x = 0; x < allValues.size(); ++x)
+	{
+		for (int y = 0; y < allValues[0].size(); ++y)
+		{
+			for (int z = 0; z < allValues[0][0].size(); ++z)
+			{
+				allValues[x][y][z] = fillV(x, y, z, octaves, persistance, heightMultiplier, 1);
 			}
 		}
 	}
 }
 
-void Terrain::removeFloating(std::vector <std::vector<std::vector<bool>>> density, int length)
+bool Terrain::fillV(int x, int y, int z, int octaves, float persistance, int heightMult, int baseMult)
 {
-	std::vector<bool> checked(length);
-	std::vector<int> part(length);
+	return getVoxelDensity(16, x, y, z, 32, octaves, persistance, heightMult, baseMult) > 0.3f;
+}
 
-	for (int i = 0; i < part.size(); ++i)
-	{
-		part[i] = i;
-	}
+void Terrain::removeFloating(std::vector <std::vector<std::vector<bool>>> density)
+{
 
 }
 

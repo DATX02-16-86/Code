@@ -96,9 +96,13 @@ public:
 
 	void generate3DSomething(bool* density, int height);
 
-	std::vector<std::vector<std::vector<bool>>> convertTo3DArray(bool* density, int chunks, int chunkSize, int height);
+	void generateMountains(std::vector<std::vector<std::vector<bool>>> allValues);
 
-	void removeFloating(std::vector <std::vector<std::vector<bool>>> density, int length);
+	void generate3d(std::vector<std::vector<std::vector<bool>>> allValues, int octaves, float frequency, float persistance, int heightMultiplier);
+
+	bool fillV(int x, int y, int z, int octaves, float persistance, int heightMult, int baseMult);
+
+	void removeFloating(std::vector <std::vector<std::vector<bool>>> density);
 
 private:
 	NoiseContext nc;

@@ -228,10 +228,59 @@ void generateAndWrite3DInterpolation(int seed, int chunkSize, int chunks, int he
 	Terrain t = Terrain(chunks, chunkSize, seed);
 	t.generateHeights();
 	t.GenerateMountains(point_z_values, height);
-	std::vector <std::vector<std::vector<bool>>> d = t.convertTo3DArray(point_z_values, chunks, chunkSize, height);
-	t.removeFloating(d, chunkVoxelAmount);
 
 	writePointsToFile3D(chunkSize, chunks, height, point_z_values);
+}
+
+void genAndWrite3d(int seed, int chunkSize, int height)
+{
+	std::vector <std::vector<std::vector<bool>>> voxels(chunkSize, std::vector<std::vector<bool>>(chunkSize, std::vector<bool>(height)));
+
+	// Init and generate terrain
+	Terrain t = Terrain(1, chunkSize, seed);
+	t.generateHeights();
+	t.generateMountains(voxels);
+	t.removeFloating(voxels);
+
+	writePointsToFile3D(voxels);
+}
+
+void writePointsToFile3D(std::vector <std::vector<std::vector<bool>>> voxels)
+{
+
+	// basic file operations
+	std::ofstream myfile;
+	myfile.open("points3D.txt");
+
+	myfile.clear();
+
+	// Write all points to file
+	for (int k = 0; k < height; ++k) {
+		for (int i = chunkSize; i < (chunks - 1)*chunkSize; ++i) {
+			for (int j = chunkSize; j < (chunks - 1)*chunkSize; ++j) {
+				bool d = point_z_values[i * chunkSize * chunks * height + j * height + k];
+
+				if (d)
+				{
+					myfile << 1;
+				}
+				else
+				{
+					myfile << 0;
+				}
+
+				if (j + 1 < (chunks - 1) * chunkSize)
+					myfile << ",";
+			}
+
+			myfile << std::endl;
+		}
+		myfile << std::endl;
+	}
+	myfile.close();
+
+	// Free memory for points
+	free(point_z_values);
 }
 
 int main() 
