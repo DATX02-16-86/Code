@@ -23,6 +23,7 @@ struct AttributeId {
     AttributeId(U32 id, U8 itemBits, AttributeType type);
 
     const U32 id;
+    const U32 mask;
 	const U8 itemBits;
 	const U8 type;
     const U8 itemsPerWord;

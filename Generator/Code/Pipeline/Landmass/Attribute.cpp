@@ -6,7 +6,7 @@ namespace generator {
 namespace landmass {
 	
 AttributeId::AttributeId(U32 id, U8 itemBits, AttributeType type):
-    id(id), itemBits(itemBits), type((U8)type),
+    id(id), mask(U32(-1) >> (sizeof(U32) * 8 - itemBits)), itemBits(itemBits), type((U8)type),
 	itemsPerWord((U8)1 << Tritium::Math::findLastBit(sizeof(U32) * 8 / itemBits)),
     itemShift((U8)Tritium::Math::findLastBit(sizeof(U32) * 8 / itemBits)) {}
 
@@ -54,7 +54,7 @@ void AttributeMap::create(AttributeId* attributes, Size attributeCount, Size cel
 }
 
 U32 AttributeMap::getRaw(AttributeId id, U32 index) {
-    auto mask = (Size(1) << id.itemBits) - 1;
+    auto mask = id.mask;
     auto offset = index >> id.itemShift;
     auto maskOffset = index & (id.itemsPerWord - 1);
     auto base = (data + offsets[id.id])[offset];
@@ -66,14 +66,14 @@ void AttributeMap::setRaw(AttributeId id, U32 index, U32 value) {
     auto offset = index >> id.itemShift;
     auto maskOffset = index & (id.itemsPerWord - 1);
     auto totalShift = maskOffset * id.itemBits;
-    auto mask = ((U32(1) << id.itemBits) - 1) << totalShift;
+    auto mask = id.mask << totalShift;
 
     auto base = offsets[id.id];
     auto c = (data + base)[offset];
     c &= ~mask;
     c |= (value << totalShift);
     (data + base)[offset] = c;
-	
+    
     assertTrue(getRaw(id, index) == value);
 }
 
