@@ -154,13 +154,13 @@ Mesh TreeLSystem::generateMesh(int iterations) {
         rotationStack.push(currentRotation);
         break;
       case Pop:
-      {
         currentPosition = positionStack.top();
         currentRotation = rotationStack.top();
         positionStack.pop();
         rotationStack.pop();
         break;
-      }
+      case Leaf:
+        break;
       default:
         addBranch(pow(this->lengthRatio, positionStack.size()),
                   pow(this->diameterRatio, positionStack.size()),

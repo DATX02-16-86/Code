@@ -10,7 +10,7 @@
 #include <list>
 #include <vector>
 
-#define DEBUG_TREELSYSTEM
+// #define DEBUG_TREELSYSTEM
 #ifdef DEBUG_TREELSYSTEM
   #define VERTEX_COUNT BRANCH_RADIAL_COUNT*2+2
 #else
@@ -38,14 +38,15 @@ struct Mesh {
 };
 
 enum DrawRule {
-  TurnLeft = '-',
-  TurnRight = '+',
+  TurnLeft = '+',
+  TurnRight = '-',
   RollLeft = '\\',
   RollRight = '/',
   PitchUp = '^',
   PitchDown = '&',
   Push = '[',
-  Pop = ']'
+  Pop = ']',
+  Leaf = '*'
 };
 
 
