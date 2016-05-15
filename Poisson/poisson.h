@@ -46,7 +46,7 @@ namespace Poisson
     class PRNG
     {
     public:
-        PRNG(unsigned int seed)
+        PRNG(int seed)
                 : m_RD()
                 , m_Gen( m_RD() )
                 , m_Dis( 0.0f, 1.0f )
@@ -81,7 +81,6 @@ namespace Poisson
             , y(0)
             , radius(0)
             , group(0)
-            , id(0)
             , selfSpawn(0)
             , valid(false)
         {}
@@ -89,16 +88,16 @@ namespace Poisson
         Entity(float x, float y, float radius, float selfSpawnBias, int group, int id)
                 : x(x)
                 , y(y)
+                , id(id)
                 , radius(radius)
                 , selfSpawn(selfSpawnBias)
                 , group(group)
-                , id(id)
                 , valid(true)
         {
         }
 
-        int group;
         int id;
+        int group;
 
         float radius;
         float x;
@@ -125,21 +124,21 @@ namespace Poisson
                 : radius(0)
                 , selfSpawn(0)
                 , group(0)
-                , id(0)
                 , valid(false)
         {}
 
-        EntityTemplate(float radius, float selfSpawnBias, int group, int id, int count = 0)
+        EntityTemplate(float radius, float selfSpawnBias, int group, int value, int count = 0)
                 : radius(radius)
                 , selfSpawn(selfSpawnBias)
                 , group(group)
-                , id(id)
                 , count(count)
                 , valid(true)
         {
+            id = value;
         }
 
         int id;
+
         int group;
         int count;
 
@@ -157,84 +156,21 @@ namespace Poisson
         }
     };
 
-    struct EntityCategorizer
-    {
-        EntityCategorizer(const unsigned int numberOfGroups)
-            : count(numberOfGroups)
-        {
-            groups.resize(numberOfGroups);
-            templatesPerGroup[numberOfGroups];
-        }
+    std::map<std::pair<int, int>, float> distanceMap;
 
-        void AddEntityTemplate(int group, float radius, float selfSpawn, int id, int count)
-        {
-            EntityTemplate t(radius, selfSpawn, group, id, count);
-            templatesPerGroup[group] += 1;
-            groups[group].push_back(t);
-        }
-
-        EntityTemplate GetEntityTemplate(int group, int index){
-            return groups[group][index];
-        }
-
-        EntityTemplate LookupEntityTemplate(int group, float f){
-
-            // Quicksearch for new blueprint
-            int tries = 0;
-            int L = 0;
-            int R = templatesPerGroup[group] - 1;
-
-            EntityTemplate t;
-
-            // TODO: ADD ERROR IF NOTHING IS FOUND
-            while (tries < templatesPerGroup[group]) {
-                int k = (L + R) / 2;
-                t = groups[group][k];
-
-                if( f < groups[group][k].spawnSpanMin){
-                    R = k - 1;
-                }
-                else if( f > groups[group][k].spawnSpanMax) {
-                    L = k + 1;
-                }
-                else {
-                    break;
-                }
-
-                tries++;
-            }
-
-            return t;
-        }
-
-        int TemplatesInGroup(int group)
-        {
-            return templatesPerGroup[group];
-        }
-
-        void AddGroupDistance(const int groupA, const int groupB, float distance)
-        {
-            distanceMap[std::pair<int, int>(groupA, groupB)] = distance;
-        }
-        float GetGroupDistance(const int groupA, const int groupB)
-        {
-            return distanceMap[std::pair<int, int>(groupA, groupB)];
-        }
-
-
-        const unsigned int count;
-
-    private:
-        std::map<std::pair<int, int>, float> distanceMap;
-        std::vector<std::vector<EntityTemplate>> groups;
-        int templatesPerGroup[];
-
-    };
+    // TODO: FIND SOMETHING THAT WONT THROW ERROR OR HANDLE ERROR
+    float GetDistanceRule(int group1, int group2){
+        return distanceMap.at(std::pair<int, int>(group1, group2));
+    }
+    // Set innate distance rule between two groups
+    void AddDistanceRule(int group1, int group2, float distance){
+        distanceMap[std::pair<int, int>(group1, group2)] = distance;
+    }
 
     // Distance between entities
-    float GetDistance( const Entity& P1, const Entity& P2 )
+    float GetSquaredDistance( const Entity& P1, const Entity& P2 )
     {
-        return sqrtf( ( P1.x - P2.x ) * ( P1.x - P2.x ) + ( P1.y - P2.y ) * ( P1.y - P2.y ) );
+        return ( P1.x - P2.x ) * ( P1.x - P2.x ) + ( P1.y - P2.y ) * ( P1.y - P2.y );
     }
 
     // Integer coordinate gridpoint
@@ -257,19 +193,18 @@ namespace Poisson
     // Collision grid
     struct Grid
     {
-        Grid(int layers  ,int* W, int* H, float* CellSizes)
+        Grid(int layers  , std::vector<int>& S, float* CellSizes)
                 : layers(layers)
-                , m_W(W)
-                , m_H(H)
                 , m_CellSizes( CellSizes )
         {
+            m_S = S;
             m_Grid.resize(layers);
 
             for (int i = 0 ; i < layers; i++) {
-                m_Grid[i].resize(H[i]);
+                m_Grid[i].resize(S[i]);
 
-                for (int j = 0; j < H[i]; j++ ) {
-                    m_Grid[i][j].resize(W[i]);
+                for (int j = 0; j < S[i]; j++ ) {
+                    m_Grid[i][j].resize(S[i]);
                 }
             }
         }
@@ -295,7 +230,7 @@ namespace Poisson
             }
         }
 
-        bool IsInNeighbourhood(Entity newEntity, float extra)
+        bool IsInNeighbourhood( Entity newEntity)
         {
             // number of adjacent cells to look for neighbour points
             const int D = 5;
@@ -307,14 +242,14 @@ namespace Poisson
 
                 for (int i = G.x - D; i < G.x + D; i++) {
                     for (int j = G.y - D; j < G.y + D; j++) {
-                        if (i >= 0 && i < m_W[layer] && j >= 0 && j < m_H[layer]) {
+                        if (i >= 0 && i < m_S[layer] && j >= 0 && j < m_S[layer]) {
                             for (int k = 0; k < m_Grid[layer][i][j].size(); ++k) {
                                 Entity P = m_Grid[layer][i][j][k];
 
                                 if (P.valid ) {
-                                    float minDist = (newEntity.radius + P.radius + extra);
+                                    float minDist = (newEntity.radius + P.radius + 2 * GetDistanceRule(newEntity.group, P.group));
 
-                                    if (GetDistance(P, newEntity) < minDist)
+                                    if (GetSquaredDistance(P, newEntity) < minDist * minDist)
                                         return true;
                                 }
                             }
@@ -327,8 +262,7 @@ namespace Poisson
         }
 
     private:
-        int* m_W;
-        int* m_H;
+        std::vector<int> m_S;
         int layers;
         float* m_CellSizes;
 
@@ -350,14 +284,14 @@ namespace Poisson
         return P;
     }
 
-    Entity GeneratePointAround(const Entity& oldEntity, EntityTemplate& newEntity, PRNG& Generator, float extra)
+    Entity GeneratePointAround(const Entity& oldEntity, EntityTemplate& newEntity, PRNG& Generator)
     {
         // start with non-uniform distribution
         float R1 = Generator.RandomFloat();
         float R2 = Generator.RandomFloat();
 
         // radius should be between min dist of entities plus their innate distance rule
-        float Radius = (oldEntity.radius + newEntity.radius +  extra) * ( R1 + 1.0f );
+        float Radius = (oldEntity.radius + newEntity.radius +  2 * GetDistanceRule(newEntity.group, oldEntity.group)) * ( R1 + 1.0f );
 
         // random angle
         float Angle = 2 * 3.141592653589f * R2;
@@ -387,7 +321,9 @@ namespace Poisson
     }
 
     std::vector<Entity> GeneratePoisson(
-            EntityCategorizer groups,
+            std::vector<std::vector<EntityTemplate>> groups,
+            const unsigned int groupCount,
+            int* entitiesPerGroup,
             PRNG& Generator,
             std::vector<float> mask,
             int maskSize,
@@ -398,88 +334,84 @@ namespace Poisson
         // TODO: ADD CHECKS SO PEOPLE CANT FUCK SHIT UP
         // TODO: Make ints right type, like unsigned n shit
 
-        int numberOfGroups = groups.count;
-
         // Support empty groups
         float maxRadius = 0;
         int start = 0;
-        for (int i = 0; i < numberOfGroups; ++i) {
-            if(groups.TemplatesInGroup(i) != 0)
+        for (int i = 0; i < groupCount; ++i) {
+            if(entitiesPerGroup[i] != 0)
                 break;
             start++;
         }
 
         // Find biggest entity per entity group
-        float cellSizes[numberOfGroups];
-        int H[numberOfGroups];
-        int W[numberOfGroups];
+        float cellSizes[groupCount];
+        std::vector<int> S;
 
-        for (int i = 0; i < numberOfGroups; ++i) {
+        for (int i = 0; i < groupCount; ++i) {
             maxRadius = 0;
 
-            for (int j = 0; j < groups.TemplatesInGroup(i); ++j) {
-                if (maxRadius < groups.GetEntityTemplate(i,j).radius){
-                    maxRadius = groups.GetEntityTemplate(i,j).radius;
+            for (int j = 0; j < entitiesPerGroup[i]; ++j) {
+                if (maxRadius < groups[i][j].radius){
+                    maxRadius = groups[i][j].radius;
                 }
             }
 
             if(maxRadius != 0){
-                maxRadius += 2 * groups.GetGroupDistance(i, i);
+                maxRadius += 2 * GetDistanceRule(i, i);
 
             }
-            else{ //  UGLY FIX SHOULD BE ERROR
+            else{
                 maxRadius = 0.5f;
             }
 
             cellSizes[i] = maxRadius / sqrtf(2.0f);
-            H[i] = (int)ceil( sqrtf(2.0f) / maxRadius);
-            W[i] = (int)ceil( sqrtf(2.0f) / maxRadius );
+            S.push_back((int)ceil( sqrtf(2.0f) / maxRadius));
 
         }
 
         // Setup grid using biggest entity (max 1 per grid of biggest)
         // Scales really bad with large size-differences
-        Grid grid(groups.count, W, H, cellSizes);
+        Grid grid(groupCount, S, cellSizes);
 
         // Entity vector per group
-        std::vector<std::vector<Entity>> output(numberOfGroups);
+        std::vector<std::vector<Entity>> output(groupCount);
 
         //Entity vector to spawn new entities from
         std::vector<Entity> processList;
 
         // Loop over and spawn entities from each group
-        for (int i = start; i < numberOfGroups; ++i) {
+        for (int i = start; i < groupCount; ++i) {
 
             // Calculate total number of entities in group
             // Adjust for selfspawn chance
             int totalEntities = 0;
-            for (int j = 0; j < groups.TemplatesInGroup(i); ++j) {
-                groups.GetEntityTemplate(i, j).count = (int)((1 - groups.GetEntityTemplate(i, j).selfSpawn) * groups.GetEntityTemplate(i, j).count);
-                totalEntities += groups.GetEntityTemplate(i, j).count;
+            for (int j = 0; j < entitiesPerGroup[i]; ++j) {
+                groups[i][j].count = (int)((1 - groups[i][j].selfSpawn) * groups[i][j].count);
+                totalEntities += groups[i][j].count;
             }
 
             // Set up selection span and adjust count for self spawn
             int countSum = 0;
-            for (int j = 0; j < groups.TemplatesInGroup(i); ++j) {
+            for (int j = 0; j < entitiesPerGroup[i]; ++j) {
 
                 float min = 0;
 
                 if (j > 0){
-                    min = groups.GetEntityTemplate(i, j - 1).spawnSpanMax;
-                    groups.GetEntityTemplate(i, j).spawnSpanMax = (float)groups.GetEntityTemplate(i, j).count / totalEntities + min;
+                    min = groups[i][j - 1].spawnSpanMax;
+                    groups[i][j].spawnSpanMax = (float)groups[i][j].count / totalEntities + min;
                 }
 
-                groups.GetEntityTemplate(i, j).spawnSpanMin = min;
-                groups.GetEntityTemplate(i, j).spawnSpanMax = (float)groups.GetEntityTemplate(i, j).count / totalEntities + min;
+                groups[i][j].spawnSpanMin = min;
+                groups[i][j].spawnSpanMax = (float)groups[i][j].count / totalEntities + min;
 
-                countSum += groups.GetEntityTemplate(i, j).count;
+                countSum += groups[i][j].count;
             }
 
             // Current groups entities
             std::vector<Entity> entities;
 
             // Get first entity from first group
-            EntityTemplate blueprint = groups.GetEntityTemplate(i, 0);
+            EntityTemplate blueprint = groups[i][0];
             Entity oldEntity;
 
             if (i == start){ // If spawning very first entity, choose random point
@@ -492,7 +424,7 @@ namespace Poisson
 
                 for (int j = 0; j < attempts * 3; ++j) {
 
-                    oldEntity = GeneratePointAround(GetRandom(output[i - 1], Generator), blueprint, Generator, groups.GetGroupDistance(blueprint.group, oldEntity.group));
+                    oldEntity = GeneratePointAround(GetRandom(output[i - 1], Generator), blueprint, Generator);
 
                     if(oldEntity.IsInRectangle())
                         break;
@@ -521,19 +453,35 @@ namespace Poisson
                         blueprint = EntityTemplate(oldEntity.radius, oldEntity.selfSpawn, oldEntity.group, oldEntity.id);
                     }
                     else {
-                        // GET SPAWN-FROM-POS
-                        int X = (int)(maskSize * oldEntity.x);
-                        int Y = (int)(maskSize * oldEntity.y);
 
-                        // MASK OR RANDOM
-                        f = mask[X + Y * maskSize];
+                        f = Generator.RandomFloat();
 
-                        blueprint = groups.LookupEntityTemplate(i, f);
+                        // Quicksearch for new blueprint
+                        int tries = 0;
+                        int L = 0;
+                        int R = entitiesPerGroup[i] - 1;
+
+                        while (tries < entitiesPerGroup[i]) {
+                            int k = (L + R) / 2;
+                            blueprint = groups[i][k];
+
+                            if( f < groups[i][k].spawnSpanMin){
+                                R = k - 1;
+                            }
+                            else if( f > groups[i][k].spawnSpanMax) {
+                                L = k + 1;
+                            }
+                            else {
+                                break;
+                            }
+
+                            tries++;
+                        }
                     }
 
-                    Entity newEntity = GeneratePointAround(oldEntity, blueprint, Generator, groups.GetGroupDistance(blueprint.group, oldEntity.group));
+                    Entity newEntity = GeneratePointAround(oldEntity, blueprint, Generator);
 
-                    if( newEntity.IsInRectangle() && !grid.IsInNeighbourhood(newEntity, groups.GetGroupDistance(newEntity.group, oldEntity.group))){
+                    if( newEntity.IsInRectangle() && !grid.IsInNeighbourhood(newEntity)){
                         processList.push_back(newEntity);
                         entities.push_back(newEntity);
                         grid.Insert(newEntity);
@@ -568,5 +516,7 @@ namespace Poisson
         return join(output);
 
     }
+
+
 
 }

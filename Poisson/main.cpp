@@ -147,14 +147,15 @@ void PrintBanner()
 }
 
 void addEntity(
-        Poisson::EntityCategorizer cat,
+        std::vector<std::vector<Poisson::EntityTemplate>>& groups,
         int radius,
         float selfSpawn,
         int group,
         int id,
         int count){
 
-    cat.AddEntityTemplate(group,(float)radius / ImageSize, selfSpawn, id, count);
+    groups[group].push_back(Poisson::EntityTemplate((float) radius / ImageSize, selfSpawn, group, id, count));
+
 }
 
 int main( int argc, char** argv )
@@ -168,45 +169,40 @@ int main( int argc, char** argv )
     unsigned int seed = 1284;
     Poisson::PRNG generator(seed);
 
-    const unsigned int groupCount = 3;
+    const unsigned int groupCount = 2;
 
     std::vector<std::vector<Poisson::EntityTemplate>> groups(groupCount);
 
-    Poisson::EntityCategorizer cat(groupCount);
+    groups.resize(groupCount);
 
-    int id = 0;
-
-
+    int id = 1;
     int giantCrownSize = 100;
-    int n_group0 = 0;
-    cat.AddGroupDistance(0, 0, giantCrownSize * 3);
-    addEntity(cat, 80, 0.0f, 0, id++,  1);
 
+    int n_group0 = 3;
     int treeCrownSize = 15;
-    int n_group1 =  2;
-    cat.AddGroupDistance(1, 0, giantCrownSize / 2);
-    cat.AddGroupDistance(1, 1, treeCrownSize);
-    addEntity(cat, 10, 0.95f, 1, id++, 100); // Maple
-    addEntity(cat, 8 , 0.95f, 1, id++, 100); // Birch
-    addEntity(cat, 6,  0.01f, 1, id++, 5);   // Bush
+    Poisson::AddDistanceRule(0, 0, (float)treeCrownSize / ImageSize);
+    addEntity(groups, 9, 0.95f, 0, id++, 100); // Maple
+    addEntity(groups, 8 , 0.95f, 0, id++, 100); // Birch
+    addEntity(groups, 6,  0.01f, 0, id++, 5);   // Bush
 
-    int n_group2 = 5;
-    cat.AddGroupDistance(2, 0, 0);
-    cat.AddGroupDistance(2, 1, 0);
-    cat.AddGroupDistance(2, 2, 0);
-    addEntity(cat, 2, 0.0f, 2, id++, 1);    // Rare flower
-    addEntity(cat, 2, 0.3f, 2, id++, 550);  // Orange flower
-    addEntity(cat, 2, 0.3f, 2, id++, 550);  // Yellow flower
-    addEntity(cat, 2, 0.3f, 2, id++, 550);  // White flower
-    addEntity(cat, 2, 0.8f, 2, id++, 9500); // Grass
+    int n_group1 = 5;
+    Poisson::AddDistanceRule(1, 0, 0);
+    Poisson::AddDistanceRule(1, 1, 0);
+    addEntity(groups, 2, 0.0f, 1, id++, 1);    // Rare flower
+    addEntity(groups, 2, 0.3f, 1, id++, 550);  // Orange flower
+    addEntity(groups, 2, 0.3f, 1, id++, 550);  // Yellow flower
+    addEntity(groups, 2, 0.3f, 1, id++, 550);  // White flower
+    addEntity(groups, 2, 0.8f, 1, id++, 9500); // Grass
 
 
-    int entitiesPerGroup[groupCount] = {n_group0, n_group1, n_group2};
+    int entitiesPerGroup[groupCount] = {n_group0, n_group1};
 
     const clock_t begin_time = clock();
 
     const auto Entities = Poisson::GeneratePoisson(
-            cat,
+            groups,
+            groupCount,
+            entitiesPerGroup,
             generator,
             g_DensityMap,
             ImageSize,
