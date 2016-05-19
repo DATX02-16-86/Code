@@ -26,18 +26,20 @@ Matrix PerformRotation(Matrix mat1, Matrix mat2) {
 
 Vector PerformRotation(Matrix rot, Vector vec) {
   Vector product = {0.0, 0.0, 0.0};
+  
   for (int row = 0; row < 3; row++) {
     for (int inner = 0; inner < 3; inner++) {
       product[row] += rot[row][inner]*vec[inner];
     }
   }
+  
   return product;
 }
 
 TreeLSystem::TreeLSystem(double branchingAngle, double phyllotacticAngle, double lengthRatio, double diameterRatio,
                          int initialBranchLength, int initialBranchDiameter, string axiom, map<char, string> rules)
-  : branchingAngle(branchingAngle), phyllotacticAngle(phyllotacticAngle), branchLengthRatio(lengthRatio), branchDiameterRatio(diameterRatio),
-    initialBranchLength(initialBranchLength), initialBranchDiameter(initialBranchDiameter), axiom(axiom), rules(rules) {};
+: branchingAngle(branchingAngle), phyllotacticAngle(phyllotacticAngle), branchLengthRatio(lengthRatio), branchDiameterRatio(diameterRatio),
+initialBranchLength(initialBranchLength), initialBranchDiameter(initialBranchDiameter), axiom(axiom), rules(rules) {};
 
 string TreeLSystem::nextGeneration(string currentGeneration) {
   string rule, result = "";
@@ -68,7 +70,7 @@ double randRange(double low, double high) {
 //  auto noisedLengthRatio = randRange(lengthRatio*0.9, lengthRatio*1.1);
 //  Vector points[VERTEX_COUNT];
 //  auto _pos = (*position);
-//  
+//
 //  Vector dir = PerformRotation(rotation, {0.0, 1.0, 0.0});
 //  for (int i = 0; i < 3; i++) {
 //    (*position)[i] += dir[i]*noisedLengthRatio;
@@ -99,7 +101,7 @@ double randRange(double low, double high) {
 //      points[i][j] += _pos[j];
 //    }
 //  }
-//  
+//
 //  // Push the points and its indices to the mesh.
 //  for (Vector vector: points) {
 //    mesh->vertices.push_back(vector);
@@ -109,7 +111,7 @@ double randRange(double low, double high) {
 //    mesh->indices.push_back(verticesCount+i);
 //    mesh->indices.push_back(verticesCount+BRANCH_RADIAL_COUNT+i);
 //    mesh->indices.push_back(verticesCount+(i+1)%BRANCH_RADIAL_COUNT);
-//    
+//
 //    mesh->indices.push_back(verticesCount+BRANCH_RADIAL_COUNT+i);
 //    mesh->indices.push_back(verticesCount+BRANCH_RADIAL_COUNT+(i+1)%BRANCH_RADIAL_COUNT);
 //    mesh->indices.push_back(verticesCount+(i+1)%BRANCH_RADIAL_COUNT);
@@ -182,19 +184,31 @@ VoxelCollection TreeLSystem::generateVoxels(int iterations) {
             coordinates = {coordinates[0] + x0, coordinates[1] + y0, coordinates[2] + z0};
             voxels.push_back(coordinates);
           }
-          double x = 0, y = radius;
-          auto decision = 1 - radius;
-          do {
-            if (decision <= 0)
-              decision = decision + 2 * (++x) + 3;
-            else
-              decision = decision + 2 * (++x) - 2 * (--y) + 5;
-            for (vector<double> coordinates : (vector<vector<double>>){{x, y, z}, {-x, y, z}, {x, -y, z}, {-x, -y, z}, {y, x, z}, {-y, x, z}, {y, -x, z}, {-y, -x, z}}) {
+          double x = radius, y = 0;
+          auto dx = 1-2*radius, dy = 1;
+          auto re = 0;
+          while (x >= y) {
+            for (vector<double> coordinates : (vector<vector<double>>){{x, y, z}, {-x, -y, z}, {-y, x, z}, {y, -x, z}}) {
               coordinates = PerformRotation(currentRotation, coordinates);
               coordinates = {coordinates[0] + x0, coordinates[1] + y0, coordinates[2] + z0};
               voxels.push_back(coordinates);
             }
-          } while (x < y);
+            if (y > 0) {
+              for (vector<double> coordinates : (vector<vector<double>>){{x, -y, z}, {-x, y, z}, {-y, -x, z}, {y, x, z}}) {
+                coordinates = PerformRotation(currentRotation, coordinates);
+                coordinates = {coordinates[0] + x0, coordinates[1] + y0, coordinates[2] + z0};
+                voxels.push_back(coordinates);
+              }
+            }
+            y += 1;
+            re += dy;
+            dy += 2;
+            if (2*re+dx > 0) {
+              x -= 1;
+              re += dx;
+              dx += 2;
+            }
+          }
         }
         break;
     }
