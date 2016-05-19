@@ -52,4 +52,6 @@ main
 CMakeFiles
 
 # Xcode
-TreeLSystem/TreeLSystemRenderer/
+*.xcodeproj
+*.xib
+*.plist
