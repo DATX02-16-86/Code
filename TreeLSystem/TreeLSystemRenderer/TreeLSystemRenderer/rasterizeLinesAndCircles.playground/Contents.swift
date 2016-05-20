@@ -53,7 +53,7 @@ func rasterizeCircle(radius r: Int) -> Bitmap {
     for (px, py) in a1 {
       circle[py + r][px + r] = circle[py + r][px + r] == "X" ? "O" : "X"
     }
-    if y > 0 {
+    if y != 0 && y != x {
       for (px, py) in a2 {
         circle[py + r][px + r] = circle[py + r][px + r] == "X" ? "O" : "X"
       }
@@ -70,28 +70,4 @@ func rasterizeCircle(radius r: Int) -> Bitmap {
   return circle
 }
 
-//print(toString(rasterizeCircle(radius: 100)))
-
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: 0, y1: 5)))
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: 3, y1: 5)))
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: 4, y1: 3)))
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: 5, y1: 0)))
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: 4, y1: -3)))
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: 3, y1: -4)))
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: 0, y1: -5)))
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: -3, y1: -4)))
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: -4, y1: -3)))
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: -5, y1: 0)))
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: -4, y1: 3)))
-//print(toString(rasterizeLine(x0: 0, y0: 0, x1: -3, y1: 4)))
-
-let steps = 360
-let radius = 5.0
-let lengthWidthRatio = 1
-for i in 0 ..< steps {
-  let rad = 2*M_PI*Double(i)/Double(steps)
-  let (x0, y0) = (Int(-radius*cos(rad)), Int(-radius*sin(rad)))
-  let (x1, y1) = (Int(radius*cos(rad)), Int(radius*sin(rad)))
-  print(toString(rasterizeLine(x0: x0, y0: y0, x1: x1, y1: y1)))
-  //  print(toString(rasterizeLine(x0: 0, y0: 0, x1: -dy*lengthWidthRatio, y1: dx*lengthWidthRatio)))
-}
+print(toString(rasterizeCircle(radius: 3)))

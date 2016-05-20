@@ -4,4 +4,4 @@
 
 #define REAL_RULES ((map<char, string>){{'F', "Y[^^^^F*]++++++[^^^^F*]++++++[^^^^F*]+++++[^ZF*]"}, {'Y', "Y^Z&+++"}})
 
-RealTree::RealTree():TreeLSystem(DEGREES_TO_RADIANS(10), DEGREES_TO_RADIANS(18), 0.9, 0.65, 30, 2, "F", REAL_RULES) {};
+RealTree::RealTree():TreeLSystem(DEGREES_TO_RADIANS(10), DEGREES_TO_RADIANS(18), 0.9, 0.75, 20, 10, "F", REAL_RULES) {};

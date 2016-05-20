@@ -19,8 +19,8 @@
 @implementation TreeLSystemBridge
 
 - (instancetype) init {
-  TreeLSystem tree = AbstractTree();
-  auto voxels = tree.generateVoxels(1);
+  TreeLSystem tree = RealTree();
+  auto voxels = tree.generateVoxels(6);
   NSMutableArray<SCNVector3Wrapper*>* tmpVoxels = [NSMutableArray<SCNVector3Wrapper*> array];
   for (vector<double> voxel: voxels) {
     [tmpVoxels addObject:[[SCNVector3Wrapper alloc] initWithVector:SCNVector3Make(voxel[0]/10, voxel[2]/10, -voxel[1]/10)]];

@@ -4,8 +4,8 @@ import QuartzCore
 class GameViewController: NSViewController {
   
   @IBOutlet weak var gameView: SCNView!
-  let height: CGFloat = 7.5
-  let distance: CGFloat = 14
+  let height: CGFloat = 20
+  let distance: CGFloat = 50
   
   override func awakeFromNib(){
     // create a new scene
@@ -18,6 +18,7 @@ class GameViewController: NSViewController {
     
     // create and add tree object
     let tree = TreeLSystemBridge()
+    let treeNode = SCNNode()
     for vector in tree.voxels.map({ $0.vector }) {
       let cubeGeometry = SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0)
       let material = SCNMaterial()
@@ -26,20 +27,14 @@ class GameViewController: NSViewController {
       cubeGeometry.materials = [material]
       let cubeNode = SCNNode(geometry: cubeGeometry)
       cubeNode.position = vector
-      scene.rootNode.addChildNode(cubeNode)
+      treeNode.addChildNode(cubeNode)
     }
+    scene.rootNode.addChildNode(treeNode)
+    treeNode.runAction(SCNAction.repeatActionForever(SCNAction.rotateByX(0, y: 2*CGFloat(M_PI), z: 0, duration: 180)))
     
+      
     // place the camera
     cameraNode.position = SCNVector3(x: 0, y: height, z: distance)
-    var actionSequence: [SCNAction] = []
-    actionSequence.reserveCapacity(360)
-    for d in 0 ..< 360 {
-      let r = CGFloat(2*d) * CGFloat(M_PI) / 360.0
-      let moveAction = SCNAction.moveTo(SCNVector3Make(distance*sin(r), height, distance*cos(r)), duration: 0.05)
-      let rotateAction = SCNAction.rotateToX(0, y: r, z: 0, duration: 0.05)
-      actionSequence.append(SCNAction.group([moveAction, rotateAction]))
-    }
-    cameraNode.runAction(SCNAction.repeatActionForever(SCNAction.sequence(actionSequence)))
     
     // create and add an ambient light to the scene
     let ambientLightNode = SCNNode()

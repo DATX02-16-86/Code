@@ -27,8 +27,7 @@
 
 using namespace std;
 
-typedef vector<double> Vector;
-typedef vector<vector<double>> Matrix;
+typedef vector<vector<double>> Matrix, VoxelCollection;
 
 Matrix PerformRotation(Matrix mat1, Matrix mat2);
 
@@ -36,7 +35,6 @@ Matrix PerformRotation(Matrix mat1, Matrix mat2);
 //  list<Vector> vertices;
 //  list<int> indices;
 //};
-typedef vector<Vector> VoxelCollection;
 
 enum DrawRule {
   TurnLeft = '+',
