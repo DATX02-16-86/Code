@@ -47,7 +47,7 @@ LandmassStage& LandmassStage::operator += (std::unique_ptr<Generator> generator)
         }
 
         if(i >= max) {
-            attributes.push_back(AttributeId((U16)attributes.size(), a->itemBits, a->type));
+            attributes.push_back(attributeId((U16)attributes.size(), a->itemBits, a->type));
             attributeSources.push_back(a);
             generator->attributes.push_back(attributes[max]);
         }

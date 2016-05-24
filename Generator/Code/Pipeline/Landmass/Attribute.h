@@ -20,8 +20,6 @@ struct Attribute {
 };
 
 struct AttributeId {
-    AttributeId(U32 id, U8 itemBits, AttributeType type);
-
     const U32 id;
     const U32 mask;
 	const U8 itemBits;
@@ -29,6 +27,8 @@ struct AttributeId {
     const U8 itemsPerWord;
     const U8 itemShift;
 };
+
+AttributeId attributeId(U32 id, U8 itemBits, AttributeType type);
 
 struct AttributeMap {
     AttributeMap() {}
