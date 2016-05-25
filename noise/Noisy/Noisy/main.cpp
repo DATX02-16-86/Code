@@ -78,6 +78,7 @@ void generateAndWrite2D(int seed, int chunkSize, int chunks)
 	// Init and generate terrain
 	Terrain t = Terrain(chunks, chunkSize, seed);
 	t.generateHeights();
+	t.generateBiomes();
 	t.generate2D(point_z_values);
 
 	writePointsToFile2D(chunkSize, chunks, point_z_values);
@@ -132,7 +133,8 @@ void generateAndWrite3D(int seed, int chunkSize, int chunks, int height)
 	// Init and generate terrain
 	Terrain t = Terrain(chunks, chunkSize, seed);
 	t.generateHeights();
-	t.generate3D(point_z_values, height);
+	t.generateBiomes();
+	t.generate3DRaw(point_z_values, height);
 
 	// basic file operations
 	std::ofstream myfile;
@@ -185,7 +187,7 @@ void generateAndWrite3DInterpolation(int seed, int chunkSize, int chunks, int he
 void generateAndWrite3DWithBiomes(int seed, int chunkSize, int chunks, int height)
 {
 	// Allocate memory for points
-	bool *point_z_values = (bool *)std::malloc(chunks * chunkSize * chunks * chunkSize * height * sizeof(bool *));
+	int *point_z_values = (int *)std::malloc(chunks * chunkSize * chunks * chunkSize * height * sizeof(int *));
 
 	// Create perm table from seed (not used??)
 	// NoiseContext nc = NoiseContext(seed);
@@ -194,7 +196,7 @@ void generateAndWrite3DWithBiomes(int seed, int chunkSize, int chunks, int heigh
 	Terrain t = Terrain(chunks, chunkSize, height, seed);
 	t.generateHeights();
 	t.generateBiomes();
-	t.generateFromBiomes(point_z_values);
+	t.generateFromBiomes(point_z_values, true);
 
 	// basic file operations
 	std::ofstream myfile;
@@ -206,16 +208,9 @@ void generateAndWrite3DWithBiomes(int seed, int chunkSize, int chunks, int heigh
 	for (int k = 0; k < height; ++k) {
 		for (int i = chunkSize; i < (chunks - 1)*chunkSize; ++i) {
 			for (int j = chunkSize; j < (chunks - 1)*chunkSize; ++j) {
-				bool d = point_z_values[i * chunkSize * chunks * height + j * height + k];
+				int d = point_z_values[i * chunkSize * chunks * height + j * height + k];
 
-				if (d)
-				{
-					myfile << 1;
-				}
-				else
-				{
-					myfile << 0;
-				}
+				myfile << d;
 
 				if (j + 1 < (chunks - 1) * chunkSize)
 					myfile << ",";
@@ -234,14 +229,17 @@ void generateAndWrite3DWithBiomes(int seed, int chunkSize, int chunks, int heigh
 int main() {
 
 	//const int seed = 23195;
-	const int seed = 0;
+	const int seed = 1; //132;
 	const int chunkSize = 64;
-	const int chunks = 7;
-	const int height = 64;
+	const int chunks = 10;
+	const int height = 256;
+	//generateAndWrite3D(seed, chunkSize, chunks, height);
+	//generateAndWrite3DWithBiomes(seed, chunkSize, chunks, height);
+
 	generateAndWrite3DWithBiomes(seed, chunkSize, chunks, height);
+
 
 	//std::cin.get();
 
 	return 0;
 }
-

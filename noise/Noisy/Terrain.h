@@ -3,22 +3,34 @@
 
 struct BiomeRepresentation {
 	
-	BiomeRepresentation(float mountainRatio, float plainRatio, float ridgeRatio, float weirdRatio, float pillarRatio, float caveRatio) 
-		: mountainness(mountainRatio), plainness(plainRatio), ridgyness(ridgeRatio), weirdness(weirdRatio), pillarness(pillarRatio), caviness(caveRatio) {};
-	BiomeRepresentation() {};
+	BiomeRepresentation(float mountainRatio, float plainRatio = 0, float ridgeRatio = 0, float weirdRatio = 0, 
+		float pillarRatio = 0, float cavernRatio = 0, float tunnelRatio = 0, float floatingIslandRatio = 0) 
+		: mountainness(mountainRatio), plainness(plainRatio), ridgyness(ridgeRatio), weirdness(weirdRatio), 
+		pillarness(pillarRatio), cavernness(cavernRatio),tunnellness(tunnelRatio), floatingIslands(floatingIslandRatio) {};
+	
+	BiomeRepresentation() { BiomeRepresentation(0); };
+	
 	float ridgyness;
 	float mountainness;
 	float plainness;
 	float weirdness;
 	float pillarness;
-	float caviness;
+	float cavernness;
+	float tunnellness;
+	float floatingIslands;
 };
 
-static const BiomeRepresentation mountainBiome = BiomeRepresentation(1.f, 0.f, 0.f, 0.f, 0.f,1.f);
-static const BiomeRepresentation plainBiome = BiomeRepresentation(0.f, 1.f, 0.f, 0.f, 0.f, 1.f);
-static const BiomeRepresentation ridgyPlainsBiome = BiomeRepresentation(0.f, 1.f, 1.f, 0.f, 0.f, 1.f);
-static const BiomeRepresentation weirdBiome = BiomeRepresentation(0.f, 0.f, 0.f, 1.f,0.f, 1.f);
-static const BiomeRepresentation pillarBiome = BiomeRepresentation(0.f, 0.f, 0.f, 0.f, 1.f, 1.f);
+// static const BiomeRepresentation mountainBiome = BiomeRepresentation(1.f, 0.f, 0.f, 0.f, 0.f,1.f);
+// static const BiomeRepresentation plainBiome = BiomeRepresentation(0.f, 1.f, 0.f, 0.f, 0.f, 1.f);
+
+static const BiomeRepresentation testBiome = BiomeRepresentation(1.f, 0.f, 0.f, 1.f);
+
+static const BiomeRepresentation mountainBiome = BiomeRepresentation(1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
+static const BiomeRepresentation plainBiome = BiomeRepresentation(0.f, 1.f, 0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
+static const BiomeRepresentation hillBiome = BiomeRepresentation(0.5f, 0.5f);
+static const BiomeRepresentation ridgyPlainsBiome = BiomeRepresentation(0.f, 1.f, 1.f, 0.f, 0.f, 1.f, 1.f);
+static const BiomeRepresentation weirdBiome = BiomeRepresentation(0.f, 0.f, 0.f, 1.f, 0.f, 1.f, 1.f);
+static const BiomeRepresentation pillarBiome = BiomeRepresentation(0.f, 0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
 class Terrain
 {
@@ -29,13 +41,15 @@ private:
 	float interpolate(float aP, float a, float b);
 
 // Universal biome
-	bool worldBiomeFunction(int x, int y, int z, float baseHeight, BiomeRepresentation biome);
+	int worldBiomeFunction(int x, int y, int z, float baseHeight, BiomeRepresentation biome);
 	float plainHeightOffset(int x, int y);
 	float mountainHeightOffset(int x, int y);
 	float ridgeHeightOffset(int x, int y);
 	float weirdDensity(int x, int y, int z, float baseHeight, float weirdnessHeight);
-	float pillarDensity(int x, int y, int z, float baseHeight, float pillarParameter);
-	float caveDensity(int x, int y, int z, float baseHeight, float caveParameter);
+	float pillarDensity(int x, int y, int z, float baseHeight, float pillarHeight, float pillarParameter);
+	float tunnelDensity(int x, int y, int z, float baseHeight, float caveParameter, float tunnelHeight);
+	float cavernDensity(int x, int y, int z, float surfaceHeight, float cavernParameter);
+	float floatingIslandsDensity(int x, int y, int z, float trueHeight, float plainness);
 	// End of universal biome
 public:
 
@@ -61,7 +75,7 @@ public:
 
 	void generateBiomes();
 	
-	void generateFromBiomes(bool* allValues, bool interpolate);
+	void generateFromBiomes(int* allValues, bool interpolate);
 
 	void generate2D(float** zvalues);
 
@@ -95,6 +109,7 @@ public:
 
 	void generate3DSomething(bool* density, int height);
 
+	void generate3DRaw(bool * point_z_values, int height);
 private:
 	NoiseContext nc;
 	int chunks;

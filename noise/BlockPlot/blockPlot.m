@@ -157,7 +157,7 @@ clear p
 xface=patch(verts(:,1),verts(:,2),verts(:,3),[.5 .5 .5],varargin{:});
 %re-order the vertices into 4-corner polygons (squares)
 set(xface,'faces',reshape(get(xface,'faces'),4,[])');
-set(gca, 'cameraPosition',[-661.6507 -588.5909 -312.2231])
+set(gca, 'cameraPosition',[-200.6507 300.5909 200.2231])
 
 
 return
