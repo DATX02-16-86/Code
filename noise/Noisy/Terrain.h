@@ -47,6 +47,7 @@ public:
 
 	static const int MOUNTAINS_OCTAVES = 6;
 	static const float MOUNTAINS_PERSISTANCE;
+	static const float MOUNTAINS_FREQUENCY;
 	static const int MOUNTAINS_HM = 5;
 	static const int MOUNTAINS_BM = 0;
 
@@ -68,11 +69,11 @@ public:
 
 	void generate3D(bool* allValues, int height);
 
-	void Generate3DCustom(bool* allValues, int height, int octaves, float persistance, int heightMult);
+	void Generate3DCustom(bool* allValues, int height, int octaves, float frequency, float persistance, int heightMult);
 
-	bool fillVoxel(int baseHeight, int x, int y, int z, int height, int octaves, float persistance, int heightMult, int baseMult);
+	bool fillVoxel(int baseHeight, int x, int y, int z, int height, int octaves, float frequency, float persistance, int heightMult, int baseMult);
 
-	float getVoxelDensity(int baseHeight, int x, int y, int z, int height, int octaves, float persistance, int heightMult, int baseMult);
+	float getVoxelDensity(int baseHeight, int x, int y, int z, int height, int octaves, float frequency, float persistance, int heightMult, int baseMult);
 
 	void GenerateMountains(bool* allValues, int height);
 
@@ -100,9 +101,9 @@ public:
 
 	void generate3d(std::vector<std::vector<std::vector<bool>>> allValues, int octaves, float frequency, float persistance, int heightMultiplier);
 
-	bool fillV(int x, int y, int z, int octaves, float persistance, int heightMult, int baseMult);
+	void removeFloating(bool* allValues, int height);
 
-	void removeFloating(std::vector <std::vector<std::vector<bool>>> density);
+	void spreadPartition(bool* checked, int* partitions, int height, int x, int y, int z, int newPartition);
 
 private:
 	NoiseContext nc;

@@ -8,7 +8,8 @@
 
 //Init constants
 const float Terrain::PLAINS_PERSISTANCE = 0.3f;
-const float Terrain::MOUNTAINS_PERSISTANCE = 0.65f;
+const float Terrain::MOUNTAINS_PERSISTANCE = 0.45f;
+const float Terrain::MOUNTAINS_FREQUENCY = 0.08f;
 
 Terrain::Terrain(int chunks, int chunkSize, int seed)
 {
@@ -368,7 +369,7 @@ void Terrain::generate3D(bool* density, int height)
 	}
 }
 
-void Terrain::Generate3DCustom(bool* density, int height, int octaves, float persistance, int heightMult)
+void Terrain::Generate3DCustom(bool* density, int height, int octaves, float frequency, float persistance, int heightMult)
 {
 	int baseHeight = height / 2;
 
@@ -381,7 +382,7 @@ void Terrain::Generate3DCustom(bool* density, int height, int octaves, float per
 					for (int z = 0; z < height; ++z)
 					{
 						//determine whether its solid or air
-						density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, octaves, persistance, heightMult, 0.0f);
+						density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, octaves, frequency, persistance, heightMult, 0.0f);
 					}
 				}
 			}
@@ -389,14 +390,14 @@ void Terrain::Generate3DCustom(bool* density, int height, int octaves, float per
 	}
 }
 
-bool Terrain::fillVoxel(int baseHeight, int x, int y, int z, int height, int octaves, float persistance, int heightMult, int baseMult) 
+bool Terrain::fillVoxel(int baseHeight, int x, int y, int z, int height, int octaves, float frequency, float persistance, int heightMult, int baseMult) 
 {
-	return getVoxelDensity(baseHeight, x, y, z, height, octaves, persistance, heightMult, baseMult) > 0.3f;
+	return getVoxelDensity(baseHeight, x, y, z, height, octaves, frequency, persistance, heightMult, baseMult) > 0.3f;
 }
 
-float Terrain::getVoxelDensity(int baseHeight, int x, int y, int z, int height, int octaves, float persistance, int heightMult, int baseMult)
+float Terrain::getVoxelDensity(int baseHeight, int x, int y, int z, int height, int octaves, float frequency, float persistance, int heightMult, int baseMult)
 {
-	float d = Simplex::octave_noise(octaves, 0.05f, persistance, x, y, z, nc);
+	float d = Simplex::octave_noise(octaves, frequency, persistance, x, y, z, nc);
 
 	float fz = (float)z;
 	// Create base layer
@@ -428,12 +429,12 @@ float Terrain::getVoxelDensity(int baseHeight, int x, int y, int z, int height, 
 
 void Terrain::GenerateMountains(bool* density, int height)
 {
-	Generate3DCustom(density, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM);
+	Generate3DCustom(density, height, MOUNTAINS_OCTAVES, MOUNTAINS_FREQUENCY, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM);
 }
 
 void Terrain::GeneratePlains(bool* density, int height)
 {
-	Generate3DCustom(density, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM);
+	Generate3DCustom(density, height, PLAINS_OCTAVES, 0.05f, PLAINS_PERSISTANCE, PLAINS_HM);
 }
 
 void Terrain::generateMountainsPlains(bool* density, int height)
@@ -450,7 +451,7 @@ void Terrain::generateMountainsPlains(bool* density, int height)
 						for (int z = 0; z < height; ++z)
 						{
 							//determine whether its solid or air
-							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
+							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_FREQUENCY, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
 						}
 					}
 				}
@@ -464,7 +465,7 @@ void Terrain::generateMountainsPlains(bool* density, int height)
 						for (int z = 0; z < height; ++z)
 						{
 							//determine whether its solid or air
-							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
+							density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, 0.05f, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
 						}
 					}
 				}
@@ -490,10 +491,11 @@ void Terrain::generateMountainsPlainsInterpolated(bool* density, int height)
 							{
 								float p = 1.0f - ((float)y / (float)(chunkSize-1.0f));
 								int octaves = interpolate(p, MOUNTAINS_OCTAVES, PLAINS_OCTAVES);
+								float frequency = interpolate(p, MOUNTAINS_FREQUENCY, 0.05f);
 								float persistance = interpolate(p, MOUNTAINS_PERSISTANCE, PLAINS_PERSISTANCE);
 								int hm = interpolate(p, MOUNTAINS_HM, PLAINS_HM);
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, octaves, persistance, hm, MOUNTAINS_BM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, octaves, frequency, persistance, hm, MOUNTAINS_BM);
 							}
 						}
 					}
@@ -507,7 +509,7 @@ void Terrain::generateMountainsPlainsInterpolated(bool* density, int height)
 							for (int z = 0; z < height; ++z)
 							{
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_FREQUENCY, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
 							}
 						}
 					}
@@ -525,7 +527,7 @@ void Terrain::generateMountainsPlainsInterpolated(bool* density, int height)
 							for (int z = 0; z < height; ++z)
 							{
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, 0.05f, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
 							}
 						}
 					}
@@ -539,7 +541,7 @@ void Terrain::generateMountainsPlainsInterpolated(bool* density, int height)
 							for (int z = 0; z < height; ++z)
 							{
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, 0.05f, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
 							}
 						}
 					}
@@ -565,8 +567,8 @@ void Terrain::generateMountainsPlainsInterpolatedD(bool* density, int height)
 							for (int z = 0; z < height; ++z)
 							{
 								float p = 1.0f - ((float)y / (float)(chunkSize - 1.0f));
-								float mountainD = getVoxelDensity(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
-								float plainsD = getVoxelDensity(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
+								float mountainD = getVoxelDensity(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_FREQUENCY, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
+								float plainsD = getVoxelDensity(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, 0.05f, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
 								float intD = interpolate(p, mountainD, plainsD);
 								density[true_y*chunkSize*chunks*height + true_x*height + z] = intD > 0.3f;
 							}
@@ -582,7 +584,7 @@ void Terrain::generateMountainsPlainsInterpolatedD(bool* density, int height)
 							for (int z = 0; z < height; ++z)
 							{
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, MOUNTAINS_OCTAVES, MOUNTAINS_FREQUENCY, MOUNTAINS_PERSISTANCE, MOUNTAINS_HM, MOUNTAINS_BM);
 							}
 						}
 					}
@@ -600,7 +602,7 @@ void Terrain::generateMountainsPlainsInterpolatedD(bool* density, int height)
 							for (int z = 0; z < height; ++z)
 							{
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, 0.05f, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
 							}
 						}
 					}
@@ -614,7 +616,7 @@ void Terrain::generateMountainsPlainsInterpolatedD(bool* density, int height)
 							for (int z = 0; z < height; ++z)
 							{
 								//determine whether its solid or air
-								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
+								density[true_y*chunkSize*chunks*height + true_x*height + z] = fillVoxel(baseHeight, true_x, true_y, z, height, PLAINS_OCTAVES, 0.05f, PLAINS_PERSISTANCE, PLAINS_HM, PLAINS_BM);
 							}
 						}
 					}
@@ -872,19 +874,115 @@ void Terrain::generate3d(std::vector<std::vector<std::vector<bool>>> allValues, 
 		{
 			for (int z = 0; z < allValues[0][0].size(); ++z)
 			{
-				allValues[x][y][z] = fillV(x, y, z, octaves, persistance, heightMultiplier, 1);
+				allValues[x][y][z] = fillVoxel(1, x, y, z, 1, octaves, frequency, persistance, heightMultiplier, 1.0f);
 			}
 		}
 	}
 }
 
-bool Terrain::fillV(int x, int y, int z, int octaves, float persistance, int heightMult, int baseMult)
+void Terrain::removeFloating(bool* allValues, int height)
 {
-	return getVoxelDensity(16, x, y, z, 32, octaves, persistance, heightMult, baseMult) > 0.3f;
+	int chunkVoxelAmount = chunks * chunkSize * chunks * chunkSize * height;
+	int *partitions = (int *)std::malloc(chunkVoxelAmount * sizeof(int *));
+	bool *checked = (bool *)std::malloc(chunkVoxelAmount * sizeof(bool *));
+	int partition_counter = 0;
+
+	for (int chY = 1; chY < chunks - 1; chY++) {
+		for (int chX = 1; chX < chunks - 1; chX++) {
+			for (int y = 0; y < chunkSize; ++y) {
+				int true_y = y + (chunkSize * chY);
+				for (int x = 0; x < chunkSize; ++x) {
+					int true_x = x + (chunkSize * chX);
+					for (int z = 0; z < height; ++z)
+					{
+						int index = true_y*chunkSize*chunks*height + true_x*height + z;
+						if (allValues[index])
+						{
+							//printf("Assigning %d to %d \n", partition_counter, index);
+							partitions[index] = partition_counter;
+							//printf("Part %d: %d  \n", index, partitions[index]);
+							checked[index] = false;
+							partition_counter++;
+						}
+						else {
+							checked[index] = true;
+							partitions[index] = -1;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for (int chY = 1; chY < chunks - 1; chY++) {
+		for (int chX = 1; chX < chunks - 1; chX++) {
+			for (int y = 0; y < chunkSize; ++y) {
+				int true_y = y + (chunkSize * chY);
+				for (int x = 0; x < chunkSize; ++x) {
+					int true_x = x + (chunkSize * chX);
+					for (int z = 0; z < height; ++z)
+					{
+						int index = y*chunkSize*chunks*height + x*height + z;
+						spreadPartition(checked, partitions, height, true_x, true_y, z, partitions[index]);
+					}
+				}
+			}
+		}
+	}
+
+	for (int chY = 1; chY < chunks - 1; chY++) {
+		for (int chX = 1; chX < chunks - 1; chX++) {
+			for (int y = 0; y < chunkSize; ++y) {
+				int true_y = y + (chunkSize * chY);
+				for (int x = 0; x < chunkSize; ++x) {
+					int true_x = x + (chunkSize * chX);
+					for (int z = 0; z < height; ++z)
+					{
+						int index = true_y*chunkSize*chunks*height + true_x*height + z;
+						//printf("Part %d: %d  \n", index, partitions[index]);
+						if (partitions[index] % 2 != 0)
+						{
+							allValues[index] = false;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
-void Terrain::removeFloating(std::vector <std::vector<std::vector<bool>>> density)
+void Terrain::spreadPartition(bool* checked, int* partitions, int height, int x, int y, int z, int newPartition)
 {
-
+	int index = y*chunkSize*chunks*height + x*height + z;
+	if (!checked[index])
+	{
+		//printf("Partition: %d \n", index);
+		checked[index] = true;
+		partitions[index] = newPartition;
+		if (x > 0) 
+		{
+			spreadPartition(checked, partitions, height, x - 1, y, z, newPartition);
+		}
+		if (x < 31) //BAD!
+		{
+			spreadPartition(checked, partitions, height, x + 1, y, z, newPartition);
+		}
+		if (y > 0)
+		{
+			spreadPartition(checked, partitions, height, x, y - 1, z, newPartition);
+		}
+		if (y < 32) //BAD!
+		{
+			spreadPartition(checked, partitions, height, x, y + 1, z, newPartition);
+		}
+		if (z > 0)
+		{
+			spreadPartition(checked, partitions, height, x, y, z + 1, newPartition);
+		}
+		if (z < 15) //BAD!
+		{
+			spreadPartition(checked, partitions, height, x, y, z - 1, newPartition);
+		}
+	}
 }
 

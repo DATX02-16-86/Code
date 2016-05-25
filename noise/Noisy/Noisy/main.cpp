@@ -228,10 +228,12 @@ void generateAndWrite3DInterpolation(int seed, int chunkSize, int chunks, int he
 	Terrain t = Terrain(chunks, chunkSize, seed);
 	t.generateHeights();
 	t.GenerateMountains(point_z_values, height);
+	t.removeFloating(point_z_values, height);
 
 	writePointsToFile3D(chunkSize, chunks, height, point_z_values);
 }
 
+/*
 void genAndWrite3d(int seed, int chunkSize, int height)
 {
 	std::vector <std::vector<std::vector<bool>>> voxels(chunkSize, std::vector<std::vector<bool>>(chunkSize, std::vector<bool>(height)));
@@ -282,15 +284,15 @@ void writePointsToFile3D(std::vector <std::vector<std::vector<bool>>> voxels)
 	// Free memory for points
 	free(point_z_values);
 }
-
+*/
 int main() 
 {
 
 	//const int seed = 23195;
-	const int seed = 7;
-	const int chunkSize = 32;
+	const int seed = 8;
+	const int chunkSize = 16;
 	const int chunks = 4;
-	const int height = 32;
+	const int height = 16;
 	generateAndWrite3DInterpolation(seed, chunkSize, chunks, height);
 
 	//std::cin.get();
