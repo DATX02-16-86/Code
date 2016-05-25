@@ -5,6 +5,8 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <chrono>
+#include <thread>
 
 //Init constants
 const float Terrain::PLAINS_PERSISTANCE = 0.3f;
@@ -922,7 +924,8 @@ void Terrain::removeFloating(bool* allValues, int height)
 					int true_x = x + (chunkSize * chX);
 					for (int z = 0; z < height; ++z)
 					{
-						int index = y*chunkSize*chunks*height + x*height + z;
+						int index = true_y*chunkSize*chunks*height + true_x*height + z;
+						//printf("spreadPartition for %d %d  \n", index, partitions[index]);
 						spreadPartition(checked, partitions, height, true_x, true_y, z, partitions[index]);
 					}
 				}
@@ -949,6 +952,7 @@ void Terrain::removeFloating(bool* allValues, int height)
 			}
 		}
 	}
+	std::this_thread::sleep_for(std::chrono::milliseconds(100000));
 }
 
 void Terrain::spreadPartition(bool* checked, int* partitions, int height, int x, int y, int z, int newPartition)
@@ -956,7 +960,7 @@ void Terrain::spreadPartition(bool* checked, int* partitions, int height, int x,
 	int index = y*chunkSize*chunks*height + x*height + z;
 	if (!checked[index])
 	{
-		//printf("Partition: %d \n", index);
+		printf("Partition: %d \n", index);
 		checked[index] = true;
 		partitions[index] = newPartition;
 		if (x > 0) 
@@ -971,17 +975,17 @@ void Terrain::spreadPartition(bool* checked, int* partitions, int height, int x,
 		{
 			spreadPartition(checked, partitions, height, x, y - 1, z, newPartition);
 		}
-		if (y < 32) //BAD!
+		if (y < 31) //BAD!
 		{
 			spreadPartition(checked, partitions, height, x, y + 1, z, newPartition);
 		}
 		if (z > 0)
 		{
-			spreadPartition(checked, partitions, height, x, y, z + 1, newPartition);
+			spreadPartition(checked, partitions, height, x, y, z - 1, newPartition);
 		}
 		if (z < 15) //BAD!
 		{
-			spreadPartition(checked, partitions, height, x, y, z - 1, newPartition);
+			spreadPartition(checked, partitions, height, x, y, z + 1, newPartition);
 		}
 	}
 }
