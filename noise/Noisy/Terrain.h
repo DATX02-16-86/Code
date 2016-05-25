@@ -105,6 +105,10 @@ public:
 
 	void spreadPartition(bool* checked, int* partitions, int height, int x, int y, int z, int newPartition);
 
+	int getVoxelAmount(int height);
+
+	int getVoxelIndex(int height, int x, int y, int z);
+
 private:
 	NoiseContext nc;
 	int chunks;

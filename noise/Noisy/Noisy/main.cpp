@@ -220,12 +220,9 @@ void generateAndWrite3DWithBiomes(int seed, int chunkSize, int chunks, int heigh
 
 void generateAndWrite3DInterpolation(int seed, int chunkSize, int chunks, int height)
 {
-	int chunkVoxelAmount = chunks * chunkSize * chunks * chunkSize * height;
-	// Allocate memory for points
-	bool *point_z_values = (bool *)std::malloc(chunkVoxelAmount * sizeof(bool *));
-
 	// Init and generate terrain
 	Terrain t = Terrain(chunks, chunkSize, seed);
+	bool *point_z_values = (bool *)std::malloc(t.getVoxelAmount(height) * sizeof(bool *));
 	t.generateHeights();
 	t.GenerateMountains(point_z_values, height);
 	t.removeFloating(point_z_values, height);

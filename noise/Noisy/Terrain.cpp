@@ -897,7 +897,7 @@ void Terrain::removeFloating(bool* allValues, int height)
 					int true_x = x + (chunkSize * chX);
 					for (int z = 0; z < height; ++z)
 					{
-						int index = true_y*chunkSize*chunks*height + true_x*height + z;
+						int index = getVoxelIndex(height, true_x, true_y, z);
 						if (allValues[index])
 						{
 							//printf("Assigning %d to %d \n", partition_counter, index);
@@ -924,7 +924,7 @@ void Terrain::removeFloating(bool* allValues, int height)
 					int true_x = x + (chunkSize * chX);
 					for (int z = 0; z < height; ++z)
 					{
-						int index = true_y*chunkSize*chunks*height + true_x*height + z;
+						int index = getVoxelIndex(height, true_x, true_y, z);
 						//printf("spreadPartition for %d %d  \n", index, partitions[index]);
 						spreadPartition(checked, partitions, height, true_x, true_y, z, partitions[index]);
 					}
@@ -941,7 +941,7 @@ void Terrain::removeFloating(bool* allValues, int height)
 					int true_x = x + (chunkSize * chX);
 					for (int z = 0; z < height; ++z)
 					{
-						int index = true_y*chunkSize*chunks*height + true_x*height + z;
+						int index = getVoxelIndex(height, true_x, true_y, z);
 						//printf("Part %d: %d  \n", index, partitions[index]);
 						if (partitions[index] % 2 != 0)
 						{
@@ -952,15 +952,18 @@ void Terrain::removeFloating(bool* allValues, int height)
 			}
 		}
 	}
-	std::this_thread::sleep_for(std::chrono::milliseconds(100000));
+	//std::this_thread::sleep_for(std::chrono::milliseconds(100000));
 }
 
 void Terrain::spreadPartition(bool* checked, int* partitions, int height, int x, int y, int z, int newPartition)
 {
-	int index = y*chunkSize*chunks*height + x*height + z;
+	int index = getVoxelIndex(height, x, y, z);
 	if (!checked[index])
 	{
-		printf("Partition: %d \n", index);
+		if (index % 16 == 0 || index < 16000)
+		{
+			printf("Partition: %d \n", index);
+		}
 		checked[index] = true;
 		partitions[index] = newPartition;
 		if (x > 0) 
@@ -990,3 +993,12 @@ void Terrain::spreadPartition(bool* checked, int* partitions, int height, int x,
 	}
 }
 
+int Terrain::getVoxelAmount(int height)
+{
+	return chunks * chunkSize * chunks * chunkSize * height;
+}
+
+int Terrain::getVoxelIndex(int height, int x, int y, int z)
+{
+	return y*chunkSize*chunks*height + x*height + z;
+}
