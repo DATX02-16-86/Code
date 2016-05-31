@@ -952,7 +952,7 @@ void Terrain::removeFloating(bool* allValues, int height)
 			}
 		}
 	}
-	//std::this_thread::sleep_for(std::chrono::milliseconds(100000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 }
 
 void Terrain::spreadPartition(bool* checked, int* partitions, int height, int x, int y, int z, int newPartition)
@@ -960,7 +960,7 @@ void Terrain::spreadPartition(bool* checked, int* partitions, int height, int x,
 	int index = getVoxelIndex(height, x, y, z);
 	if (!checked[index])
 	{
-		if (index % 16 == 0 || index < 16000)
+		if (y == 0)
 		{
 			printf("Partition: %d \n", index);
 		}
@@ -1000,5 +1000,5 @@ int Terrain::getVoxelAmount(int height)
 
 int Terrain::getVoxelIndex(int height, int x, int y, int z)
 {
-	return y*chunkSize*chunks*height + x*height + z;
+	return (y*chunkSize*chunks*height) + (x*height) + z;
 }

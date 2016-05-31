@@ -37,9 +37,9 @@ void writePointsToFile3D(int chunkSize, int chunks, int height, bool *point_z_va
 
 	// Write all points to file
 	for (int k = 0; k < height; ++k) {
-		for (int i = chunkSize; i < (chunks - 1)*chunkSize; ++i) {
-			for (int j = chunkSize; j < (chunks - 1)*chunkSize; ++j) {
-				bool d = point_z_values[i * chunkSize * chunks * height + j * height + k];
+		for (int i = chunkSize; i < (chunks-1)*chunkSize; ++i) {
+			for (int j = chunkSize; j < (chunks-1)*chunkSize; ++j) {
+				bool d = point_z_values[(i*chunkSize*chunks*height) + (j*height) + k];
 
 				if (d)
 				{
